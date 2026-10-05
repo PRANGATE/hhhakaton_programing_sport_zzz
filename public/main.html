@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FSP·TALENT — демо-прототип агрегатора ИТ-вакансий</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0E13;--panel:#10141B;--panel2:#151A23;--line:#212937;--line2:#2E3949;
+  --text:#EDF1F7;--muted:#9AA6B6;--dim:#6E7A8B;
+  --lime:#C9F24B;--lime-soft:rgba(201,242,75,.08);
+  --ok:#4ADE80;--err:#F87171;--amber:#FBBF24;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --disp:'Unbounded',sans-serif;--body:'Golos Text',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+::selection{background:var(--lime);color:#0B0D07}
+::-webkit-scrollbar{width:10px}::-webkit-scrollbar-thumb{background:#232C3A;border-radius:6px}::-webkit-scrollbar-track{background:var(--bg)}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--text);background:#0D1117;border:1px solid var(--line);border-radius:9px;padding:10px 12px;width:100%;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--lime)}
+textarea{resize:vertical;min-height:88px}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239AA6B6' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+.container{max-width:1160px;margin:0 auto;padding:0 22px}
+.mono{font-family:var(--mono)}.dim{color:var(--dim)}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+.ic{vertical-align:-3px;flex:none}
+.hdr{position:sticky;top:0;z-index:50;background:rgba(11,14,19,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.hdr-in{display:flex;align-items:center;justify-content:space-between;height:60px;gap:14px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{color:var(--lime)}
+.logo-t{font-family:var(--disp);font-weight:600;font-size:14px;letter-spacing:.04em;white-space:nowrap}
+.logo-t .dot{color:var(--lime)}
+.logo-sub{font-family:var(--mono);font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:5px;padding:2px 6px}
+.hdr-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.role-badge{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;border:1px solid var(--line2);border-radius:99px;padding:6px 13px;background:var(--panel)}
+.role-badge .ic{color:var(--lime)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line2);background:#171D27;color:var(--text);padding:10px 18px;border-radius:10px;font-weight:600;font-size:14px;transition:.16s;white-space:nowrap}
+.btn:hover{border-color:var(--lime);color:var(--lime)}
+.btn.primary{background:var(--lime);border-color:var(--lime);color:#0B0D07}
+.btn.primary:hover{background:#DBFF6E;color:#0B0D07}
+.btn.ghost{background:transparent}
+.btn.sm{padding:7px 13px;font-size:13px;border-radius:8px}
+.btn.danger:hover{border-color:var(--err);color:var(--err)}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+.subnav{border-bottom:1px solid var(--line);position:sticky;top:60px;z-index:40;background:var(--bg)}
+.subnav-in{display:flex;align-items:center;gap:20px;padding:0 22px;max-width:1160px;margin:0 auto}
+.subnav-k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--dim);text-transform:uppercase;white-space:nowrap;padding:14px 0}
+.tabs{display:flex;gap:2px;overflow-x:auto}
+.tab{padding:15px 14px 13px;color:var(--muted);font-weight:600;font-size:13.5px;border-bottom:2px solid transparent;white-space:nowrap;display:flex;gap:7px;align-items:center;transition:.15s}
+.tab:hover{color:var(--text)}.tab.on{color:var(--text);border-color:var(--lime)}
+.tab .cnt{font-family:var(--mono);font-size:10.5px;background:var(--lime);color:#0B0D07;border-radius:99px;padding:1px 7px;font-weight:700}
+.view{padding:30px 0 90px;animation:vin .3s ease}
+@keyframes vin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+.panel+.panel{margin-top:14px}
+.h2{font-family:var(--disp);font-weight:600;font-size:clamp(19px,2.6vw,27px);line-height:1.25;margin:8px 0 6px}
+.lbl{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.field{margin-bottom:14px}
+.field.err input,.field.err textarea{border-color:var(--err)}
+.ferr{display:none;color:var(--err);font-size:12px;margin-top:5px}
+.field.err .ferr{display:block}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+.hint{font-size:12.5px;color:var(--muted);margin-top:6px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;border:1px solid var(--line2);border-radius:7px;padding:4px 9px;color:var(--muted)}
+.badge.lime{color:var(--lime);border-color:rgba(201,242,75,.4);background:var(--lime-soft)}
+.bar{height:6px;background:#1C2431;border-radius:99px;overflow:hidden;display:inline-block;vertical-align:middle}
+.bar i{display:block;height:100%;background:var(--lime);border-radius:99px;transition:width .4s}
+.segs{display:inline-flex;gap:3px;vertical-align:middle}
+.segs i{width:13px;height:8px;border-radius:2px;background:#242E3D}
+.segs i.on{background:var(--lime)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border:1px solid var(--line2);border-radius:99px;font-size:12.5px;font-weight:500;background:#141A24;margin:0 6px 6px 0}
+.chip.hit{border-color:var(--lime);color:var(--lime);background:var(--lime-soft)}
+.chip .x{display:inline-flex;opacity:.55}
+.chip .x:hover{opacity:1;color:var(--err)}
+.chips{display:flex;flex-wrap:wrap;align-items:center;border:1px solid var(--line);border-radius:9px;background:#0D1117;padding:7px 9px;cursor:text}
+.chips:focus-within{border-color:var(--lime)}
+.chips-in{border:none;background:transparent;flex:1;min-width:120px;padding:3px 4px}
+.chips-in:focus{border:none}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-weight:500}
+.tbl td{padding:13px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tblwrap{overflow-x:auto}
+.st{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:6px;border:1px solid;display:inline-block}
+.st.sent{color:#A9B4C4;border-color:#2A3442}
+.st.viewed{color:var(--amber);border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.06)}
+.st.accepted{color:var(--ok);border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.07)}
+.st.declined{color:var(--err);border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.06)}
+.sw{position:relative;width:40px;height:22px;flex:none;display:inline-block}
+.sw input{position:absolute;opacity:0;inset:0;cursor:pointer;margin:0;z-index:2}
+.sw i{position:absolute;inset:0;background:#1E2734;border:1px solid var(--line2);border-radius:99px;transition:.2s}
+.sw i:after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#8B95A5;transition:.2s}
+.sw input:checked+i{background:var(--lime);border-color:var(--lime)}
+.sw input:checked+i:after{left:20px;background:#0B0D07}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
+.setrow:last-child{border-bottom:none}
+.setrow b{display:block;font-weight:600;font-size:14px}
+.setrow .d{font-size:12.5px;color:var(--muted)}
+.hero{padding:60px 22px 34px}
+.hero h1{font-family:var(--disp);font-weight:600;font-size:clamp(28px,4.6vw,50px);line-height:1.16;margin:16px 0 18px;max-width:840px}
+.hero h1 em{font-style:normal;color:var(--lime)}
+.hero .lead{color:var(--muted);max-width:620px;font-size:16.5px}
+.hero-mono{margin-top:20px;font-size:12px;color:var(--dim);letter-spacing:.04em}
+.hero-grid{display:grid;grid-template-columns:1.5fr .9fr;gap:26px;align-items:end}
+.specbox{border:1px solid var(--line);border-radius:14px;padding:18px 20px;background:var(--panel)}
+.specbox .t{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--muted);margin-bottom:10px}
+.specbox li{list-style:none;display:flex;gap:10px;padding:6px 0;font-family:var(--mono);font-size:12.5px;border-top:1px dashed var(--line)}
+.specbox li:first-of-type{border-top:none}
+.specbox li b{color:var(--lime);font-weight:500;min-width:34px}
+.roles{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;padding-bottom:14px}
+.role{border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:26px;transition:.2s}
+.role:hover{transform:translateY(-3px);border-color:var(--line2)}
+.role-a{border-top:3px solid var(--lime)}
+.role-tag{font-size:10.5px;letter-spacing:.16em;color:var(--dim);text-transform:uppercase;margin-bottom:12px}
+.role h2{font-family:var(--disp);font-weight:600;font-size:22px;margin-bottom:10px}
+.role p{color:var(--muted);font-size:14px;min-height:66px}
+.role-btns{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 14px}
+.role-list{list-style:none;font-size:12px;color:var(--dim);line-height:1.9}
+.flow{padding:30px 22px 50px}
+.step{display:grid;grid-template-columns:70px 1fr 150px;gap:16px;align-items:baseline;padding:16px 0;border-top:1px solid var(--line)}
+.step:last-child{border-bottom:1px solid var(--line)}
+.step .n{font-family:var(--mono);font-size:22px;color:var(--lime);font-weight:500}
+.step .t{font-size:15.5px;font-weight:500}
+.step .ref{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:right}
+.foot{border-top:1px solid var(--line);margin-top:20px;padding:26px 22px 110px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center;color:var(--dim);font-size:12.5px}
+.auth{max-width:520px;margin:0 auto}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:14px 0 20px}
+.seg button{padding:9px 20px;font-weight:600;font-size:13.5px;color:var(--muted)}
+.seg button.on{background:var(--lime);color:#0B0D07}
+.rolerow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rolem{border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;transition:.15s;background:var(--panel)}
+.rolem.on{border-color:var(--lime);background:var(--lime-soft)}
+.rolem b{display:block;margin-bottom:3px}
+.rolem span{font-size:12px;color:var(--muted)}
+.codebox{display:flex;align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap}
+.bigcode{font-family:var(--mono);font-size:26px;letter-spacing:.35em;color:var(--lime);font-weight:700}
+.picks{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.pick{display:flex;gap:12px;align-items:center;padding:13px 15px;border:1px solid var(--line);border-radius:12px;cursor:pointer;background:var(--panel);transition:.15s;text-align:left;width:100%}
+.pick:hover{border-color:var(--line2)}
+.pick.on{border-color:var(--lime);background:var(--lime-soft)}
+.pick .pi{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.pick.on .pi{color:var(--lime)}
+.pick b{font-weight:600;font-size:14px}
+.pick .rd{width:16px;height:16px;border:1.5px solid var(--line2);border-radius:50%;flex:none;margin-left:auto;position:relative}
+.pick.on .rd{border-color:var(--lime)}
+.pick.on .rd:after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--lime)}
+.test{max-width:860px;margin:0 auto}
+.test-top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:10px;flex-wrap:wrap}
+.tmeta{font-size:11px;letter-spacing:.12em;color:var(--muted)}
+.test-right{display:flex;align-items:center;gap:14px}
+.ttime{font-size:24px;font-weight:700;color:var(--lime);min-width:84px;text-align:right}
+.ttime.low{color:var(--err)}
+.tbar{height:4px;background:#1B2330;border-radius:99px;overflow:hidden;margin-bottom:24px}
+.tbar i{display:block;height:100%;background:var(--lime);transition:width .5s linear}
+.qcard h3{font-size:19px;font-weight:600;margin-bottom:16px;line-height:1.4}
+.code{font-family:var(--mono);font-size:13px;line-height:1.6;background:#0C0F15;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px;overflow-x:auto;color:#D7E2F0;white-space:pre}
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt{display:flex;align-items:center;gap:13px;text-align:left;border:1px solid var(--line);border-radius:11px;padding:13px 15px;background:var(--panel);transition:.14s;font-size:14.5px}
+.opt:hover{border-color:var(--line2);background:var(--panel2)}
+.opt.on{border-color:var(--lime);background:var(--lime-soft)}
+.opt .ol{font-size:12px;color:var(--dim);border:1px solid var(--line2);border-radius:6px;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.opt.on .ol{border-color:var(--lime);color:var(--lime)}
+.opt .ok{margin-left:auto;color:var(--lime)}
+.qnav{display:flex;justify-content:space-between;margin-top:20px;gap:10px}
+.test-note{margin-top:16px;font-size:11.5px;color:var(--dim)}
+.stamp{display:inline-block;border:3px solid var(--lime);color:var(--lime);font-family:var(--disp);font-weight:600;font-size:clamp(20px,3.4vw,34px);padding:12px 26px;border-radius:8px;transform:rotate(-2deg);letter-spacing:.05em;animation:stamp .5s cubic-bezier(.2,1.5,.4,1);margin:14px 0 8px}
+.stamp.bad{border-color:var(--err);color:var(--err)}
+@keyframes stamp{from{transform:rotate(-2deg) scale(1.7);opacity:0}to{transform:rotate(-2deg) scale(1);opacity:1}}
+.review{border-top:1px dashed var(--line);padding:12px 0;display:flex;gap:12px;font-size:13.5px}
+.review .r-ic{flex:none;margin-top:2px}
+.review .ans{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.review .right-ans{font-family:var(--mono);font-size:12px;color:var(--lime)}
+.mrow{display:grid;grid-template-columns:170px 1fr auto;gap:8px 20px;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:var(--panel);margin-bottom:10px;transition:.15s}
+.mrow:hover{border-color:var(--line2)}
+.mrow-l{display:flex;flex-direction:column;gap:7px}
+.cid{font-family:var(--mono);font-weight:700;font-size:16px;letter-spacing:.03em}
+.catbadge{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;border:1px solid rgba(201,242,75,.4);color:var(--lime);background:var(--lime-soft);border-radius:6px;padding:3px 8px;width:fit-content}
+.mrow-r{display:flex;flex-direction:column;gap:8px;justify-content:center}
+.why{grid-column:1/-1;border-top:1px dashed var(--line);padding-top:10px;color:var(--muted);font-size:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.why .ic{color:var(--lime)}
+.scoreline{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.brow{display:grid;grid-template-columns:120px 120px 1fr auto;gap:14px;align-items:center;padding:13px 16px;border-bottom:1px solid var(--line)}
+.brow:last-child{border-bottom:none}
+.brow .stk{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fsp-b{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--lime)}
+.fsp-b.off{color:var(--dim)}
+.grouph{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin:22px 0 10px;display:flex;align-items:center;gap:10px}
+.grouph:after{content:'';flex:1;height:1px;background:var(--line)}
+.grouph b{color:var(--lime);font-weight:500}
+.invrow{display:grid;grid-template-columns:1fr auto auto;gap:4px 20px;align-items:center;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:var(--panel);margin-bottom:10px;cursor:pointer;transition:.15s}
+.invrow:hover{border-color:var(--lime)}
+.invrow .co{font-weight:700;font-size:15px}
+.invrow .vc{font-size:13px;color:var(--muted)}
+.invrow .sal{font-family:var(--mono);font-weight:700;color:var(--lime);font-size:14px;white-space:nowrap}
+.invrow .meta{display:flex;gap:12px;align-items:center}
+.track{display:flex;align-items:center;margin:18px 0 22px}
+.track .tp{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:90px}
+.track .dot2{width:12px;height:12px;border-radius:50%;border:2px solid var(--line2);background:var(--panel)}
+.track .tp.done .dot2{background:var(--lime);border-color:var(--lime)}
+.track .tp.acc .dot2{background:var(--ok);border-color:var(--ok)}
+.track .tp.dec .dot2{background:var(--err);border-color:var(--err)}
+.track .tl{flex:1;height:2px;background:var(--line);min-width:30px}
+.track .tl.done{background:var(--lime)}
+.track .tp span{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.bigsal{font-family:var(--mono);font-weight:700;font-size:clamp(20px,3vw,28px);color:var(--lime)}
+.candhead{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px}
+.candhead .cid{font-size:clamp(30px,4.5vw,44px)}
+.candtags{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px}
+.split{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}
+.sec h4{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-weight:500}
+.hiddenline{display:flex;align-items:center;gap:8px;color:var(--dim);font-size:13.5px;font-style:italic}
+.fspitem{display:flex;gap:12px;align-items:baseline;padding:10px 0;border-top:1px dashed var(--line);font-size:14px}
+.fspitem:first-of-type{border-top:none}
+.fspitem .pl{font-family:var(--mono);color:var(--lime);font-size:12px;min-width:70px}
+#modal{position:fixed;inset:0;z-index:90;display:none}
+#modal.open{display:flex;align-items:center;justify-content:center;background:rgba(5,7,10,.7);backdrop-filter:blur(3px)}
+.mbox{background:var(--panel);border:1px solid var(--line2);border-radius:16px;padding:26px;width:min(430px,92vw);animation:vin .25s}
+.mbox h3{font-family:var(--disp);font-weight:600;font-size:17px;margin-bottom:6px}
+#toasts{position:fixed;right:20px;bottom:20px;z-index:120;display:flex;flex-direction:column;gap:8px;max-width:360px}
+.toast{background:#141A23;border:1px solid var(--line2);border-left:3px solid var(--lime);padding:12px 16px;border-radius:10px;font-size:13.5px;animation:tin .25s;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.toast.err{border-left-color:var(--err)}
+@keyframes tin{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+#screensBtn{position:fixed;right:20px;bottom:20px;z-index:110;display:inline-flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--lime);color:var(--lime);border-radius:99px;padding:11px 18px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;font-weight:700;box-shadow:0 10px 34px rgba(0,0,0,.5)}
+#screensBtn:hover{background:var(--lime);color:#0B0D07}
+#screensPanel{position:fixed;right:20px;bottom:72px;z-index:110;width:360px;max-width:calc(100vw - 40px);max-height:min(640px,75vh);overflow-y:auto;background:var(--panel);border:1px solid var(--line2);border-radius:16px;padding:16px;display:none;box-shadow:0 18px 60px rgba(0,0,0,.55)}
+#screensPanel.open{display:block;animation:vin .2s}
+.sp-h{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.sp-it{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;width:100%;text-align:left;padding:9px 10px;border-radius:9px;font-size:13px;color:var(--text)}
+.sp-it:hover{background:var(--panel2)}
+.sp-it .n{font-family:var(--mono);color:var(--dim);font-size:11px}
+.sp-it .hot{width:7px;height:7px;border-radius:50%;background:var(--lime)}
+.sp-it .rl{font-family:var(--mono);font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:5px;padding:2px 6px;white-space:nowrap}
+.sp-f{display:flex;gap:8px;margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+@media (max-width:920px){
+  .hero-grid,.roles,.split,.grid2{grid-template-columns:1fr}
+  .mrow{grid-template-columns:1fr}
+  .mrow-r{flex-direction:row}
+  .brow{grid-template-columns:100px 70px 1fr}
+  .brow .acts{grid-column:1/-1}
+  .step{grid-template-columns:52px 1fr}.step .ref{display:none}
+  .subnav-k{display:none}
+}
+@media (max-width:640px){
+  .logo-sub{display:none}
+  .invrow{grid-template-columns:1fr}
+  .rolerow{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal"></div>
+<div id="toasts"></div>
+<button id="screensBtn" data-act="screens-toggle">ЭКРАНЫ · 16</button>
+<div id="screensPanel"></div>
+
+<script>
+'use strict';
+/* ================= утилиты ================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>Number(n||0).toLocaleString('ru-RU');
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const DAY=864e5;
+const daysAgo=n=>Date.now()-n*DAY;
+const fdate=t=>new Date(t).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
+const fdsh=t=>new Date(t).toLocaleDateString('ru-RU');
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const setPath=(o,p,v)=>{const ks=p.split('.'),last=ks.pop();ks.reduce((a,k)=>a[k]=a[k]||{},o)[last]=v;};
+const getPath=(o,p)=>p.split('.').reduce((a,k)=>a&&a[k],o);
+const fmtLeft=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');};
+
+/* ================= иконки ================= */
+const I={
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/>',
+ brief:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>',
+ mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+ shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>',
+ check:'<path d="m4 12 5 5L20 6"/>',
+ x:'<path d="M6 6l12 12M18 6 6 18"/>',
+ arr:'<path d="M5 12h14m-6-6 6 6-6 6"/>',
+ back:'<path d="M19 12H5m6 6-6-6 6-6"/>',
+ lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+ link:'<path d="M10 14a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 10a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/>',
+ medal:'<circle cx="12" cy="14" r="5"/><path d="m9 10-3-7h4l2 4 2-4h4l-3 7"/>',
+ send:'<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/>',
+ filter:'<path d="M3 5h18l-7 8v6l-4-2v-4z"/>',
+ search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+ file:'<path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>',
+ refresh:'<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>',
+ out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>'
+};
+const ic=(n,s=17,cls='')=>`<svg class="ic ${cls}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${I[n]||''}</svg>`;
+const LOGO=`<svg width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6H9a2 2 0 0 0-2 2v5l-3 3 3 3v5a2 2 0 0 0 2 2h3"/><path d="M20 6h3a2 2 0 0 1 2 2v5l3 3-3 3v5a2 2 0 0 1-2 2h-3"/><circle cx="16" cy="16" r="1.6" fill="currentColor" stroke="none"/></svg>`;
+
+/* ================= справочники ================= */
+const SPECS=['Backend','Frontend','Mobile','Data & Analytics','DevOps','QA','Information Security','Game Dev'];
+const GRADES=['Junior','Middle','Senior'];
+const INDUSTRIES=['Финтех','E-commerce','Госсектор','Медтех и биотех','Промышленность','Телеком','Геймдев','Логистика'];
+const STATUS_RU={sent:'Отправлено',viewed:'Просмотрено',accepted:'Принято',declined:'Отклонено'};
+const gradIdx=g=>GRADES.indexOf(g);
+
+/* ============ пул заданий (п.6.2: разные варианты у разных кандидатов) ============ */
+const POOLS={
+Backend:{
+ Junior:[
+  {q:'Какой HTTP-статус-код корректен для успешного создания ресурса через POST?',opts:['201 Created','200 OK','204 No Content','302 Found'],a:0},
+  {q:'Что такое индекс в реляционной базе данных?',opts:['Структура данных, ускоряющая поиск по столбцу','Копия таблицы для резервного копирования','Ограничение внешнего ключа','Механизм репликации'],a:0},
+  {q:'Какое свойство ACID означает, что транзакция выполняется целиком либо никак?',opts:['Атомарность','Согласованность','Изолированность','Долговечность'],a:0},
+  {q:'Что делает SQL-оператор JOIN?',opts:['Соединяет строки двух таблиц по условию','Удаляет дубликаты строк','Создаёт индекс','Меняет владельца таблицы'],a:0},
+  {q:'Какой принцип REST означает отсутствие состояния между запросами?',opts:['Stateless','Cacheable','Layered System','Uniform Interface'],a:0},
+  {q:'Зачем нужен HTTP-заголовок Content-Type?',opts:['Указать формат тела запроса или ответа','Для аутентификации клиента','Для сжатия трафика','Чтобы задать куки'],a:0}],
+ Middle:[
+  {q:'В чём суть проблемы «N+1 запросов»?',opts:['Один запрос на список и ещё N запросов в цикле для связанных данных','N параллельных соединений к базе','Ошибки сериализации при транзакциях','Дублирование одинаковых индексов'],a:0},
+  {q:'Потребитель Kafka покинул группу. Что произойдёт с его партициями?',opts:['Перераспределятся между оставшимися консьюмерами (ребалансировка)','Данные партиций будут потеряны','Партиции заблокируются навсегда','Топик будет удалён'],a:0},
+  {q:'Оптимистичная блокировка — это…',opts:['Проверка версии записи при обновлении без предварительного захвата','Захват блокировки до чтения записи','Полный запрет конкурентных сессий','Очередь ожидания на уровне приложения'],a:0},
+  {q:'Индекс B-tree в PostgreSQL особенно эффективен для…',opts:['Диапазонных запросов и сортировки','Только точного совпадения по хэшу','Полнотекстового поиска','Хранения JSONB'],a:0},
+  {q:'Уровень изоляции SERIALIZABLE гарантирует…',opts:['Результат неотличим от последовательного выполнения транзакций','Только чтение без блокировок','Отсутствие взаимных блокировок','Автоматический шардинг таблицы'],a:0},
+  {q:'Что напечатает этот код на Go?',code:'func main() {\n  ch := make(chan int, 1)\n  ch <- 1\n  close(ch)\n  v, ok := <-ch\n  fmt.Println(v, ok)\n}',opts:['1 true','1 false','0 false','Программа заблокируется (deadlock)'],a:0}],
+ Senior:[
+  {q:'Паттерн Saga применяют для…',opts:['Управления распределёнными транзакциями через локальные с компенсациями','Кеширования ответов API','Маршрутизации трафика между ЦОД','Версионирования публичного API'],a:0},
+  {q:'Consistent hashing решает проблему…',opts:['Перемещения почти всех ключей при изменении числа узлов','Коллизий в обычной хэш-таблице','Рассинхронизации схемы БД','Медленного разрешения DNS'],a:0},
+  {q:'Согласно CAP-теореме, во время сетевого разделения система выбирает между…',opts:['Согласованностью и доступностью','Скоростью и стоимостью','Процессором и памятью','Безопасностью и удобством'],a:0},
+  {q:'Зачем в API нужен Idempotency-Key?',opts:['Чтобы повторные запросы не создавали дублирующего эффекта','Для шифрования полезной нагрузки','Для ограничения частоты запросов','Для распределённой трассировки'],a:0},
+  {q:'Backpressure в потоковых системах — это…',opts:['Механизм согласования скорости производителя и потребителя','Очередь DNS-запросов','Ретраи на стороне клиента','Сжатие служебного трафика'],a:0},
+  {q:'Конфликты в CRDT разрешаются так, что…',opts:['Реплики математически сходятся без координации','Требуется глобальная блокировка','Сервер случайно выбирает победителя','Всегда нужно ручное слияние'],a:0}]
+},
+Frontend:{
+ Junior:[
+  {q:'Чем const отличается от let в JavaScript?',opts:['const запрещает переприсваивание','const создаёт глобальную переменную','let работает только внутри модулей','Ничем, это синонимы'],a:0},
+  {q:'Делегирование событий — это…',opts:['Один обработчик на родителе, цель определяется через event.target','Обработчик на каждом элементе отдельно','Обработка событий в Web Worker','Хранение обработчиков в глобальной переменной'],a:0},
+  {q:'Какой селектор имеет наибольшую специфичность в CSS?',opts:['#id','.class','div','*'],a:0},
+  {q:'Политика CORS в браузере регулирует…',opts:['Кросс-доменные запросы со страницы','Размер JS-бандла','Порядок подключения скриптов','Кеширование изображений'],a:0},
+  {q:'Что делает Array.prototype.map?',opts:['Возвращает новый массив той же длины с преобразованными элементами','Изменяет исходный массив на месте','Отфильтровывает элементы по условию','Схлопывает массив в одно значение'],a:0},
+  {q:'Что выведет этот код?',code:'console.log(typeof null);',opts:['"object"','"null"','"undefined"','Будет выброшен TypeError'],a:0}],
+ Middle:[
+  {q:'Микротаски (promise.then) выполняются…',opts:['После текущего синхронного кода, но до макротасок','После всех setTimeout','Параллельно с синхронным кодом','Только в конце загрузки страницы'],a:0},
+  {q:'Зачем в списках React нужны ключи (key)?',opts:['Чтобы при reconcile корректно сопоставлять элементы','Для применения CSS-стилей','Это устаревшее требование','Для автоматической сортировки'],a:0},
+  {q:'Замыкание — это…',opts:['Функция, сохраняющая доступ к области видимости места своего создания','Приватный метод класса','Синтаксический сахар над async/await','Синоним рекурсии'],a:0},
+  {q:'Что измеряет CLS в Core Web Vitals?',opts:['Визуальную стабильность страницы (сдвиги макета)','Время до интерактивности','Время до первого байта','Общий вес страницы'],a:0},
+  {q:'Preflight-запрос OPTIONS отправляется, когда…',opts:['Запрос «непростой»: нестандартные заголовки или методы','Выполняется каждый GET-запрос','Используется только HTTP/1.0','В браузере отключены куки'],a:0},
+  {q:'Что выведет этот код?',code:'setTimeout(()=>console.log("A"),0);\nPromise.resolve().then(()=>console.log("B"));\nconsole.log("C");',opts:['C B A','A B C','C A B','B C A'],a:0}],
+ Senior:[
+  {q:'Hydration в SSR — это…',opts:['«Оживление» серверного HTML: обработчики и восстановление состояния','Компиляция шаблонов на сервере','Прогрессивная загрузка изображений','Кеширование ответов на CDN'],a:0},
+  {q:'Типичная причина утечек памяти в SPA…',opts:['Незакрытые подписки, таймеры и ссылки на узлы, снятые с DOM','Использование CSS Grid','Избыточные полифиллы','Протокол HTTP/2'],a:0},
+  {q:'Virtual DOM — это…',opts:['Компромисс: декларативность ценой дополнительных diff-вычислений','Требование HTML-спецификации','Всегда быстрее прямой работы с DOM','Эксклюзивная технология React'],a:0},
+  {q:'Code splitting нужен, чтобы…',opts:['Уменьшить начальный бандл, загружая чанки по требованию','Ускорить рендеринг на сервере','Объединить все CSS в один файл','Обойти ограничения CORS'],a:0},
+  {q:'Динамический import() в ESM…',opts:['Возвращает Promise с объектом модуля','Подключает модуль синхронно','Работает только в Node.js','Запрещён в браузерах'],a:0},
+  {q:'Главный риск SSR для интерактивных страниц…',opts:['Расхождение при гидратации (hydration mismatch)','Слишком длинные CSS-селекторы','Отсутствие мета-тегов','Большой размер favicon'],a:0}]
+}};
+const COMMON_POOL=[
+ {q:'Сложность бинарного поиска в отсортированном массиве…',opts:['O(log n)','O(n)','O(n log n)','O(1)'],a:0},
+ {q:'Чем git rebase отличается от merge?',opts:['Rebase переносит коммиты на новую базу, выравнивая историю','Rebase удаляет удалённую ветку','Merge переписывает историю коммитов','Это синонимы одной операции'],a:0},
+ {q:'Ключевое отличие HTTP/2 от HTTP/1.1…',opts:['Мультиплексирование нескольких потоков в одном соединении','Полное отсутствие заголовков','Исключительно текстовый формат','Отказ от TLS'],a:0},
+ {q:'Назначение CI-пайплайна…',opts:['Автоматически собирать и проверять каждое изменение','Ручное развёртывание на прод','Хранение логов приложений','Резервное копирование базы'],a:0},
+ {q:'Первая нормальная форма требует…',opts:['Атомарности значений в полях','Обязательных внешних ключей','Полного отсутствия NULL','Шардирования таблицы'],a:0},
+ {q:'Что делает git stash?',opts:['Временно сохраняет незакоммиченные изменения и очищает рабочую директорию','Удаляет последний коммит','Создаёт аннотированный тег','Клонирует репозиторий заново'],a:0}];
+
+/* ================= состояние ================= */
+const KEY='fsp_talent_demo_v1';
+function makeDemoUser(){return{
+ name:'Алексей Смирнов',email:'alexey.smirnov@demo.ru',tg:'@a_smirnov',phone:'+7 900 000-00-00',
+ industry:'Финтех',spec:'Backend',grade:'Middle',roles:'Backend-разработчик, Team Lead',
+ stack:['Go','PostgreSQL','Redis','Docker','Kafka'],exp:'3–6 лет',soft:['Командная работа','Наставничество'],
+ about:'Backend-разработчик платёжной платформы: highload-сервисы на Go, PostgreSQL, Kafka. Люблю чистую архитектуру и честные оценки сроков.',
+ surveyDone:true,published:true,privacy:{stack:true,exp:true,soft:true},consentProcessing:true,consentPublish:true,
+ fsp:null,anonId:'K-1001',
+ category:{spec:'Backend',score:87,date:daysAgo(9)},
+ history:[{date:daysAgo(9),spec:'Backend',level:'Middle',score:87,passed:true}],
+ lastGradeChange:null};}
+function makeDemoEmployer(){return{
+ email:'hr@technovektor.ru',
+ company:{name:'ТехноВектор',about:'Разрабатываем платформу управления логистикой: маршрутизация, трекинг, интеграции с перевозчиками.',industry:'Логистика',contactName:'Ольга Крамер',email:'hr@technovektor.ru',tg:'@technovektor_hr',phone:'+7 495 000-00-00',channel:'Telegram'},
+ demand:{spec:'Backend',grade:'Middle',stack:['Go','PostgreSQL','Kafka','Docker','Redis'],team:'Команда платформы логистики: 12 инженеров, микросервисы на Go, Kafka, Kubernetes. Highload, много интересной серверной работы.',done:true}};}
+function defaultState(){return{
+ v:1,role:null,user:null,employer:null,pending:null,test:null,lastResult:null,
+ draftSurvey:{industry:null,spec:null,grade:null},invDraft:null,bankF:{spec:'',grade:'',stack:'',fsp:false},authTab:'login',regRole:'candidate',regEmail:'',
+ seqInv:1050,
+ candidates:[
+  {id:'K-1024',spec:'Backend',grade:'Middle',score:87,testedAt:daysAgo(9),stack:['Go','PostgreSQL','Kafka','Docker','gRPC'],exp:'3–6 лет',soft:['Командная работа','Менторство'],privacy:{stack:true,exp:true,soft:true},contacts:{email:'k1024@demo.ru',tg:'@k1024'},fsp:{id:'FSP-0412',items:[{place:'Золото',name:'Национальный чемпионат «Big Data»',year:2024},{place:'Бронза',name:'Algorithms Cup',year:2023}]}},
+  {id:'K-1090',spec:'Backend',grade:'Senior',score:93,testedAt:daysAgo(14),stack:['Java','Kafka','Kubernetes','PostgreSQL','gRPC'],exp:'6+ лет',soft:['Архитектура','Переговоры'],privacy:{stack:true,exp:true,soft:true},contacts:{email:'k1090@demo.ru',tg:'@k1090'},fsp:{id:'FSP-0337',items:[{place:'Золото',name:'Algorithms Cup',year:2024}]}},
+  {id:'K-1007',spec:'Backend',grade:'Junior',score:72,testedAt:daysAgo(3),stack:['Python','PostgreSQL','Docker'],exp:'менее года',soft:['Обучаемость'],privacy:{stack:true,exp:true,soft:true},contacts:{email:'k1007@demo.ru',tg:'@k1007'},fsp:null},
+  {id:'K-1077',spec:'Frontend',grade:'Junior',score:71,testedAt:daysAgo(5),stack:['TypeScript','React','Vite'],exp:'1–3 года',soft:['Внимание к деталям'],privacy:{stack:true,exp:true,soft:false},contacts:{email:'k1077@demo.ru',tg:'@k1077'},fsp:null},
+  {id:'K-1121',spec:'Frontend',grade:'Middle',score:64,testedAt:daysAgo(20),stack:['React','TypeScript','Next.js','Redux'],exp:'3–6 лет',soft:['Дизайн-чутьё'],privacy:{stack:true,exp:false,soft:true},contacts:{email:'k1121@demo.ru',tg:'@k1121'},fsp:null},
+  {id:'K-1113',spec:'Data & Analytics',grade:'Middle',score:78,testedAt:daysAgo(11),stack:['Python','SQL','Airflow','ClickHouse'],exp:'3–6 лет',soft:['Аналитическое мышление'],privacy:{stack:true,exp:true,soft:true},contacts:{email:'k1113@demo.ru',tg:'@k1113'},fsp:{id:'FSP-0521',items:[{place:'Серебро',name:'Data Marathon',year:2024}]}},
+  {id:'K-1150',spec:'DevOps',grade:'Senior',score:81,testedAt:daysAgo(30),stack:['Kubernetes','Terraform','AWS','Go'],exp:'6+ лет',soft:['Ответственность'],privacy:{stack:true,exp:true,soft:true},contacts:{email:'k1150@demo.ru',tg:'@k1150'},fsp:null},
+  {id:'K-1188',spec:'QA',grade:'Junior',score:66,testedAt:daysAgo(7),stack:['Python','Selenium','Postman'],exp:'1–3 года',soft:['Дотошность'],privacy:{stack:true,exp:true,soft:true},contacts:{email:'k1188@demo.ru',tg:'@k1188'},fsp:null}],
+ invites:[
+  {id:'IN-1041',employer:'bot',companyName:'SkyLogic Systems',cand:'me',salaryFrom:160000,salaryTo:220000,vacancy:'Backend-разработчик (Go)',channel:'Telegram',message:'Здравствуйте! Увидели ваш профиль в категории Backend, Middle. Ищем Go-разработчика в платёжную команду: highload, Kafka, своя платформа. Гибрид, сильная команда, реальные продакшен-задачи.',ich:{email:'hr@skylogic.ru',tg:'@skylogic_hr'},date:daysAgo(1),status:'sent'},
+  {id:'IN-1038',employer:'bot',companyName:'Финтех Стрим',cand:'me',salaryFrom:180000,salaryTo:260000,vacancy:'',channel:'Email',message:'Приглашаем к диалогу без привязки к конкретной вакансии: строим новую антифрод-платформу и ищем сильных Backend-инженеров уровня Middle. Готовы обсудить формат под вас.',ich:{email:'jobs@fintechstream.ru',tg:'@fintech_jobs'},date:daysAgo(3),status:'viewed'},
+  {id:'IN-1031',employer:'me',companyName:'ТехноВектор',cand:'K-1090',salaryFrom:250000,salaryTo:340000,vacancy:'Senior Go-разработчик',channel:'Telegram',message:'Приглашаем на позицию Senior Go-разработчика в команду маршрутизации. Java/Kafka бэкграунд — плюс.',ich:{email:'hr@technovektor.ru',tg:'@technovektor_hr'},date:daysAgo(2),status:'viewed'},
+  {id:'IN-1029',employer:'me',companyName:'ТехноВектор',cand:'K-1113',salaryFrom:200000,salaryTo:280000,vacancy:'Data Engineer',channel:'Email',message:'Хотим пригласить вас в команду данных: пайплайны на Airflow, ClickHouse, огромный объём телематики.',ich:{email:'hr@technovektor.ru',tg:'@technovektor_hr'},date:daysAgo(6),status:'accepted'},
+  {id:'IN-1027',employer:'me',companyName:'ТехноВектор',cand:'K-1150',salaryFrom:230000,salaryTo:300000,vacancy:'',channel:'Email',message:'Ищем SRE в инфраструктурную команду. Открыты к диалогу.',ich:{email:'hr@technovektor.ru',tg:'@technovektor_hr'},date:daysAgo(7),status:'declined'}]};}
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))||defaultState();}catch(e){S=defaultState();}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
+const resetDemo=()=>{localStorage.removeItem(KEY);location.hash='';location.reload();};
+
+/* ================= роутер ================= */
+let route=parseHash(),lastKey='';
+function parseHash(){const p=(location.hash||'#/home').slice(2).split('/');return{name:p[0]||'home',id:p[1]?decodeURIComponent(p[1]):null};}
+function nav(name,id){const h='#/'+name+(id?'/'+encodeURIComponent(id):'');if(location.hash===h){render();}else{location.hash=h;}}
+window.addEventListener('hashchange',()=>{route=parseHash();render();});
+
+/* ================= производные ================= */
+const userAsCand=()=>{
+ const u=S.user;if(!u||!u.category||!u.published)return null;
+ return{id:u.anonId,spec:u.category.spec,grade:u.grade,score:u.category.score,testedAt:u.category.date,
+  stack:u.stack,exp:u.exp,soft:u.soft,privacy:u.privacy,contacts:{email:u.email,tg:u.tg},fsp:u.fsp,isUser:true};};
+const allCands=()=>{const uc=userAsCand();return uc?S.candidates.concat([uc]):S.candidates.slice();};
+const findCand=id=>S.candidates.find(c=>c.id===id)||(S.user&&id===S.user.anonId?userAsCand():null);
+const invite=id=>S.invites.find(i=>i.id===id);
+const inbox=()=>S.invites.filter(i=>i.cand==='me');
+const sent=()=>S.invites.filter(i=>i.employer==='me');
+const newInvitesCount=()=>inbox().filter(i=>i.status==='sent'||i.status==='viewed').length;
+const canChange=()=>!S.user.lastGradeChange||(Date.now()-S.user.lastGradeChange>=90*DAY);
+const catOf=c=>`${c.spec}, ${c.grade}`;
+
+/* ================= UI-хелперы ================= */
+const lbl=t=>`<label class="lbl">${t}</label>`;
+const field=(t,inner)=>`<div class="field">${lbl(t)}${inner}</div>`;
+const barHtml=(v,w=120)=>`<span class="bar" style="width:${w}px"><i style="width:${clamp(v,0,100)}%"></i></span>`;
+const stBadge=st=>`<span class="st ${st}">${STATUS_RU[st]}</span>`;
+const fspBadge=c=>c.fsp?`<span class="fsp-b">${ic('medal',13)} ФСП</span>`:`<span class="fsp-b off">без ФСП</span>`;
+const chipsField=(path,chips,ph)=>`<div class="chips" data-chips="${path}">${chips.map(c=>chipHtml(c)).join('')}<input class="chips-in" placeholder="${esc(ph)}"></div>`;
+const chipHtml=t=>`<span class="chip"><span class="chip-t">${esc(t)}</span><span class="x" data-act="chip-del" title="Убрать">${ic('x',11)}</span></span>`;
+const matchInfo=(c,demand)=>{
+ const req=demand.stack||[];const have=(c.privacy&&!c.privacy.stack)?[]:(c.stack||[]);
+ const hit=have.filter(s=>req.some(r=>r.toLowerCase()===s.toLowerCase()));
+ return{hit,req};};
+const whyLine=(c,demand)=>{
+ const mi=matchInfo(c,demand);
+ const parts=[`стек совпал ${mi.hit.length} из ${mi.req.length}`,`тест ${c.score}%`];
+ parts.push(c.fsp?`ФСП: ${c.fsp.items[0].place.toLowerCase()} «${c.fsp.items[0].name}»`:'ФСП не привязан');
+ return `<div class="why">${ic('search',13)} Почему в подборке: ${parts.map(p=>`<b style="font-weight:500;color:var(--text)">${esc(p)}</b>`).join('<span class="dim">·</span>')}</div>`;};
+function needLogin(role){
+ const isC=role==='candidate';
+ return `<div class="view container"><div class="panel auth" style="text-align:center;padding:40px">
+  <div class="kicker">${isC?'Кабинет кандидата':'Кабинет работодателя'}</div>
+  <div class="h2" style="margin-top:10px">Требуется вход</div>
+  <p class="dim" style="margin:8px 0 20px">Это экран ${isC?'кабинета кандидата':'кабинета работодателя'}. Войдите как демо-пользователь или зарегистрируйтесь.</p>
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+   <button class="btn primary" data-act="demo-login" data-role="${role}">Войти как демо-${isC?'кандидат':'работодатель'}</button>
+   <button class="btn ghost" data-act="nav" data-to="register">Регистрация</button>
+  </div></div></div>`;}
+function subnav(tabs,kicker,extra){
+ return `<div class="subnav"><div class="subnav-in">
+  <span class="subnav-k">${kicker}</span>
+  <nav class="tabs">${tabs.map(([r,t,cnt])=>`<a class="tab ${route.name===r||(r==='cand-test'&&['cand-test','cand-result','cand-survey'].includes(route.name))?'on':''}" href="#/${r}">${t}${cnt?`<span class="cnt">${cnt}</span>`:''}</a>`).join('')}</nav>
+  ${extra||''}</div></div>`;}
+function invTrack(st){
+ const node=(label,state)=>`<div class="tp ${state}"><span class="dot2"></span><span>${label}</span></div>`;
+ const line=on=>`<div class="tl ${on?'done':''}"></div>`;
+ let h=node('Отправлено','done')+line(['viewed','accepted','declined'].includes(st));
+ if(st==='viewed')h+=node('Просмотрено','done')+line(false)+node('Ожидание','');
+ else if(st==='accepted')h+=node('Просмотрено','done')+line(true)+node('Принято','acc');
+ else if(st==='declined')h+=node('Просмотрено','done')+line(true)+node('Отклонено','dec');
+ else h+=node('Просмотрено','')+line(false)+node('Ожидание','');
+ return `<div class="track">${h}</div>`;}
+function toast(msg,type){const d=document.createElement('div');d.className='toast'+(type==='err'?' err':'');d.textContent=msg;$('#toasts').appendChild(d);setTimeout(()=>d.remove(),4200);}
+function showModal(html){$('#modal').innerHTML=`<div class="mbox">${html}</div>`;$('#modal').classList.add('open');}
+function closeModal(){$('#modal').classList.remove('open');$('#modal').innerHTML='';}
+
+/* ================= ГЛАВНАЯ ================= */
+function vHome(){
+ return `
+ <section class="hero container">
+  <div class="hero-grid">
+   <div>
+    <div class="kicker">Демо-прототип · Платформа-агрегатор ИТ-вакансий · Федерация спортивного программирования</div>
+    <h1>Работодатель находит сам.<br><em>Уровень подтверждает тест.</em></h1>
+    <p class="lead">Категория кандидата присваивается только по результату тестирования, а достижения ФСП усиливают его позицию в подборке. В каждом приглашении — честная зарплатная вилка «от–до», контакты раскрываются только после «принято».</p>
+    <div class="hero-mono mono">16 ЭКРАНОВ ПО ТЗ · ПУЛ ЗАДАНИЙ ВМЕСТО ФИКСИРОВАННОГО ТЕСТА · ОБЪЯСНИМАЯ ПОДБОРКА · ВИЛКА ЗП ОБЯЗАТЕЛЬНА</div>
+   </div>
+   <aside class="specbox">
+    <div class="t">Что внутри прототипа</div>
+    <li><b>01</b>регистрация и подтверждение email</li>
+    <li><b>02</b>опрос: отрасль · специализация · грейд</li>
+    <li><b>03</b>тест из пула → категория «Backend, Middle»</li>
+    <li><b>04</b>подборка и банк кандидатов по категориям</li>
+    <li><b>05</b>приглашение с вилкой «от–до» в ₽</li>
+    <li><b>06</b>привязка ФСП ID (имитация Keycloak)</li>
+   </aside>
+  </div>
+ </section>
+ <section class="container roles">
+  <article class="role role-a">
+   <div class="role-tag mono">Кабинет 01 — экраны 3–9</div>
+   <h2>Я кандидат</h2>
+   <p>Пройдите опрос, подтвердите грейд тестом и получайте приглашения с зарплатной вилкой. Работодатель видит анонимный ID и подтверждённую категорию — не резюме.</p>
+   <div class="role-btns">
+    <button class="btn primary" data-act="demo-login" data-role="candidate">${ic('user',16)} Войти как демо-кандидат</button>
+    <button class="btn ghost" data-act="register-as" data-role="candidate">Регистрация с нуля</button>
+   </div>
+   <ul class="role-list mono"><li>— тест из пула: у разных кандидатов разные варианты</li><li>— категория вида «Backend, Middle» + история попыток</li><li>— приватность: что видно работодателю, решаете вы</li></ul>
+  </article>
+  <article class="role">
+   <div class="role-tag mono">Кабинет 02 — экраны 10–16</div>
+   <h2>Я работодатель</h2>
+   <p>Опишите потребность — платформа соберёт подборку по категориям и объяснит каждое совпадение. Приглашайте с обязательной вилкой «от–до».</p>
+   <div class="role-btns">
+    <button class="btn primary" data-act="demo-login" data-role="employer">${ic('brief',16)} Войти как демо-работодатель</button>
+    <button class="btn ghost" data-act="register-as" data-role="employer">Регистрация с нуля</button>
+   </div>
+   <ul class="role-list mono"><li>— выдача по категориям, а не по тексту резюме</li><li>— контакты кандидата — только после «принято»</li><li>— вакансия в приглашении не обязательна</li></ul>
+  </article>
+ </section>
+ <section class="container flow">
+  <div class="kicker" style="margin-bottom:14px">Сквозной сценарий демонстрации (п. 3.3 ТЗ)</div>
+  ${[['01','Кандидат регистрируется по email и подтверждает адрес кодом','2.2 · п.4'],
+     ['02','Опрос: отрасль, специализация из справочника, предполагаемый грейд','п.2'],
+     ['03','Тест из пула заданий с таймером → автоматическая категория','п.6.2'],
+     ['04','Работодатель описывает потребность → подборка по категориям с объяснением','п.6.1'],
+     ['05','Приглашение с вилкой «от–до» в ₽ — кандидат видит условия сразу','2.2 · п.1'],
+     ['06','Кандидат принял — контакты открыты обеим сторонам; отклонил — статус «отклонено»','2.2 · п.3']]
+   .map(([n,t,r])=>`<div class="step"><span class="n">${n}</span><span class="t">${t}</span><span class="ref">ТЗ: ${r}</span></div>`).join('')}
+ </section>
+ <footer class="container foot">
+  <span>Тестовый прототип по ТЗ · данные синтетические · механика тестирования и подбора — ключевые критерии оценки (п.6)</span>
+  <button class="btn sm ghost" data-act="screens-toggle">Все 16 экранов</button>
+ </footer>`;}
+
+/* ================= 1–2: регистрация / подтверждение ================= */
+function vRegister(){
+ const tab=S.authTab;
+ return `<div class="view container"><div class="auth">
+  <div class="kicker">Шаг 1 из 2 · ${tab==='login'?'Вход':'Регистрация'}</div>
+  <div class="h2">${tab==='login'?'Вход в демо':'Создание аккаунта'}</div>
+  <div class="seg">
+   <button type="button" class="${tab==='login'?'on':''}" data-act="auth-tab" data-t="login">Вход</button>
+   <button type="button" class="${tab==='reg'?'on':''}" data-act="auth-tab" data-t="reg">Регистрация</button>
+  </div>
+  ${tab==='login'?`
+  <form class="panel" data-form="login">
+   ${field('Email',`<input type="email" name="email" required placeholder="you@company.ru">`)}
+   ${field('Пароль',`<input type="password" name="pass" required placeholder="••••••••">`)}
+   <button class="btn primary" style="width:100%">${ic('arr',15)} Войти</button>
+   <p class="hint">Демо-режим: пароль не проверяется. Быстрый вход — кнопками ниже.</p>
+  </form>
+  <div style="display:flex;gap:10px;margin-top:12px">
+   <button class="btn ghost sm" data-act="demo-login" data-role="candidate">Демо-кандидат</button>
+   <button class="btn ghost sm" data-act="demo-login" data-role="employer">Демо-работодатель</button>
+  </div>`:`
+  <form class="panel" data-form="register" novalidate>
+   ${field('Email',`<input type="email" name="email" required placeholder="you@company.ru">`)}
+   ${field('Пароль',`<input type="password" name="pass" required minlength="6" placeholder="минимум 6 символов">`)}
+   ${field('Роль (два раздельных кабинета)',`
+    <div class="rolerow">
+     <div class="rolem ${S.regRole==='candidate'?'on':''}" data-act="reg-role" data-v="candidate"><b>${ic('user',15)} Кандидат</b><span>профиль, тесты, приглашения</span></div>
+     <div class="rolem ${S.regRole==='employer'?'on':''}" data-act="reg-role" data-v="employer"><b>${ic('brief',15)} Работодатель</b><span>компания, подборка, поиск</span></div>
+    </div>`)}
+   <div class="field" data-f="consent">
+    <label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted);cursor:pointer">
+     <input type="checkbox" name="consent" style="width:17px;height:17px;flex:none;margin-top:1px">
+     <span>Согласен(на) на обработку и публикацию персональных данных в соответствии с 152-ФЗ</span>
+    </label><div class="ferr">Без согласия регистрация невозможна (п.3.5 ТЗ)</div>
+   </div>
+   <button class="btn primary" style="width:100%">${ic('mail',15)} Зарегистрироваться</button>
+  </form>`}
+ </div></div>`;}
+function vVerify(){
+ const p=S.pending||{code:'493021',role:'candidate'};
+ return `<div class="view container"><div class="auth" style="text-align:center">
+  <div class="kicker">Шаг 2 из 2</div>
+  <div class="h2">Подтверждение email</div>
+  <p class="dim" style="margin:8px 0 18px">Мы «отправили» код на <b style="color:var(--text)">${esc(S.regEmail||'demo@fsp.ru')}</b>. Введите его — или подставьте кнопкой.</p>
+  <div class="panel codebox">
+   <div><div class="lbl">Демо: входящее письмо</div><span class="bigcode">${p.code}</span></div>
+   <button type="button" class="btn ghost sm" data-act="fill-code" data-code="${p.code}">Вставить код</button>
+  </div>
+  <form data-form="verify" style="margin-top:16px" novalidate>
+   ${field('Код из письма',`<input name="code" class="mono" style="text-align:center;letter-spacing:.4em;font-size:20px" placeholder="······" maxlength="6" required>`)}
+   <div class="ferr" data-ferr style="display:none;margin-bottom:10px;color:var(--err);font-size:13px">Неверный код. Проверьте и попробуйте снова.</div>
+   <button class="btn primary" style="width:100%">Подтвердить и войти</button>
+  </form>
+  <p class="hint" style="margin-top:12px">Регистрация выполняется «с подтверждением адреса» (п.2.2, п.4 ТЗ)</p>
+ </div></div>`;}
+
+/* ================= КАБИНЕТ КАНДИДАТА ================= */
+const CAND_TABS=[['cand-profile','Профиль'],['cand-test','Тестирование'],['cand-grade','Категория и грейд'],['cand-invites','Приглашения','i'],['cand-settings','Настройки']];
+const candTabs=()=>subnav(CAND_TABS.map(([r,t,c])=>[r,t,c==='i'?newInvitesCount():0]),'Кабинет кандидата',
+ S.user?`<span class="badge ${S.user.category?'lime':''}" style="margin-left:auto">${ic('shield',13)} ${S.user.category?esc(S.user.category.spec+' · '+S.user.grade):'категория не присвоена'}</span>`:'');
+
+function vCandProfile(){
+ const u=S.user;
+ const cat=u.category?`<span class="catbadge">${u.category.spec}, ${u.grade} · тест ${u.category.score}%</span>`:`<span class="badge">${ic('clock',13)} категория не присвоена — пройдите тестирование</span>`;
+ return candTabs()+`<div class="view container">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px">
+   <div><div class="kicker">Экран 3 · Профиль / резюме</div><div class="h2">${esc(u.name||'Заполните профиль')}</div></div>
+   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${cat}</div>
+  </div>
+  <form class="panel" data-form="profile" novalidate>
+   <div class="grid2">
+    ${field('ФИО',`<input name="name" value="${esc(u.name)}" data-bind="user.name">`)}
+    ${field('Email',`<input type="email" name="email" value="${esc(u.email)}" data-bind="user.email">`)}
+    ${field('Telegram',`<input name="tg" value="${esc(u.tg||'')}" data-bind="user.tg" placeholder="@username">`)}
+    ${field('Телефон',`<input name="phone" value="${esc(u.phone||'')}" data-bind="user.phone" placeholder="+7 ...">`)}
+    ${field('Желаемые роли',`<input name="roles" value="${esc(u.roles||'')}" data-bind="user.roles" placeholder="Backend-разработчик, Тимлид">`)}
+    ${field('Стаж',`<select data-bind="user.exp">${['менее года','1–3 года','3–6 лет','6+ лет'].map(o=>`<option ${u.exp===o?'selected':''}>${o}</option>`).join('')}</select>`)}
+   </div>
+   ${field('Стек и технологии (Enter — добавить)',chipsField('user.stack',u.stack,'например, Go'))}
+   ${field('Софт-скиллы',chipsField('user.soft',u.soft,'например, Менторство'))}
+   ${field('О себе',`<textarea data-bind="user.about">${esc(u.about||'')}</textarea>`)}
+   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+    <button class="btn primary" type="submit">${ic('check',15)} Сохранить профиль</button>
+    <button class="btn" type="button" data-act="pdf">${ic('file',15)} Скачать PDF-профиль</button>
+    <button class="btn ghost" type="button" disabled title="Реализуется вторым шагом; на оценку механики не влияет">Загрузить PDF (автораспознавание) · beta</button>
+   </div>
+  </form>
+  <p class="hint mono" style="margin-top:12px">Резюме заполняет профиль, но категорию определяет только тестирование — самоописанные навыки на неё не влияют (п.2, 2.1 ТЗ).</p>
+ </div>`;}
+
+function vCandSurvey(){
+ const d=S.draftSurvey,done=S.user.surveyDone;
+ const tiles=(k,arr)=>`<div class="picks">${arr.map((v,i)=>`<button type="button" class="pick ${d[k]===v?'on':''}" data-act="pick" data-k="${k}" data-v="${esc(v)}"><span class="pi">${String(i+1).padStart(2,'0')}</span><span style="flex:1"><b>${esc(v)}</b></span><span class="rd"></span></button>`).join('')}</div>`;
+ return candTabs()+`<div class="view container" style="max-width:900px">
+  <div class="kicker">Экран 4 · Обязательный шаг после регистрации</div>
+  <div class="h2">Опрос: отрасль, специализация, грейд</div>
+  <p class="dim" style="margin-bottom:18px">Отрасль и специализация берутся из справочника основных направлений. Грейд вы выбираете сами — он определяет уровень теста. Категорию подтвердит только тест.</p>
+  <div class="panel">${lbl('1 · Отрасль')}${tiles('industry',INDUSTRIES)}</div>
+  <div class="panel" style="margin-top:14px">${lbl('2 · Специализация (справочник направлений)')}${tiles('spec',SPECS)}</div>
+  <div class="panel" style="margin-top:14px">
+   ${lbl('3 · Предполагаемый грейд — уровень, на который будет тест')}
+   <div class="picks" style="grid-template-columns:repeat(auto-fill,minmax(170px,1fr))">${tiles('grade',GRADES)}</div>
+   <p class="hint">Грейд не понижается принудительно: если тест не сдан — платформа лишь предложит попробовать уровнем ниже.</p>
+  </div>
+  <div style="display:flex;gap:12px;margin-top:18px;align-items:center;flex-wrap:wrap">
+   <button class="btn primary" data-act="survey-done" ${d.industry&&d.spec&&d.grade?'':'disabled'}>${ic('check',15)} ${done?'Обновить ответы':'Подтвердить и перейти к тестированию'}</button>
+   ${done?`<span class="badge lime">${ic('check',13)} опрос пройден · тест уровня ${esc(S.user.grade)}</span>`:'<span class="dim" style="font-size:13px">Выберите все три пункта</span>'}
+  </div>
+ </div>`;}
+
+function vCandTest(){
+ if(S.test)return testScreen();
+ const u=S.user;
+ if(!u.surveyDone)return candTabs()+`<div class="view container"><div class="panel" style="max-width:640px;margin:0 auto;text-align:center;padding:36px">
+   <div class="kicker">Экран 5 · Тестирование</div><div class="h2">Сначала — опрос</div>
+   <p class="dim" style="margin:10px 0 20px">Уровень теста определяется опросом: отрасль, специализация и предполагаемый грейд.</p>
+   <button class="btn primary" data-act="nav" data-to="cand-survey">Пройти опрос</button></div></div>`;
+ const last=u.history[0];
+ return candTabs()+`<div class="view container" style="max-width:760px">
+  <div class="kicker">Экран 5 · Тестирование</div>
+  <div class="h2">Тест уровня ${esc(u.grade)} · ${esc(u.spec)}</div>
+  <div class="panel" style="margin-top:14px">
+   <div class="setrow"><div><b>Формат</b><div class="d">5 заданий из пула · общий таймер 8 минут · порог 60%</div></div><span class="badge lime">ВАРИАНТ №${100+Math.floor(Math.random()*880)}</span></div>
+   <div class="setrow"><div><b>Устойчивость к распространению заданий</b><div class="d">Задания и порядок вариантов собираются из пула случайно — у разных кандидатов разные варианты (п.6.2 ТЗ).</div></div>${ic('shield',20)}</div>
+   ${last?`<div class="setrow"><div><b>Последняя попытка</b><div class="d">${fdsh(last.date)} · ${last.spec}, ${last.level} · ${last.score}% · ${last.passed?'зачёт':'незачёт'}</div></div><span class="st ${last.passed?'accepted':'declined'}">${last.passed?'зачёт':'незачёт'}</span></div>`:''}
+   <div style="margin-top:16px"><button class="btn primary" data-act="start-test" data-level="${u.grade}">${ic('clock',15)} Начать тест · 8:00</button></div>
+  </div>
+ </div>`;}
+
+function testScreen(){
+ const t=S.test,qi=t.qi||0,q=t.qs[qi];
+ const left=t.startedAt+t.durationMs-Date.now();
+ const pct=clamp(left/t.durationMs*100,0,100);
+ return candTabs()+`<div class="view container test">
+  <div class="test-top">
+   <div class="mono tmeta">ЗАДАНИЕ ${qi+1}/${t.qs.length} · ПУЛ: ${esc((t.spec+' · '+t.level).toUpperCase())} · ВАРИАНТ №${t.variantNo}</div>
+   <div class="test-right">
+    <button class="btn ghost sm" data-act="finish-test">Завершить</button>
+    <div class="ttime mono ${left<60000?'low':''}" id="tTime">${fmtLeft(left)}</div>
+   </div>
+  </div>
+  <div class="tbar"><i id="tBar" style="width:${pct}%"></i></div>
+  <div class="qcard panel">
+   <h3>${esc(q.q)}</h3>
+   ${q.code?`<pre class="code">${esc(q.code)}</pre>`:''}
+   <div class="opts">
+    ${q.opts.map((o,i)=>`<button type="button" class="opt ${q.chosen===i?'on':''}" data-act="answer" data-i="${i}"><span class="ol mono">${'ABCD'[i]}</span><span>${esc(o.t)}</span>${q.chosen===i?ic('check',16,'ok'):''}</button>`).join('')}
+   </div>
+   <div class="qnav">
+    <button type="button" class="btn ghost" data-act="q-prev" ${qi===0?'disabled':''}>${ic('back',15)} Назад</button>
+    ${qi<t.qs.length-1?`<button type="button" class="btn primary" data-act="q-next">Далее ${ic('arr',15)}</button>`:`<button type="button" class="btn primary" data-act="finish-test">${ic('check',15)} Завершить тест</button>`}
+   </div>
+  </div>
+  <div class="mono test-note">Задания собираются из пула случайным образом — механика «разные варианты у разных кандидатов» (п.6.2 ТЗ). Таймер общий на все задания.</div>
+ </div>`;}
+
+function vCandResult(){
+ const r=S.lastResult;
+ if(!r)return candTabs()+`<div class="view container"><div class="panel" style="max-width:640px;margin:0 auto;text-align:center;padding:36px">
+  <div class="kicker">Экран 6</div><div class="h2">Результата пока нет</div>
+  <p class="dim" style="margin:10px 0 18px">Пройдите тестирование — категория будет присвоена автоматически.</p>
+  <button class="btn primary" data-act="nav" data-to="cand-test">К тестированию</button></div></div>`;
+ const u=S.user,hasPrev=!!u.category;
+ return candTabs()+`<div class="view container" style="max-width:820px">
+  <div class="kicker">Экран 6 · Результат теста и присвоенная категория · ${fdate(r.date)}${r.auto?' · время вышло, завершено автоматически':''}</div>
+  <div style="padding:6px 0 4px">
+   <div class="stamp ${r.passed?'':'bad'}">${r.passed?esc((r.spec+' · '+r.level).toUpperCase()):'ПОРОГ НЕ ПРОЙДЕН'}</div>
+  </div>
+  ${r.passed
+   ?`<p style="max-width:640px">Категория <b>${esc(r.spec)}, ${esc(r.level)}</b> присвоена автоматически и уже видна работодателям в подборках и банке кандидатов.</p>`
+   :`<p style="max-width:640px">Уровень <b>${esc(r.spec)}, ${esc(r.level)}</b> не подтверждён: верно ${r.correct} из ${r.qs.length} при пороге 60%. Грейд не понижается принудительно${hasPrev?` — действует предыдущая категория <b>${esc(u.category.spec)}, ${esc(u.grade)}</b>`:''}, но вы можете добровольно пройти тест уровнем ниже.</p>`}
+  <div class="panel" style="margin-top:16px">
+   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <div class="kicker">Краткое объяснение результата (прозрачность оценки)</div>
+    <div class="scoreline">${barHtml(r.score,160)}<b style="color:var(--text)">${r.score}%</b></div>
+   </div>
+   <div style="margin-top:8px">
+   ${r.qs.map((q,i)=>{
+     const ok=q.chosen!==null&&q.opts[q.chosen].ok;
+     const ra=q.opts.findIndex(o=>o.ok);
+     return `<div class="review">
+      <span class="r-ic" style="color:${ok?'var(--ok)':'var(--err)'}">${ic(ok?'check':'x',15)}</span>
+      <div>${i+1}. ${esc(q.q)}<br>
+       ${ok?`<span class="ans">ваш ответ верен: «${esc(q.opts[q.chosen].t)}»</span>`
+        :`${q.chosen!==null?`<span class="ans">ваш ответ: «${esc(q.opts[q.chosen].t)}» · </span>`:'<span class="ans">без ответа · </span>'}<span class="right-ans">верно: «${esc(q.opts[ra].t)}»</span>`}
+      </div></div>`;}).join('')}
+   </div>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
+   ${r.passed?`<button class="btn primary" data-act="nav" data-to="cand-grade">К категории и грейду ${ic('arr',15)}</button>`
+    :`${gradIdx(r.level)>0?`<button class="btn primary" data-act="start-test" data-level="${GRADES[gradIdx(r.level)-1]}">Пройти тест уровнем ниже · ${GRADES[gradIdx(r.level)-1]}</button>`:''}
+      <button class="btn ghost" data-act="start-test" data-level="${r.level}">Повторить свой уровень</button>`}
+  </div>
+ </div>`;}
+
+function vCandGrade(){
+ const u=S.user,locked=!canChange(),ci=gradIdx(u.grade);
+ return candTabs()+`<div class="view container" style="max-width:860px">
+  <div class="kicker">Экран 7 · Категория и грейд (статус)</div>
+  <div class="h2">Текущий статус</div>
+  <div class="panel" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-top:14px">
+   <div>
+    ${u.category?`<span class="stamp" style="font-size:20px;margin:0">${esc(u.category.spec.toUpperCase())} · ${esc(u.grade.toUpperCase())}</span>`
+     :`<span class="stamp bad" style="font-size:20px;margin:0">Категория не присвоена</span>`}
+    <p class="hint" style="margin-top:10px">${u.category?`Подтверждено тестом ${fdate(u.category.date)} · результат ${u.category.score}% · уровень ${esc(u.grade)}`:'Пройдите тестирование, чтобы попасть в подборки работодателей.'}</p>
+   </div>
+   <div style="display:flex;flex-direction:column;gap:9px;min-width:250px">
+    ${ci<2?`<button class="btn" data-act="start-test" data-level="${GRADES[ci+1]}" ${locked?'disabled':''}>${ic('arr',15)} Тест уровнем выше · ${GRADES[ci+1]}</button>`:''}
+    ${ci>0?`<button class="btn" data-act="start-test" data-level="${GRADES[ci-1]}" ${locked?'disabled':''}>${ic('back',15)} Тест уровнем ниже · ${GRADES[ci-1]}</button>`:''}
+    <button class="btn ghost sm" data-act="start-test" data-level="${u.grade}">Пересдать текущий уровень</button>
+    ${locked?`<p class="hint mono" style="display:flex;gap:7px;align-items:flex-start;flex-wrap:wrap">${ic('lock',14)} Смена грейда доступна с <b style="color:var(--text)">&nbsp;${fdate(S.user.lastGradeChange+90*DAY)}</b>&nbsp;· лимит — раз в 3 месяца (п.2 ТЗ)
+      <button class="btn ghost sm" data-act="skip-lock" style="padding:2px 8px;font-size:11px;margin-left:auto">демо: пропустить ожидание</button></p>`
+     :'<p class="hint mono" style="color:var(--lime)">смена грейда доступна · лимит 3 месяца начнёт действовать после успешной сдачи</p>'}
+   </div>
+  </div>
+  <div class="panel" style="margin-top:14px">
+   <div class="kicker" style="margin-bottom:10px">История опроса и тестов</div>
+   ${u.history.length?`<div class="tblwrap"><table class="tbl"><tr><th>Дата</th><th>Специализация</th><th>Уровень</th><th>Результат</th><th>Итог</th></tr>
+    ${u.history.slice(0,10).map(h=>`<tr><td class="mono" style="font-size:13px">${fdsh(h.date)}</td><td>${esc(h.spec)}</td><td>${esc(h.level)}</td><td class="mono">${h.score}%</td><td><span class="st ${h.passed?'accepted':'declined'}">${h.passed?'зачёт':'незачёт'}</span></td></tr>`).join('')}</table></div>`
+   :'<p class="dim">Попыток пока не было.</p>'}
+  </div>
+ </div>`;}
+
+function vCandInvites(){
+ const list=inbox().slice().sort((a,b)=>b.date-a.date);
+ return candTabs()+`<div class="view container" style="max-width:860px">
+  <div class="kicker">Экран 8 · Входящие приглашения — главный сценарий платформы (35% оценки)</div>
+  <div class="h2">Приглашения</div>
+  <p class="dim" style="margin:6px 0 16px">Каждое приглашение содержит вилку зарплаты «от–до» — вы видите условия до начала общения. Открытие детали переводит статус в «просмотрено».</p>
+  ${list.length?list.map(i=>`
+   <div class="invrow" data-act="open-inv" data-id="${i.id}">
+    <div><div class="co">${esc(i.companyName)}</div><div class="vc">${i.vacancy?esc(i.vacancy):'Приглашение без привязки к вакансии'} · ${esc(i.channel)} · ${fdsh(i.date)}</div></div>
+    <div class="meta"><span class="sal">${money(i.salaryFrom)} — ${money(i.salaryTo)} ₽</span>${stBadge(i.status)}</div>
+    <span style="color:var(--dim)">${ic('arr',16)}</span>
+   </div>`).join('')
+  :`<div class="panel" style="text-align:center;padding:34px"><p class="dim">Приглашений пока нет. Они появятся, когда работодатель найдёт вас в подборке или банке кандидатов.</p></div>`}
+ </div>`;}
+
+function vCandInvite(){
+ const i=invite(route.id);
+ if(!i)return vCandInvites();
+ if(i.status==='sent'){i.status='viewed';save();}
+ const open=i.status==='accepted';
+ const empContacts=i.ich||{};
+ return candTabs()+`<div class="view container" style="max-width:760px">
+  <a class="btn ghost sm" href="#/cand-invites" style="margin-bottom:14px">${ic('back',14)} Все приглашения</a>
+  <div class="panel">
+   <div style="display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center">
+    <div><div class="kicker">Приглашение ${i.id} · ${fdsh(i.date)}</div><div class="h2" style="margin-top:6px">${esc(i.companyName)}</div></div>
+    ${stBadge(i.status)}
+   </div>
+   ${invTrack(i.status)}
+   <div class="kicker" style="margin-bottom:8px">Зарплатная вилка — видна до начала общения (п.2.2, п.1)</div>
+   <div class="bigsal">${money(i.salaryFrom)} — ${money(i.salaryTo)} ₽</div>
+   <div style="margin-top:18px">
+    <div class="kicker" style="margin-bottom:8px">Описание предложения</div>
+    <p style="max-width:600px">${esc(i.message)}</p>
+   </div>
+   <div class="grid2" style="margin-top:18px">
+    <div><div class="kicker" style="margin-bottom:6px">Вакансия</div><p>${i.vacancy?esc(i.vacancy):'<span class="dim">не указана — приглашение без привязки к вакансии</span>'}</p></div>
+    <div><div class="kicker" style="margin-bottom:6px">Способ связи</div><p>${esc(i.channel)}</p></div>
+   </div>
+   <div style="margin-top:22px;display:flex;gap:10px;flex-wrap:wrap">
+    ${['sent','viewed'].includes(i.status)?`
+     <button class="btn primary" data-act="inv-accept" data-id="${i.id}">${ic('check',15)} Принять</button>
+     <button class="btn danger" data-act="inv-decline" data-id="${i.id}">${ic('x',15)} Отклонить</button>`
+    :i.status==='accepted'?`<div class="panel" style="margin:0;padding:16px 18px;flex:1;min-width:260px;border-color:rgba(74,222,128,.4)">
+       <div class="kicker" style="color:var(--ok);margin-bottom:8px">Контакты открыты</div>
+       <p class="mono" style="font-size:13px;line-height:2">${ic('mail',14)} ${esc(empContacts.email||'—')}<br>${ic('user',14)} ${esc(empContacts.tg||'—')}</p>
+       <p class="hint">Работодатель теперь видит и ваши контакты тоже.</p></div>`
+    :`<p class="dim">Вы отклонили это приглашение. Компания видит статус «отклонено».</p>`}
+   </div>
+  </div>
+ </div>`;}
+
+function vCandSettings(){
+ const u=S.user;
+ const sw=(path,on,title,d)=>`<div class="setrow"><div><b>${title}</b><div class="d">${d}</div></div>
+   <label class="sw"><input type="checkbox" data-chk="${path}" ${on?'checked':''}><i></i></label></div>`;
+ return candTabs()+`<div class="view container" style="max-width:760px">
+  <div class="kicker">Экран 9 · Настройки</div>
+  <div class="h2">Настройки</div>
+  <div class="panel" style="margin-top:14px">
+   <div class="kicker" style="margin-bottom:6px">Приватность — что видно работодателю</div>
+   ${sw('user.privacy.stack',u.privacy.stack,'Стек и технологии','Работодатель увидит технологии в карточке и по ним будет искать совпадения')}
+   ${sw('user.privacy.exp',u.privacy.exp,'Стаж работы','Отображается в карточке кандидата')}
+   ${sw('user.privacy.soft',u.privacy.soft,'Софт-скиллы','Отображаются в карточке кандидата')}
+   <p class="hint" style="display:flex;gap:7px;margin-top:12px">${ic('lock',14)} ФИО и контакты скрыты всегда: до принятия приглашения работодатель видит только анонимный ID и подтверждённую категорию.</p>
+  </div>
+  <div class="panel">
+   <div class="kicker" style="margin-bottom:6px">Согласия (152-ФЗ)</div>
+   <div class="setrow"><div><b>Обработка персональных данных</b><div class="d">Обязательна для работы профиля — снятие согласия недоступно</div></div>
+    <label class="sw"><input type="checkbox" checked disabled><i></i></label></div>
+   ${sw('user.published',u.published,'Публиковать профиль в банке и подборках','Выключите — работодатель перестанет вас видеть, но категория сохранится')}
+  </div>
+  <div class="panel">
+   <div class="kicker" style="margin-bottom:6px">ФСП ID — связь с профилем участника Федерации</div>
+   ${u.fsp?`
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+     <span class="badge lime" style="font-size:13px;padding:7px 13px">${ic('shield',15)} ${esc(u.fsp.id)} · привязан</span>
+     <button class="btn ghost sm" data-act="fsp-unlink">Отвязать (демо)</button>
+    </div>
+    <div style="margin-top:12px">
+     ${u.fsp.items.map(a=>`<div class="fspitem"><span class="pl">${esc(a.place)}</span><span>${esc(a.name)}, ${a.year}</span></div>`).join('')}
+    </div>
+    <p class="hint">Достижения отображаются работодателям в карточке и усиливают позицию в ранжировании подборки.</p>`
+   :`
+    <div style="display:flex;gap:14px;align-items:flex-start">
+     <span style="color:var(--dim);margin-top:2px">${ic('link',22)}</span>
+     <div><b>ФСП не привязан</b>
+      <p class="hint" style="margin-top:6px;max-width:480px">История достижений ФСП пока не отображается в вашем профиле. Это не влияет на присвоение категории и попадание в подборки — работодатель просто не увидит блок достижений.</p></div>
+    </div>
+    <button class="btn" style="margin-top:14px" data-act="fsp-bind">${ic('shield',15)} Связать с ФСП ID</button>
+    <p class="hint">Вход через Keycloak экосистемы ФСП; здесь — имитация SSO.</p>`}
+  </div>
+ </div>`;}
+
+/* ================= КАБИНЕТ РАБОТОДАТЕЛЯ ================= */
+const EMP_TABS=[['emp-company','Компания'],['emp-demand','Потребность'],['emp-match','Подборка'],['emp-bank','Банк кандидатов'],['emp-invites','Приглашения']];
+const empTabs=()=>subnav(EMP_TABS,'Кабинет работодателя',S.employer?`<span class="badge" style="margin-left:auto">${ic('brief',13)} ${esc(S.employer.company.name||'Компания')}</span>`:'');
+
+function vEmpCompany(){
+ const c=S.employer.company;
+ return empTabs()+`<div class="view container" style="max-width:860px">
+  <div class="kicker">Экран 10 · Профиль компании</div>
+  <div class="h2">Профиль компании</div>
+  <form class="panel" data-form="company" style="margin-top:14px" novalidate>
+   <div class="grid2">
+    ${field('Название *',`<input name="name" value="${esc(c.name)}" data-bind="employer.company.name">`)}
+    ${field('Направление деятельности',`<select data-bind="employer.company.industry">${INDUSTRIES.map(o=>`<option ${c.industry===o?'selected':''}>${o}</option>`).join('')}</select>`)}
+    ${field('Контактное лицо',`<input name="cn" value="${esc(c.contactName)}" data-bind="employer.company.contactName">`)}
+    ${field('Email',`<input name="em" value="${esc(c.email)}" data-bind="employer.company.email">`)}
+    ${field('Telegram',`<input name="tg" value="${esc(c.tg)}" data-bind="employer.company.tg" placeholder="@company_hr">`)}
+    ${field('Телефон',`<input name="ph" value="${esc(c.phone)}" data-bind="employer.company.phone">`)}
+   </div>
+   ${field('Способ связи по умолчанию (подставляется в приглашения)',`<select data-bind="employer.company.channel">${['Telegram','Email','Телефон'].map(o=>`<option ${c.channel===o?'selected':''}>${o}</option>`).join('')}</select>`)}
+   ${field('Описание организации',`<textarea data-bind="employer.company.about">${esc(c.about)}</textarea>`)}
+   <button class="btn primary" type="submit">${ic('check',15)} Сохранить</button>
+  </form>
+  <p class="hint mono" style="margin-top:12px">Название и способ связи подставляются в каждое приглашение (п.2.2 ТЗ).</p>
+ </div>`;}
+
+function vEmpDemand(){
+ const d=S.employer.demand;
+ return empTabs()+`<div class="view container" style="max-width:860px">
+  <div class="kicker">Экран 11 · Описание потребности</div>
+  <div class="h2">Какие специалисты нужны</div>
+  ${d.done?`<div class="panel" style="margin-top:14px;border-color:rgba(201,242,75,.35)">
+    <div class="kicker" style="color:var(--lime)">Текущая потребность · подборка сформирована</div>
+    <p style="margin-top:8px"><b>${esc(d.spec)}, ${esc(d.grade)}</b> · стек: <span class="mono" style="font-size:13px">${d.stack.map(esc).join(' · ')}</span></p>
+    <p class="dim" style="font-size:13.5px;margin-top:6px">${esc(d.team)}</p></div>`:''}
+  <form class="panel" data-form="demand" style="margin-top:14px" novalidate>
+   <div class="grid2">
+    ${field('Специализация',`<select data-bind="employer.demand.spec">${SPECS.map(o=>`<option ${d.spec===o?'selected':''}>${o}</option>`).join('')}</select>`)}
+    ${field('Грейд',`<select data-bind="employer.demand.grade">${GRADES.map(o=>`<option ${d.grade===o?'selected':''}>${o}</option>`).join('')}</select>`)}
+   </div>
+   ${field('Требуемый стек — основа совпадений в подборке',chipsField('employer.demand.stack',d.stack,'технология и Enter'))}
+   ${field('Чем занимается команда',`<textarea data-bind="employer.demand.team">${esc(d.team)}</textarea>`)}
+   <button class="btn primary" type="submit">${ic('refresh',15)} Сохранить и сформировать подборку</button>
+  </form>
+ </div>`;}
+
+function matchRow(c,demand){
+ const mi=matchInfo(c,demand);
+ return `<div class="mrow">
+  <div class="mrow-l">
+   <span class="cid">${c.id}${c.isUser?' <span class="badge lime" style="font-size:9.5px;padding:2px 6px">новый</span>':''}</span>
+   <span class="catbadge">${esc(catOf(c))}</span>
+  </div>
+  <div class="mrow-c">
+   <div class="scoreline">${barHtml(c.score,130)}<span>тест ${c.score}%</span>${fspBadge(c)}</div>
+   <div style="margin-top:7px">${(c.privacy&&!c.privacy.stack)?'<span class="dim mono" style="font-size:12px">стек скрыт настройками приватности</span>':(c.stack||[]).map(s=>`<span class="chip ${mi.hit.includes(s)?'hit':''}">${esc(s)}</span>`).join('')}</div>
+  </div>
+  <div class="mrow-r">
+   <a class="btn sm ghost" href="#/emp-candidate/${c.id}">Карточка</a>
+   <button class="btn sm primary" data-act="invite" data-id="${c.id}">${ic('send',14)} Пригласить</button>
+  </div>
+  ${whyLine(c,demand)}
+ </div>`;}
+
+function vEmpMatch(){
+ const d=S.employer.demand;
+ if(!d.done)return empTabs()+`<div class="view container"><div class="panel" style="max-width:640px;margin:0 auto;text-align:center;padding:36px">
+  <div class="kicker">Экран 12</div><div class="h2">Подборка ещё не сформирована</div>
+  <p class="dim" style="margin:10px 0 18px">Опишите потребность — и платформа соберёт кандидатов по категориям.</p>
+  <button class="btn primary" data-act="nav" data-to="emp-demand">Описать потребность</button></div></div>`;
+ const all=allCands();
+ const primary=all.filter(c=>c.spec===d.spec&&c.grade===d.grade)
+  .sort((a,b)=>b.score-a.score||((b.fsp?1:0)-(a.fsp?1:0)));
+ const gi=gradIdx(d.grade);
+ const near=all.filter(c=>c.spec===d.spec&&Math.abs(gradIdx(c.grade)-gi)===1).sort((a,b)=>b.score-a.score);
+ return empTabs()+`<div class="view container" style="max-width:900px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap">
+   <div><div class="kicker">Экран 12 · Подборка по потребности</div>
+    <div class="h2">Рекомендованная категория: ${esc(d.spec)}, ${esc(d.grade)}</div>
+    <p class="dim" style="font-size:13px;margin-top:4px">Стек потребности: <span class="mono">${d.stack.map(esc).join(' · ')}</span></p></div>
+   <button class="btn ghost sm" data-act="refresh">${ic('refresh',14)} Обновить</button>
+  </div>
+  <p class="hint mono" style="margin:8px 0 16px">Порядок внутри категории: результат теста ↓, затем наличие достижений ФСП (п.2.1 ТЗ). Кандидатов в категории: ${primary.length}.</p>
+  ${primary.length?primary.map(c=>matchRow(c,d)).join(''):`<div class="panel" style="text-align:center;padding:32px"><p class="dim">В категории «${esc(d.spec)}, ${esc(d.grade)}» пока никто не подтверждён тестом. Кандидаты попадают в подборку только после успешного тестирования — попробуйте банк кандидатов или смежные категории.</p></div>`}
+  ${near.length?`<details style="margin-top:16px"><summary class="btn ghost sm" style="list-style:none;display:inline-flex">Смежные категории · ${near.length} ${ic('arr',13)}</summary>
+   <div style="margin-top:12px">${near.map(c=>matchRow(c,d)).join('')}</div></details>`:''}
+ </div>`;}
+
+function vEmpBank(){
+ const f=S.bankF,all=allCands();
+ const toks=f.stack.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
+ const res=all.filter(c=>{
+  if(f.spec&&c.spec!==f.spec)return false;
+  if(f.grade&&c.grade!==f.grade)return false;
+  if(f.fsp&&!c.fsp)return false;
+  if(toks.length){
+   if(c.privacy&&!c.privacy.stack)return false;
+   const st=(c.stack||[]).map(s=>s.toLowerCase());
+   if(!toks.every(t=>st.some(s=>s.includes(t))))return false;
+  }
+  return true;});
+ const groups={};
+ res.forEach(c=>{(groups[catOf(c)]=groups[catOf(c)]||[]).push(c);});
+ const order=Object.keys(groups).sort((a,b)=>{const[sa,ga]=a.split(', ');const[sb,gb]=b.split(', ');return sa.localeCompare(sb)||gradIdx(ga)-gradIdx(gb);});
+ const d=S.employer.demand;
+ const matchCount=d.done?all.filter(c=>c.spec===d.spec&&c.grade===d.grade).length:0;
+ return empTabs()+`<div class="view container" style="max-width:980px">
+  <div class="kicker">Экран 13 · Банк кандидатов</div>
+  <div class="h2">Поиск по банку</div>
+  <p class="hint" style="margin:6px 0 14px">Выдача строится по категориям, присвоенным тестом, — а не по ключевым словам резюме (п.2.1 ТЗ). Контакты и ФИО скрыты — доступен анонимный ID.</p>
+  ${matchCount?`<div class="panel" style="display:flex;align-items:center;gap:12px;padding:14px 18px;margin-bottom:14px;border-color:rgba(201,242,75,.3)">
+    ${ic('shield',18)} <span style="font-size:13.5px">Подборка сохранена: <b>${matchCount}</b> кандидат(ов) в категории ${esc(d.spec)}, ${esc(d.grade)} — уточнение запроса её не сбрасывает.</span>
+    <a class="btn sm ghost" style="margin-left:auto" href="#/emp-match">Открыть подборку</a></div>`:''}
+  <div class="panel">
+   <div class="kicker" style="margin-bottom:12px">Фильтры: специализация · грейд · категория · стек · достижения ФСП</div>
+   <div style="display:grid;grid-template-columns:1fr 1fr 1.3fr auto;gap:10px;align-items:end">
+    ${field('Специализация',`<select id="fSpec"><option value="">Все</option>${SPECS.map(s=>`<option ${f.spec===s?'selected':''}>${s}</option>`).join('')}</select>`)}
+    ${field('Грейд',`<select id="fGrade"><option value="">Все</option>${GRADES.map(s=>`<option ${f.grade===s?'selected':''}>${s}</option>`).join('')}</select>`)}
+    ${field('Стек (через запятую)',`<input id="fStack" value="${esc(f.stack)}" placeholder="Go, Kafka">`)}
+    <label style="display:flex;gap:9px;align-items:center;padding:10px 0;cursor:pointer;font-size:13.5px;white-space:nowrap"><input type="checkbox" id="fFsp" ${f.fsp?'checked':''} style="width:16px;height:16px"> Только с ФСП</label>
+   </div>
+   <div style="display:flex;gap:10px;margin-top:6px">
+    <button class="btn primary sm" data-act="bank-apply">${ic('filter',14)} Применить</button>
+    <button class="btn ghost sm" data-act="bank-reset">Сбросить</button>
+   </div>
+  </div>
+  <div style="margin-top:18px">
+  ${order.length?order.map(g=>{
+    const arr=groups[g].sort((a,b)=>b.score-a.score);
+    return `<div class="grouph">${esc(g)} — <b>${arr.length}</b></div>
+    <div class="panel" style="padding:0">${arr.map(c=>`
+     <div class="brow">
+      <span class="cid" style="font-size:14px">${c.id}</span>
+      <span class="scoreline" style="gap:7px">${barHtml(c.score,70)}<span>${c.score}%</span></span>
+      <span class="stk">${(c.privacy&&!c.privacy.stack)?'<i class="dim">стек скрыт приватностью</i>':esc((c.stack||[]).slice(0,5).join(' · '))}</span>
+      <span class="acts" style="display:flex;gap:8px;align-items:center">${fspBadge(c)}
+       <a class="btn sm ghost" href="#/emp-candidate/${c.id}">Карточка</a>
+       <button class="btn sm primary" data-act="invite" data-id="${c.id}">${ic('send',13)}</button></span>
+     </div>`).join('')}</div>`;}).join('')
+  :`<div class="panel" style="text-align:center;padding:32px"><p class="dim">Ничего не найдено. Попробуйте ослабить фильтры — или подождите: кандидаты появляются в банке после подтверждения категории тестом.</p></div>`}
+  </div>
+ </div>`;}
+
+function vEmpCandidate(){
+ const c=findCand(route.id);
+ if(!c)return vEmpBank();
+ const hidden=k=>c.privacy&&!c.privacy[k];
+ return empTabs()+`<div class="view container" style="max-width:900px">
+  <a class="btn ghost sm" href="#/emp-bank" style="margin-bottom:16px">${ic('back',14)} К списку</a>
+  <div class="candhead">
+   <div>
+    <div class="kicker">Экран 14 · Карточка кандидата</div>
+    <div class="cid">${c.id}</div>
+    <div class="candtags">
+     <span class="catbadge">${esc(catOf(c))}</span>
+     <span class="badge lime">${ic('shield',13)} тест ${c.score}% · ${fdate(c.testedAt||Date.now())}</span>
+     ${fspBadge(c)}
+    </div>
+   </div>
+   <div style="text-align:right">
+    <button class="btn primary" data-act="invite" data-id="${c.id}">${ic('send',15)} Пригласить</button>
+    <p class="hint mono" style="display:flex;gap:6px;justify-content:flex-end;align-items:center;margin-top:8px">${ic('lock',13)} контактов нет — откроются после «принято»</p>
+   </div>
+  </div>
+  <div class="split">
+   <div class="panel sec">
+    <h4>Подтверждённый профиль</h4>
+    ${hidden('stack')?`<div class="hiddenline">${ic('lock',14)} Стек скрыт настройками приватности</div>`
+     :`<div>${(c.stack||[]).map(s=>`<span class="chip">${esc(s)}</span>`).join('')||'<span class="dim">не указан</span>'}</div>`}
+    <div style="margin-top:16px"><h4>Стаж</h4>
+     ${hidden('exp')?`<div class="hiddenline">${ic('lock',14)} Скрыто настройками приватности</div>`:`<p>${esc(c.exp||'не указан')}</p>`}</div>
+    <div style="margin-top:16px"><h4>Софт-скиллы</h4>
+     ${hidden('soft')?`<div class="hiddenline">${ic('lock',14)} Скрыто настройками приватности</div>`:`<p>${esc((c.soft||[]).join(' · ')||'не указаны')}</p>`}</div>
+   </div>
+   <div class="panel sec">
+    <h4>Достижения ФСП</h4>
+    ${c.fsp?`
+     <span class="badge lime" style="margin-bottom:12px">${ic('shield',13)} ${esc(c.fsp.id)}</span>
+     <div style="margin-top:8px">${c.fsp.items.map(a=>`<div class="fspitem"><span class="pl">${esc(a.place)}</span><span>${esc(a.name)}, ${a.year}</span></div>`).join('')}</div>
+     <p class="hint" style="margin-top:10px">Верифицированная история участника Федерации — учитывается в ранжировании подборки.</p>`
+    :`<div style="display:flex;gap:12px;align-items:flex-start">
+      <span style="color:var(--dim)">${ic('link',20)}</span>
+      <div><b style="font-size:14px">История ФСП отсутствует</b>
+      <p class="hint" style="margin-top:6px">Участник не привязал ФСП ID. Это не влияет на категорию и попадание в подборку — блок достижений просто не отображается.</p></div></div>`}
+   </div>
+  </div>
+ </div>`;}
+
+function vEmpInviteForm(){
+ const d=S.invDraft||(S.invDraft={candId:route.id,msg:'',from:'',to:'',vacancy:'',channel:S.employer.company.channel});
+ if(!d.candId&&route.id)d.candId=route.id;
+ const c=findCand(d.candId),co=S.employer.company;
+ return empTabs()+`<div class="view container" style="max-width:760px">
+  <a class="btn ghost sm" href="#/emp-bank" style="margin-bottom:14px">${ic('back',14)} Назад</a>
+  <div class="kicker">Экран 15 · Форма приглашения — смысловой центр платформы (п.6.1: 35% оценки)</div>
+  <div class="h2">Пригласить ${esc(d.candId)}</div>
+  <p class="hint" style="margin:6px 0 14px">Категория: <span class="catbadge">${c?esc(catOf(c)):'—'}</span> · тест: <b>${c?c.score:'—'}%</b>. Кандидат увидит вилку сразу, контакты — только когда примет.</p>
+  <div class="panel" style="margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+   ${ic('brief',16)} <span class="mono" style="font-size:12.5px">От компании: <b style="color:var(--text)">${esc(co.name||'—')}</b> · контакт: ${esc(co.contactName||'—')} · ${esc(co.channel)}</span>
+   <span class="badge" style="margin-left:auto">подставлено из профиля</span>
+  </div>
+  <form class="panel" data-form="invite" novalidate>
+   ${field('Описание предложения *',`<textarea name="msg" data-bind="invDraft.msg" placeholder="Чем интересна команда, чем предстоит заниматься, формат работы">${esc(d.msg)}</textarea><div class="ferr">Опишите предложение — обязательное содержимое приглашения (п.2.2)</div>`)}
+   ${field('Вакансия (необязательно — приглашение может быть без привязки к вакансии)',`<input name="vac" data-bind="invDraft.vacancy" value="${esc(d.vacancy)}" placeholder="Например, Go-разработчик платёжной команды">`)}
+   <div class="grid2">
+    <div class="field" data-f="from">${lbl('Зарплата «от», ₽ *')}<input name="from" type="number" min="0" data-bind="invDraft.from" value="${esc(d.from)}" placeholder="160000"><div class="ferr">Обязательное поле — вилка «от–до» обязательна (п.2.2, п.1)</div></div>
+    <div class="field" data-f="to">${lbl('Зарплата «до», ₽ *')}<input name="to" type="number" min="0" data-bind="invDraft.to" value="${esc(d.to)}" placeholder="220000"><div class="ferr">Проверьте вилку: «от» не может превышать «до»</div></div>
+   </div>
+   ${field('Способ связи',`<select data-bind="invDraft.channel">${['Telegram','Email','Телефон'].map(o=>`<option ${d.channel===o?'selected':''}>${o}</option>`).join('')}</select>`)}
+   <button class="btn primary" style="width:100%">${ic('send',15)} Отправить приглашение</button>
+   <p class="hint mono" style="margin-top:12px">* Вилка в рублях обязательна: кандидат видит условия до начала общения — принципиальное отличие площадки (п.2.2 ТЗ).</p>
+  </form>
+ </div>`;}
+
+function vEmpInvites(){
+ const list=sent().slice().sort((a,b)=>b.date-a.date);
+ return empTabs()+`<div class="view container" style="max-width:980px">
+  <div class="kicker">Экран 16 · Мои приглашения · статусная модель (п.2.2, п.3)</div>
+  <div class="h2">Приглашения</div>
+  <p class="hint mono" style="margin:6px 0 14px">sent → viewed → accepted / declined · контакты кандидата открываются при статусе «принято» · кнопки «✓/✗» — имитация ответа кандидата для демо.</p>
+  ${list.length?`<div class="panel" style="padding:0"><div class="tblwrap"><table class="tbl">
+   <tr><th>Кандидат</th><th>Вакансия</th><th>Вилка</th><th>Дата</th><th>Статус</th><th>Контакты</th><th></th></tr>
+   ${list.map(i=>{
+    const cc=findCand(i.cand);
+    return `<tr>
+     <td><span class="cid" style="font-size:13.5px">${esc(i.cand)}</span></td>
+     <td style="font-size:13.5px">${i.vacancy?esc(i.vacancy):'<span class="dim">—</span>'}</td>
+     <td class="mono" style="white-space:nowrap;color:var(--lime);font-weight:700">${money(i.salaryFrom)}—${money(i.salaryTo)} ₽</td>
+     <td class="mono" style="font-size:12.5px">${fdsh(i.date)}</td>
+     <td>${stBadge(i.status)}</td>
+     <td>${i.status==='accepted'&&cc?`<span class="mono" style="font-size:12px;color:var(--ok)">${esc(cc.contacts.email)}<br>${esc(cc.contacts.tg)}</span>`:`<span class="dim" style="display:inline-flex;gap:6px;align-items:center">${ic('lock',13)} после «принято»</span>`}</td>
+     <td>${['sent','viewed'].includes(i.status)?`<span style="display:inline-flex;gap:6px;align-items:center;white-space:nowrap">
+       <button class="btn sm ghost" title="Симулировать: кандидат принял" data-act="sim-acc" data-id="${i.id}" style="color:var(--ok)">${ic('check',14)}</button>
+       <button class="btn sm ghost" title="Симулировать: кандидат отклонил" data-act="sim-dec" data-id="${i.id}" style="color:var(--err)">${ic('x',14)}</button></span>`:''}</td>
+    </tr>`;}).join('')}</table></div></div>`
+  :`<div class="panel" style="text-align:center;padding:32px"><p class="dim">Вы ещё никого не пригласили. Найдите кандидатов в подборке или банке.</p>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:14px"><a class="btn primary sm" href="#/emp-match">К подборке</a><a class="btn ghost sm" href="#/emp-bank">В банк кандидатов</a></div></div>`}
+ </div>`;}
+
+/* ================= PDF-профиль ================= */
+function downloadPDF(){
+ const u=S.user,c=u.category;
+ const w=window.open('','_blank');
+ if(!w){toast('Разрешите всплывающие окна, чтобы сохранить PDF','err');return;}
+ const chips=a=>(a||[]).map(s=>`<span style="display:inline-block;border:1px solid #bbb;border-radius:12px;padding:2px 10px;margin:0 4px 4px 0;font-size:12px">${esc(s)}</span>`).join('');
+ w.document.write(`<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Профиль ${esc(u.anonId)}</title>
+ <style>body{font-family:Arial,Helvetica,sans-serif;color:#111;max-width:720px;margin:36px auto;padding:0 26px}
+ h1{font-size:22px;margin:0 0 2px}.meta{color:#555;font-size:13px;margin-bottom:14px}
+ h2{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#444;border-bottom:1px solid #ddd;padding-bottom:4px;margin:22px 0 10px}
+ .cat{display:inline-block;border:2px solid #111;padding:5px 12px;font-weight:700;margin:4px 0}
+ .row{margin:5px 0;font-size:14px}.note{color:#777;font-size:11.5px;margin-top:28px;border-top:1px solid #eee;padding-top:8px}
+ button{padding:8px 18px;margin-bottom:18px;cursor:pointer}</style></head><body>
+ <button onclick="window.print()">Сохранить PDF</button>
+ <h1>${esc(u.name||u.anonId)}</h1>
+ <div class="meta">Анонимный ID: ${esc(u.anonId)} · ${esc(u.email)} · ${esc(u.tg||'')} · ${esc(u.phone||'')}</div>
+ <h2>Категория (присвоена тестированием платформы)</h2>
+ ${c?`<span class="cat">${esc(c.spec)}, ${esc(u.grade)}</span><div class="row">Результат теста: <b>${c.score}%</b> · подтверждено ${fdsh(c.date)}</div>`:'<div class="row">Категория пока не присвоена — пройдите тестирование.</div>'}
+ <h2>Стек и технологии</h2><div>${chips(u.stack)}</div>
+ <h2>Опыт и роли</h2><div class="row">Стаж: ${esc(u.exp||'—')} · Роли: ${esc(u.roles||'—')} · Отрасль: ${esc(u.industry||'—')}</div>
+ <h2>Софт-скиллы</h2><div>${chips(u.soft)}</div>
+ <h2>О себе</h2><div class="row">${esc(u.about||'—')}</div>
+ <h2>Достижения ФСП</h2>
+ ${u.fsp?u.fsp.items.map(a=>`<div class="row"><b>${esc(a.place)}</b> — ${esc(a.name)}, ${a.year} <span style="color:#777">(${esc(u.fsp.id)})</span></div>`).join(''):'<div class="row" style="color:#777">ФСП ID не привязан — история достижений не отображается.</div>'}
+ <div class="note">Резюме заполняет профиль участника, но категорию определяет исключительно результат тестирования платформы — самоописанные данные на неё не влияют. FSP·TALENT, демо-прототип.</div>
+ </body></html>`);
+ w.document.close();
+ toast('Профиль подготовлен — выберите «Сохранить как PDF» в диалоге печати');
+}
+
+/* ================= логика теста ================= */
+let ticker=null;
+function stopTicker(){if(ticker){clearInterval(ticker);ticker=null;}}
+function buildTest(spec,level){
+ const pool=(POOLS[spec]&&POOLS[spec][level])?POOLS[spec][level]:COMMON_POOL;
+ const qs=shuffle(pool.slice()).slice(0,5).map(q=>{
+  const order=shuffle([0,1,2,3]);
+  return{q:q.q,code:q.code||null,opts:order.map(i=>({t:q.opts[i],ok:i===q.a})),chosen:null};});
+ return{spec,level,qs,qi:0,startedAt:Date.now(),durationMs:8*60*1000,variantNo:100+Math.floor(Math.random()*880)};}
+function startTest(spec,level){
+ S.test=buildTest(spec,level);save();nav('cand-test');render();}
+function startTicker(){
+ stopTicker();
+ const upd=()=>{
+  const t=S.test;if(!t){stopTicker();return;}
+  const left=t.startedAt+t.durationMs-Date.now();
+  if(left<=0){finishTest(true);return;}
+  const te=$('#tTime'),tb=$('#tBar');
+  if(te){te.textContent=fmtLeft(left);te.classList.toggle('low',left<60000);}
+  if(tb)tb.style.width=clamp(left/t.durationMs*100,0,100)+'%';};
+ ticker=setInterval(upd,1000);upd();}
+function finishTest(auto){
+ const t=S.test;if(!t)return;
+ stopTicker();
+ const correct=t.qs.filter(q=>q.chosen!==null&&q.opts[q.chosen].ok).length;
+ const score=Math.round(correct/t.qs.length*100);
+ const passed=score>=60;
+ const u=S.user;
+ u.history.unshift({date:Date.now(),spec:t.spec,level:t.level,score,passed});
+ if(passed){
+  u.grade=t.level;u.spec=t.spec;
+  u.category={spec:t.spec,score,date:Date.now()};
+  u.lastGradeChange=Date.now();
+ }
+ S.lastResult={date:Date.now(),spec:t.spec,level:t.level,score,correct,passed,auto:!!auto,qs:t.qs};
+ S.test=null;save();
+ nav('cand-result');}
+
+/* ================= сбор форм ================= */
+function collect(form){
+ form.querySelectorAll('[data-bind]').forEach(el=>{
+  setPath(S,el.dataset.bind,el.type==='checkbox'?el.checked:el.value);});
+ form.querySelectorAll('[data-chips]').forEach(box=>{
+  setPath(S,box.dataset.chips,[...box.querySelectorAll('.chip-t')].map(s=>s.textContent));});}
+
+/* ================= навигатор экранов ================= */
+function ensureCandidate(){if(!S.user)S.user=makeDemoUser();S.role='candidate';}
+function ensureEmployer(){if(!S.employer)S.employer=makeDemoEmployer();S.role='employer';}
+function renderScreensPanel(){
+ const items=[[1,'Регистрация / вход','Общий','register'],[2,'Подтверждение email','Общий','verify'],
+ [3,'Профиль / резюме','Канд.','cand-profile'],[4,'Опрос','Канд.','cand-survey'],
+ [5,'Тестирование','Канд.','cand-test',1],[6,'Результат и категория','Канд.','cand-result',1],
+ [7,'Категория и грейд','Канд.','cand-grade'],[8,'Входящие приглашения','Канд.','cand-invites',1],
+ [9,'Настройки','Канд.','cand-settings'],[10,'Профиль компании','Раб.','emp-company'],
+ [11,'Описание потребности','Раб.','emp-demand'],[12,'Подборка','Раб.','emp-match',1],
+ [13,'Банк кандидатов','Раб.','emp-bank'],[14,'Карточка кандидата','Раб.','emp-candidate'],
+ [15,'Форма приглашения','Раб.','emp-invite-form',1],[16,'Мои приглашения','Раб.','emp-invites']];
+ $('#screensPanel').innerHTML=`<div class="sp-h">Навигатор: 16 экранов ТЗ <button data-act="screens-toggle" style="color:var(--dim)">${ic('x',14)}</button></div>
+ ${items.map(([n,t,r,rt,hot])=>`<button class="sp-it" data-act="go-screen" data-n="${n}"><span class="n">${String(n).padStart(2,'0')}</span><span>${t}</span><span class="rl">${r}</span>${hot?'<span class="hot"></span>':''}</button>`).join('')}
+ <div class="sp-f"><button class="btn ghost sm" data-act="reset-demo">${ic('refresh',13)} Сбросить демо-данные</button></div>`;}
+function goScreen(n){
+ $('#screensPanel').classList.remove('open');
+ const candMap={3:'cand-profile',4:'cand-survey',5:'cand-test',6:'cand-result',7:'cand-grade',8:'cand-invites',9:'cand-settings'};
+ const empMap={10:'emp-company',11:'emp-demand',12:'emp-match',13:'emp-bank',16:'emp-invites'};
+ if(n===1){S.role=null;save();nav('register');}
+ else if(n===2){S.pending={code:'493021',role:'candidate'};save();nav('verify');}
+ else if(candMap[n]){ensureCandidate();save();nav(candMap[n]);}
+ else if(empMap[n]){ensureEmployer();save();nav(empMap[n]);}
+ else if(n===14){ensureEmployer();save();nav('emp-candidate','K-1024');}
+ else if(n===15){ensureEmployer();S.invDraft={candId:'K-1024',msg:'',from:'',to:'',vacancy:'',channel:S.employer.company.channel};save();nav('emp-invite-form','K-1024');}}
+
+/* ================= действия (клики) ================= */
+document.addEventListener('click',e=>{
+ const el=e.target.closest('[data-act]');if(!el)return;
+ e.preventDefault();
+ const act=el.dataset.act,id=el.dataset.id;
+ switch(act){
+  case 'nav':nav(el.dataset.to,el.dataset.id);break;
+  case 'screens-toggle':$('#screensPanel').classList.toggle('open');break;
+  case 'go-screen':goScreen(+el.dataset.n);break;
+  case 'reset-demo':resetDemo();break;
+  case 'demo-login':{
+   const r=el.dataset.role;
+   if(r==='candidate'){if(!S.user)S.user=makeDemoUser();S.role='candidate';save();toast('Демо-вход: кандидат '+S.user.name);nav('cand-profile');}
+   else{if(!S.employer)S.employer=makeDemoEmployer();S.role='employer';save();toast('Демо-вход: компания «'+S.employer.company.name+'»');nav('emp-match');}
+   break;}
+  case 'register-as':S.authTab='reg';S.regRole=el.dataset.role;save();nav('register');break;
+  case 'auth-tab':S.authTab=el.dataset.t;save();render();break;
+  case 'reg-role':S.regRole=el.dataset.v;save();render();break;
+  case 'fill-code':{const inp=document.querySelector('[data-form="verify"] input[name="code"]');if(inp)inp.value=el.dataset.code;break;}
+  case 'logout':S.role=null;save();toast('Вы вышли из кабинета');nav('home');break;
+  case 'pick':{S.draftSurvey[el.dataset.k]=el.dataset.v;save();render();break;}
+  case 'survey-done':{
+   const d=S.draftSurvey;Object.assign(S.user,{industry:d.industry,spec:d.spec,grade:d.grade,surveyDone:true});
+   save();toast('Опрос завершён — уровень теста: '+d.grade);nav('cand-test');break;}
+  case 'start-test':startTest(S.user.spec,el.dataset.level);break;
+  case 'answer':{
+   const t=S.test;if(!t)break;
+   t.qs[t.qi||0].chosen=+el.dataset.i;save();
+   document.querySelectorAll('.opt').forEach((b,j)=>{
+    b.classList.toggle('on',j===+el.dataset.i);
+    const ok=b.querySelector('.ok');if(ok)ok.remove();
+    if(j===+el.dataset.i)b.insertAdjacentHTML('beforeend',ic('check',16,'ok'));});
+   break;}
+  case 'q-next':S.test.qi=Math.min((S.test.qi||0)+1,S.test.qs.length-1);save();render();break;
+  case 'q-prev':S.test.qi=Math.max((S.test.qi||0)-1,0);save();render();break;
+  case 'finish-test':finishTest(false);break;
+  case 'skip-lock':S.user.lastGradeChange=Date.now()-91*DAY;save();toast('Демо: лимит 3 месяца снят');render();break;
+  case 'open-inv':nav('cand-invite',id);break;
+  case 'inv-accept':{const i=invite(id);if(i){i.status='accepted';save();toast('Приглашение принято — контакты открыты');render();}break;}
+  case 'inv-decline':{const i=invite(id);if(i){i.status='declined';save();toast('Приглашение отклонено');render();}break;}
+  case 'sim-acc':case 'sim-dec':{
+   const i=invite(id);if(i){i.status=act==='sim-acc'?'accepted':'declined';save();
+    toast(act==='sim-acc'?'Демо: кандидат принял — контакты открыты у обеих сторон':'Демо: кандидат отклонил приглашение',act==='sim-acc'?'':'err');render();}break;}
+  case 'invite':{
+   S.invDraft={candId:id,msg:'',from:'',to:'',vacancy:'',channel:S.employer.company.channel};
+   save();nav('emp-invite-form',id);break;}
+  case 'chip-del':{
+   const box=el.closest('[data-chips]'),chip=el.closest('.chip');
+   const t=chip.querySelector('.chip-t').textContent;
+   const arr=getPath(S,box.dataset.chips)||[];
+   const ix=arr.findIndex(x=>x.toLowerCase()===t.toLowerCase());
+   if(ix>=0)arr.splice(ix,1);
+   chip.remove();save();break;}
+  case 'bank-apply':{
+   S.bankF={spec:$('#fSpec').value,grade:$('#fGrade').value,stack:$('#fStack').value,fsp:$('#fFsp').checked};
+   save();render();break;}
+  case 'bank-reset':S.bankF={spec:'',grade:'',stack:'',fsp:false};save();render();break;
+  case 'refresh':render();break;
+  case 'pdf':downloadPDF();break;
+  case 'fsp-bind':
+   showModal(`<h3>Вход через ФСП ID</h3>
+    <p class="hint" style="margin-bottom:14px">Имитация SSO Keycloak экосистемы ФСП. Любые логин и пароль подойдут.</p>
+    <form data-form="fsp">
+     ${field('Логин ФСП',`<input name="l" placeholder="например, fsp_0412" required>`)}
+     ${field('Пароль',`<input type="password" name="p" placeholder="••••••••" required>`)}
+     <button class="btn primary" style="width:100%">Войти и привязать</button>
+    </form>`);
+   break;
+  case 'fsp-unlink':S.user.fsp=null;save();toast('ФСП ID отвязан (демо)');render();break;
+  case 'modal-close':closeModal();break;
+ }
+});
+/* клик по фону модалки */
+ $('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
+
+/* ================= чипсы: ввод ================= */
+document.addEventListener('keydown',e=>{
+ const inp=e.target.closest('input.chips-in');if(!inp)return;
+ if(e.key==='Enter'||e.key===','){
+  e.preventDefault();
+  const box=inp.closest('[data-chips]');
+  const t=inp.value.trim().replace(/,$/,'');
+  if(!t)return;
+  const arr=getPath(S,box.dataset.chips)||[];
+  if(arr.some(x=>x.toLowerCase()===t.toLowerCase())){inp.value='';return;}
+  arr.push(t);
+  inp.insertAdjacentHTML('beforebegin',chipHtml(t));
+  inp.value='';save();
+ }
+});
+
+/* ================= свитчи (change) ================= */
+document.addEventListener('change',e=>{
+ const el=e.target.closest('[data-chk]');if(!el)return;
+ setPath(S,el.dataset.chk,el.checked);save();
+ toast('Настройка сохранена');
+});
+
+/* ================= формы (submit) ================= */
+document.addEventListener('submit',e=>{
+ const form=e.target.closest('[data-form]');if(!form)return;
+ e.preventDefault();
+ const kind=form.dataset.form;
+ form.querySelectorAll('.field.err').forEach(f=>f.classList.remove('err'));
+
+ if(kind==='login'){
+  const email=form.email.value.trim().toLowerCase();
+  if(!email){toast('Введите email','err');return;}
+  if(S.employer&&S.employer.email.toLowerCase()===email){S.role='employer';save();toast('Вход: работодатель');nav('emp-match');return;}
+  if(S.user&&S.user.email.toLowerCase()===email){S.role='candidate';save();toast('Вход: кандидат');nav('cand-profile');return;}
+  /* новый кандидат с этим email */
+  S.user=makeDemoUser();S.user.email=email;S.role='candidate';save();
+  toast('Аккаунт найден — вошли как кандидат');nav('cand-profile');return;}
+
+ if(kind==='register'){
+  const email=form.email.value.trim(),pass=form.pass.value,consent=form.consent.checked;
+  let ok=true;
+  if(!/^\S+@\S+\.\S+$/.test(email)){form.email.closest('.field').classList.add('err');ok=false;}
+  if(pass.length<6){form.pass.closest('.field').classList.add('err');ok=false;}
+  if(!consent){form.consent.closest('.field').classList.add('err');ok=false;}
+  if(!ok){toast('Проверьте поля формы','err');return;}
+  S.pending={code:String(Math.floor(100000+Math.random()*900000)),role:S.regRole};
+  S.regEmail=email;save();
+  toast('Код подтверждения «отправлен» на '+email);
+  nav('verify');return;}
+
+ if(kind==='verify'){
+  const code=form.code.value.trim();
+  const p=S.pending||{code:'493021',role:'candidate'};
+  if(code!==p.code){const fe=form.querySelector('[data-ferr]');if(fe)fe.style.display='block';return;}
+  const role=p.role;
+  if(role==='candidate'){
+   S.user=makeDemoUser();
+   if(S.regEmail)S.user.email=S.regEmail;
+   S.user.surveyDone=false;S.user.category=null;S.user.history=[];
+   S.role='candidate';
+   toast('Email подтверждён — заполните опрос, он определяет уровень теста');
+   nav('cand-survey');
+  }else{
+   S.employer=makeDemoEmployer();
+   if(S.regEmail){S.employer.email=S.regEmail;S.employer.company.email=S.regEmail;}
+   S.employer.company={name:'',about:'',industry:INDUSTRIES[0],contactName:'',email:S.regEmail||'',tg:'',phone:'',channel:'Telegram'};
+   S.employer.demand={spec:SPECS[0],grade:GRADES[1],stack:[],team:'',done:false};
+   S.role='employer';
+   toast('Email подтверждён — заполните профиль компании');
+   nav('emp-company');
+  }
+  S.pending=null;S.regEmail='';save();return;}
+
+ if(kind==='profile'){
+  collect(form);save();toast('Профиль сохранён');render();return;}
+
+ if(kind==='company'){
+  collect(form);save();toast('Профиль компании сохранён');render();return;}
+
+ if(kind==='demand'){
+  collect(form);
+  const d=S.employer.demand;
+  if(!d.stack.length){toast('Добавьте хотя бы одну технологию в стек','err');return;}
+  d.done=true;save();
+  toast('Потребность сохранена — подборка сформирована');
+  nav('emp-match');return;}
+
+ if(kind==='invite'){
+  const msg=form.msg.value.trim();
+  const from=parseInt(form.from.value,10)||0;
+  const to=parseInt(form.to.value,10)||0;
+  let ok=true;
+  if(!msg){form.msg.closest('.field').classList.add('err');ok=false;}
+  if(from<=0){form.from.closest('.field').classList.add('err');ok=false;}
+  if(to<=0||to<from){form.to.closest('.field').classList.add('err');ok=false;}
+  if(!ok){toast('Заполните обязательные поля','err');return;}
+  collect(form);
+  const co=S.employer.company;
+  const cid=S.invDraft.candId;
+  S.invites.push({
+   id:'IN-'+(S.seqInv++),employer:'me',companyName:co.name||'Компания',cand:cid,
+   salaryFrom:from,salaryTo:to,vacancy:S.invDraft.vacancy.trim(),channel:S.invDraft.channel,
+   message:msg,ich:{email:co.email,tg:co.tg},date:Date.now(),status:'sent'});
+  S.invDraft=null;save();
+  toast('Приглашение отправлено кандидату '+cid+' — вилка '+money(from)+'—'+money(to)+' ₽');
+  nav('emp-invites');return;}
+
+ if(kind==='fsp'){
+  const id='FSP-'+String(1000+Math.floor(Math.random()*9000));
+  S.user.fsp={id,items:[{place:'Золото',name:'Национальный чемпионат «Big Data»',year:2024},{place:'Серебро',name:'Algorithms Cup',year:2023}]};
+  save();closeModal();
+  toast('ФСП ID '+id+' привязан — история достижений подтянута');
+  render();return;}
+});
+
+/* ================= рендер ================= */
+const guardC=v=>()=>S.user?v():needLogin('candidate');
+const guardE=v=>()=>S.employer?v():needLogin('employer');
+const VIEWS={
+ home:vHome,register:vRegister,verify:vVerify,
+ 'cand-profile':guardC(vCandProfile),'cand-survey':guardC(vCandSurvey),'cand-test':guardC(vCandTest),
+ 'cand-result':guardC(vCandResult),'cand-grade':guardC(vCandGrade),'cand-invites':guardC(vCandInvites),
+ 'cand-invite':guardC(vCandInvite),'cand-settings':guardC(vCandSettings),
+ 'emp-company':guardE(vEmpCompany),'emp-demand':guardE(vEmpDemand),'emp-match':guardE(vEmpMatch),
+ 'emp-bank':guardE(vEmpBank),'emp-candidate':guardE(vEmpCandidate),'emp-invite-form':guardE(vEmpInviteForm),'emp-invites':guardE(vEmpInvites)};
+function render(){
+ stopTicker();
+ const fn=VIEWS[route.name]||vHome;
+ const body=fn();
+ const who=S.role==='candidate'?(S.user?(S.user.name||'Кандидат'):''):(S.role==='employer'?(S.employer?(S.employer.company.name||'Работодатель'):''):null);
+ $('#app').innerHTML=`<header class="hdr"><div class="container hdr-in">
+  <a class="logo" href="#/home">${LOGO}<span class="logo-t">FSP<span class="dot">·</span>TALENT</span><span class="logo-sub">DEMO</span></a>
+  <div class="hdr-r">
+   ${who?`<span class="role-badge">${S.role==='candidate'?ic('user',14):ic('brief',14)}${esc(who)}</span><button class="btn ghost sm" data-act="logout">${ic('out',14)} Выйти</button>`
+   :`<button class="btn sm" data-act="nav" data-to="register">Войти / регистрация</button>`}
+  </div></div></header>${body}`;
+ if(route.name==='cand-test'&&S.test)startTicker();
+ const key=route.name+(route.id||'');
+ if(key!==lastKey){window.scrollTo(0,0);lastKey=key;}
+}
+renderScreensPanel();
+render();
+</script>
+</body>
+</html>

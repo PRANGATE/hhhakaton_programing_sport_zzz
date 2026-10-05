@@ -6,6 +6,10 @@ services:
     restart: unless-stopped
     ports:
       - "80:3000"
+    volumes:
+      - ./public:/app/public
+      - ./server:/app/server
+      - ./data:/app/data
     environment:
       NODE_ENV: production
       PORT: "3000"

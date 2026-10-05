@@ -39,9 +39,9 @@ app.use('/vendor/keycloak', express.static(
 ));
 
 // --- SPA fallback ---
-app.get('*', (_req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
-});
+// app.get('*', (_req, res) => {
+//   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+// });
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`[fsp] listening on http://0.0.0.0:${PORT}`);
