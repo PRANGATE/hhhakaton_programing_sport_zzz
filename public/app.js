@@ -44,7 +44,7 @@ $$('[data-stub]').forEach(el => el.addEventListener('click', (e) => {
 // ---- загрузка конфига и подготовка Keycloak ----
 async function loadConfig() {
   try {
-    const res = await fetch('/api/config', { cache: 'no-store' });
+    const res = await fetch('/api/v1/config', { cache: 'no-store' });
     return await res.json();
   } catch { return null; }
 }
