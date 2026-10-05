@@ -13,8 +13,8 @@ $VpsDockerDir  = "/home/PRANG/docker"
 $RemoteTar     = "$VpsDockerDir/fsp-hhru-image.tar"
 
 $ContainerName = "fsp-app"
-$PortMapping   = "80:3000"
-$MemoryLimit   = "256m"
+$PortMapping   = "80:8080"
+$MemoryLimit   = "320m"
 $CpuLimit      = "0.5"
 
 # Keycloak / ФСП ID — включишь после хакатона
