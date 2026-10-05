@@ -1,4 +1,5 @@
 import express from 'express';
+import pool from './db.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -7,11 +8,21 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '512kb' }));
 app.use(express.urlencoded({ extended: false }));
 
-// --- health для nginx (location = /health), HEALTHCHECK и docker-compose ---
+// --- liveness: процесс жив ---
 app.get('/health', (_req, res) => res.json({ ok: true, ts: Date.now() }));
 
+// --- readiness: готов принимать (проверка БД) ---
+app.get('/ready', async (_req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[fsp] /ready failed', err.message);
+    res.status(503).json({ ok: false, error: 'db_unavailable' });
+  }
+});
+
 // --- публичный конфиг для фронта (в т.ч. настройки Keycloak) ---
-//     keycloak.enabled=false по умолчанию: SSO включается флагом после хакатона
 app.get('/api/config', (_req, res) => {
   res.json({
     appName: 'ФСП · Платформа ИТ-вакансий',
@@ -25,13 +36,11 @@ app.get('/api/config', (_req, res) => {
 });
 
 // --- заглушки авторизации (MVP) ---
-//     Реальная реализация: bcrypt + JWT/sessions, PostgreSQL — Post-MVP
 app.post('/api/auth/login',    (_req, res) => res.status(501).json({ error: 'not_implemented' }));
 app.post('/api/auth/register', (_req, res) => res.status(501).json({ error: 'not_implemented' }));
 
 // --- всё остальное — 404 JSON ---
-//     Статику (/, /styles.css, /app.js, /vendor/*) отдаёт nginx из /app/public.
-//     SPA-fallback и раздача файлов — на стороне nginx (try_files ... /index.html).
+//     Статику отдаёт nginx; сюда доходят только API-пути.
 app.use((_req, res) => {
   res.status(404).json({ error: 'not_found' });
 });

@@ -1,4 +1,34 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fsp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fsp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fsp_secret}
+      POSTGRES_DB: fsp
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fsp -d fsp && psql -U fsp -d fsp -c 'SELECT 1' -q"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    mem_limit: 512m
+    cpus: 0.5
+
+  migrate:
+    build: .
+    image: fsp-hhru:latest
+    container_name: fsp-migrate
+    command: ["npm", "run", "migrate:up"]
+    environment:
+      DATABASE_URL: postgres://fsp:${POSTGRES_PASSWORD:-fsp_secret}@postgres:5432/fsp
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   fsp-app:
     build: .
     image: fsp-hhru:latest
@@ -10,11 +40,16 @@ services:
       NODE_ENV: production
       PORT: "3000"
       NODE_OPTIONS: "--max-old-space-size=192"
-
+      DATABASE_URL: postgres://fsp:${POSTGRES_PASSWORD:-fsp_secret}@postgres:5432/fsp
       KEYCLOAK_ENABLED: "false"
       KEYCLOAK_URL: "https://id.fsp.example"
       KEYCLOAK_REALM: "fsp"
       KEYCLOAK_CLIENT_ID: "fsp-web"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     mem_limit: 320m
     cpus: 0.5
     healthcheck:
@@ -23,3 +58,6 @@ services:
       timeout: 3s
       retries: 3
       start_period: 15s
+
+volumes:
+  pgdata:

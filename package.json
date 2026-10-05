@@ -6,10 +6,16 @@
   "engines": { "node": ">=20" },
   "scripts": {
     "start": "node server/index.js",
-    "dev": "node --watch server/index.js"
+    "dev": "node --watch server/index.js",
+    "migrate": "node-pg-migrate",
+    "migrate:up": "node-pg-migrate up",
+    "migrate:down": "node-pg-migrate down",
+    "migrate:create": "node-pg-migrate create --migration-file-language js"
   },
   "dependencies": {
     "express": "^4.19.2",
-    "keycloak-js": "^25.0.1"
+    "keycloak-js": "^25.0.1",
+    "node-pg-migrate": "^7.9.0",
+    "pg": "^8.13.1"
   }
 }
