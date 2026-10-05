@@ -1,5 +1,6 @@
 services:
   fsp-app:
+    build: .
     image: fsp-hhru:latest
     container_name: fsp-app
     restart: unless-stopped
