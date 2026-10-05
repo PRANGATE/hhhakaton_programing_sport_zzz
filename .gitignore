@@ -1,0 +1,45 @@
+# ---------- Node ----------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+.pnpm-store/
+
+# ---------- Сборка / кэш ----------
+dist/
+build/
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+
+# ---------- Окружение и секреты ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ---------- Данные (SQLite, volume) ----------
+data/
+*.sqlite
+*.sqlite3
+*.db
+
+# ---------- Docker ----------
+*.tar
+docker-compose.override.yml
+
+# ---------- IDE / OS ----------
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ---------- Логи ----------
+logs/
+*.log

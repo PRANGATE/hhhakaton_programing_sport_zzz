@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ФСП · Платформа ИТ-вакансий — Вход</title>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="layout">
+
+    <!-- Левая панель: брендинг -->
+    <aside class="brand">
+      <div class="brand__logo">
+        <span class="brand__mark">ФСП</span>
+        <span class="brand__sub">Федерация спортивного программирования</span>
+      </div>
+
+      <h1 class="brand__title">Платформа&nbsp;ИТ&#8209;вакансий</h1>
+      <p class="brand__lead">
+        Работодатель находит категорию с подтверждённым грейдом&nbsp;—
+        и сам выходит на кандидата с предложением и уровнем зарплаты.
+      </p>
+
+      <ul class="brand__points">
+        <li>Категория присваивается по&nbsp;опросу и&nbsp;тесту, а&nbsp;не&nbsp;по&nbsp;резюме</li>
+        <li>Достижения ФСП усиливают профиль кандидата</li>
+        <li>Уровень зарплаты виден до&nbsp;начала общения</li>
+      </ul>
+
+      <footer class="brand__footer">© ФСП, 2026 · прототип</footer>
+    </aside>
+
+    <!-- Правая панель: форма входа -->
+    <main class="panel">
+      <div class="panel__inner">
+        <h2 class="panel__title">Вход в личный кабинет</h2>
+        <p class="panel__hint">Выберите роль и войдите по&nbsp;e&#8209;mail или через ФСП&nbsp;ID.</p>
+
+        <!-- Переключатель роли -->
+        <div class="roles" role="tablist" aria-label="Роль">
+          <button class="roles__btn is-active" role="tab" data-role="candidate" aria-selected="true">Кандидат</button>
+          <button class="roles__btn"           role="tab" data-role="employer"  aria-selected="false">Работодатель</button>
+        </div>
+
+        <!-- Форма -->
+        <form class="form" id="login-form" novalidate>
+          <label class="field">
+            <span class="field__label">E-mail</span>
+            <input class="field__input" type="email" name="email"
+                   placeholder="you@example.com" autocomplete="email" required />
+          </label>
+
+          <label class="field">
+            <span class="field__label">Пароль</span>
+            <input class="field__input" type="password" name="password"
+                   placeholder="••••••••" autocomplete="current-password" required />
+          </label>
+
+          <div class="form__row">
+            <label class="check">
+              <input type="checkbox" name="remember" />
+              <span>Запомнить меня</span>
+            </label>
+            <a class="link" href="#" data-stub>Забыли пароль?</a>
+          </div>
+
+          <button class="btn btn--primary" type="submit">Войти</button>
+        </form>
+
+        <div class="divider"><span>или</span></div>
+
+        <button class="btn btn--ghost" id="fsp-id-btn" type="button">
+          <span class="fsp-dot" aria-hidden="true"></span>
+          Войти через ФСП&nbsp;ID
+        </button>
+
+        <p class="panel__foot">
+          Нет аккаунта? <a class="link" href="#" data-stub>Зарегистрироваться</a>
+        </p>
+
+        <p class="legal">
+          Продолжая, вы соглашаетесь с обработкой персональных данных
+          в соответствии с ФЗ&nbsp;№&nbsp;152&#8209;ФЗ.
+        </p>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
