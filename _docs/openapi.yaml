@@ -1,0 +1,63 @@
+openapi: 3.0.3
+info:
+  title: ФСП · Платформа ИТ-вакансий API
+  version: 0.1.0
+  description: |
+    Черновая спецификация. Заполняется по мере реализации эндпоинтов.
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local
+paths:
+  /config:
+    get:
+      summary: Публичный конфиг фронта
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Config'
+  /auth/register:
+    post:
+      summary: Регистрация
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, role]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                role: { type: string, enum: [candidate, employer] }
+      responses:
+        '201': { description: Created }
+        '409': { description: Email уже занят }
+  /auth/login:
+    post:
+      summary: Вход
+      responses:
+        '200': { description: OK }
+        '401': { description: Неверные креды }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Config:
+      type: object
+      properties:
+        appName: { type: string }
+        keycloak:
+          type: object
+          properties:
+            enabled: { type: boolean }
+            url: { type: string }
+            realm: { type: string }
+            clientId: { type: string }
+security:
+  - bearerAuth: []
