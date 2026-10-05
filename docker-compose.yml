@@ -41,6 +41,12 @@ services:
       PORT: "3000"
       NODE_OPTIONS: "--max-old-space-size=192"
       DATABASE_URL: postgres://fsp:${POSTGRES_PASSWORD:-fsp_secret}@postgres:5432/fsp
+
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev_access_change_me_min_32_chars_ok_12345}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev_refresh_change_me_min_32_chars_ok_12345}
+      JWT_ACCESS_TTL: "15m"
+      JWT_REFRESH_TTL: "30d"
+
       KEYCLOAK_ENABLED: "false"
       KEYCLOAK_URL: "https://id.fsp.example"
       KEYCLOAK_REALM: "fsp"

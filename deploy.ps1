@@ -22,17 +22,26 @@ $PortMapping   = "80:8080"
 $MemoryLimit   = "320m"
 $CpuLimit      = "0.5"
 
-# Реквизиты БД (для прод-деплоя смени пароль!)
+# Реквизиты БД (для прода — смени пароль!)
 $PostgresUser     = "fsp"
 $PostgresPassword = "fsp_secret"
 $PostgresDb       = "fsp"
 $DatabaseUrl      = "postgres://${PostgresUser}:${PostgresPassword}@${ContainerPostgres}:5432/${PostgresDb}"
+
+# JWT-секреты. Задай один раз и не меняй — иначе все ранее выданные токены станут невалидными.
+# Сгенерировать новые: -join ((1..48) | % { [char](Get-Random -Minimum 33 -Maximum 126) })
+$JwtAccessSecret  = "&f5<JP3(HGQS2\#Y({oqZ\U!k@Y43vNSj>RZ$CCN_.xJOq_["
+$JwtRefreshSecret = "--&Lpw4qg!9@5f&-9@F3JWy,V#sAwZ8,@^oo=BBkjXDy,ED5"
 
 $EnvVars = @(
   "NODE_ENV=production",
   "PORT=3000",
   "NODE_OPTIONS=--max-old-space-size=192",
   "DATABASE_URL=$DatabaseUrl",
+  "JWT_ACCESS_SECRET=$JwtAccessSecret",
+  "JWT_REFRESH_SECRET=$JwtRefreshSecret",
+  "JWT_ACCESS_TTL=15m",
+  "JWT_REFRESH_TTL=30d",
   "KEYCLOAK_ENABLED=false",
   "KEYCLOAK_URL=https://id.fsp.example",
   "KEYCLOAK_REALM=fsp",
@@ -81,13 +90,11 @@ Ok "доставлено"
 Info "prepare db + migrate + restart"
 
 $remoteLines = @(
-  'set -e',
-
   # сеть для контейнеров
   "docker network inspect $NetworkName >/dev/null 2>&1 || docker network create $NetworkName",
 
   # postgres: стартуем или создаём
-  "docker start $ContainerPostgres >/dev/null 2>&1 || docker run -d --name $ContainerPostgres --network $NetworkName --restart unless-stopped -e POSTGRES_USER=$PostgresUser -e POSTGRES_PASSWORD=$PostgresPassword -e POSTGRES_DB=$PostgresDb -v $PgVolumePath:/var/lib/postgresql/data postgres:16-alpine",
+  "docker start $ContainerPostgres >/dev/null 2>&1 || docker run -d --name $ContainerPostgres --network $NetworkName --restart unless-stopped -e POSTGRES_USER=$PostgresUser -e POSTGRES_PASSWORD=$PostgresPassword -e POSTGRES_DB=$PostgresDb -v ${PgVolumePath}:/var/lib/postgresql/data postgres:16-alpine",
 
   # ждём готовности БД (до 30 сек)
   "for i in {1..30}; do docker exec $ContainerPostgres pg_isready -U $PostgresUser -d $PostgresDb >/dev/null 2>&1 && break; sleep 1; done",
@@ -96,7 +103,7 @@ $remoteLines = @(
   "docker load -i '$RemoteTar'",
   "rm -f '$RemoteTar'",
 
-  # миграции (одноразовый контейнер, переопределяем CMD)
+  # миграции (одноразовый контейнер)
   "docker rm -f $ContainerMigrate >/dev/null 2>&1 || true",
   "docker run --rm --name $ContainerMigrate --network $NetworkName -e DATABASE_URL='$DatabaseUrl' '$FullImage' npm run migrate:up",
 
