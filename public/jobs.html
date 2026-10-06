@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ФСП · Платформа ИТ-вакансий — объявления</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/navigation_bar_styles.css" />
+    <link rel="stylesheet" href="/jobs_styles.css" />
+</head>
+
+<body>
+    <header>
+        <h1>Объявления</h1>
+        <p>Вакансии от работодателей. Выберите объявление слева, чтобы посмотреть детали и откликнуться.</p>
+    </header>
+
+    <main>
+        <div class="jobs">
+
+            <!-- Левая колонка: список объявлений -->
+            <aside class="jobs__list" id="jobsList" aria-label="Список объявлений"></aside>
+
+            <!-- Правая колонка: детали выбранного объявления -->
+            <section class="jobs__detail" id="jobsDetail" aria-live="polite"></section>
+
+        </div>
+    </main>
+
+    <footer>
+        <p><small>ФСП · Платформа ИТ-вакансий</small></p>
+    </footer>
+
+    <script src="/navigation_bar_script.js" defer></script>
+    <script src="/jobs_script.js" defer></script>
+</body>
+
+</html>
