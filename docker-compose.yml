@@ -51,6 +51,10 @@ services:
       KEYCLOAK_URL: "https://id.fsp.example"
       KEYCLOAK_REALM: "fsp"
       KEYCLOAK_CLIENT_ID: "fsp-web"
+    volumes:
+      - ./public:/app/public
+      - ./server:/app/server
+      - ./data:/app/data
     depends_on:
       postgres:
         condition: service_healthy

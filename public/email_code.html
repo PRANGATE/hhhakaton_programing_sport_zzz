@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ФСП · Платформа ИТ-вакансий — подтверждение</title>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+    <div>Подтвердите email</div>
+    <div class="pin-container">
+    <input type="password" maxlength="1" inputmode="numeric" class="pin-cell">
+    <input type="password" maxlength="1" inputmode="numeric" class="pin-cell">
+    <input type="password" maxlength="1" inputmode="numeric" class="pin-cell">
+    <input type="password" maxlength="1" inputmode="numeric" class="pin-cell">
+</div>
+
+<script>
+document.querySelectorAll('.pin-cell').forEach((cell, index, cells) => {
+    cell.addEventListener('input', () => {
+        if (cell.value && index < cells.length - 1) {
+            cells[index + 1].focus();
+        }
+    });
+    
+    cell.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !cell.value && index > 0) {
+            cells[index - 1].focus();
+        }
+    });
+});
+
+// Автофокус
+document.querySelector('.pin-cell').focus();
+</script>
+</body>
