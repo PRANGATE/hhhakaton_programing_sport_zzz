@@ -254,7 +254,7 @@ form > p:last-child {
     text-align: right;
 }
 
-button[type="submit"] {
+.btn-primary {
     padding: 12px 28px;
     font: inherit;
     font-size: 15px;
@@ -267,15 +267,15 @@ button[type="submit"] {
     transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
 }
 
-button[type="submit"]:hover {
+.btn-primary:hover {
     background: #3f6cf0;
 }
 
-button[type="submit"]:active {
+.btn-primary:active {
     transform: translateY(1px);
 }
 
-button[type="submit"]:focus-visible {
+.btn-primary:focus-visible {
     outline: none;
     box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.35);
 }
@@ -328,7 +328,7 @@ footer {
         text-align: stretch;
     }
 
-    button[type="submit"] {
+    .btn-primary {
         width: 100%;
     }
 }

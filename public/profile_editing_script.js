@@ -13,6 +13,13 @@
 document.addEventListener('DOMContentLoaded', () => {
     initPhoneMask('phone');
     document.querySelectorAll('[data-multi-select]').forEach(initMultiSelect);
+
+        const saveBtn = document.getElementById('saveProfile');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            window.location.href = '/profile.html';
+        });
+    }
 });
 
 /* ============================================================

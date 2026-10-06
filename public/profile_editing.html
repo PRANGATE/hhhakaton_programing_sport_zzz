@@ -1,13 +1,14 @@
 <!doctype html>
 <html lang="ru">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ФСП · Платформа ИТ-вакансий — подтверждение</title>
     <link rel="stylesheet" href="/styles.css" />
     <link rel="stylesheet" href="/profile_editing_styles.css" />
-    <script src="/profile_editing_script.js" defer></script>
 </head>
+
 <body>
     <header>
         <h1>Подтверждение профиля</h1>
@@ -22,40 +23,33 @@
 
                 <p>
                     <label for="lastName">Фамилия</label><br />
-                    <input type="text" id="lastName" name="lastName"
-                           autocomplete="family-name" required />
+                    <input type="text" id="lastName" name="lastName" autocomplete="family-name" required />
                 </p>
 
                 <p>
                     <label for="firstName">Имя</label><br />
-                    <input type="text" id="firstName" name="firstName"
-                           autocomplete="given-name" required />
+                    <input type="text" id="firstName" name="firstName" autocomplete="given-name" required />
                 </p>
 
                 <p>
                     <label for="middleName">Отчество</label><br />
-                    <input type="text" id="middleName" name="middleName"
-                           autocomplete="additional-name" />
+                    <input type="text" id="middleName" name="middleName" autocomplete="additional-name" />
                 </p>
 
                 <p>
                     <label for="email">Электронная почта</label><br />
-                    <input type="email" id="email" name="email"
-                           autocomplete="email" required />
+                    <input type="email" id="email" name="email" autocomplete="email" required />
                 </p>
 
                 <p>
                     <label for="telegram">Ссылка на Telegram</label><br />
-                    <input type="url" id="telegram" name="telegram"
-                           placeholder="https://t.me/username" />
+                    <input type="url" id="telegram" name="telegram" placeholder="https://t.me/username" />
                 </p>
 
                 <p>
                     <label for="phone">Номер телефона</label><br />
-                    <input type="tel" id="phone" name="phone"
-                           autocomplete="tel"
-                           inputmode="tel"
-                           placeholder="+7 (___) ___-__-__" />
+                    <input type="tel" id="phone" name="phone" autocomplete="tel" inputmode="tel"
+                        placeholder="+7 (___) ___-__-__" />
                 </p>
             </fieldset>
 
@@ -64,15 +58,13 @@
 
                 <p>
                     <label for="experience">Стаж (в годах)</label><br />
-                    <input type="number" id="experience" name="experience"
-                           min="0" max="60" step="0.5" />
+                    <input type="number" id="experience" name="experience" min="0" max="60" step="0.5" />
                 </p>
 
                 <p>
                     <label for="about">Коротко о себе</label><br />
-                    <textarea id="about" name="about" rows="5" cols="40"
-                              maxlength="500"
-                              placeholder="Пара предложений о вашем опыте и интересах"></textarea>
+                    <textarea id="about" name="about" rows="5" cols="40" maxlength="500"
+                        placeholder="Пара предложений о вашем опыте и интересах"></textarea>
                 </p>
             </fieldset>
 
@@ -85,9 +77,7 @@
                     и кнопкой удаления. Скрипт найдёт контейнер по data-multi-select,
                     возьмёт <option> из первого select и будет их клонировать.
                 -->
-                <div class="multi-select"
-                     data-multi-select="roles"
-                     data-name="roles">
+                <div class="multi-select" data-multi-select="roles" data-name="roles">
                     <div class="multi-select__row">
                         <select class="multi-select__select" name="roles[]">
                             <option value="">— выберите роль —</option>
@@ -125,11 +115,8 @@
                                 <option value="product-designer">Продуктовый дизайнер</option>
                             </optgroup>
                         </select>
-                        <button type="button"
-                                class="multi-select__remove"
-                                aria-label="Удалить роль"
-                                title="Удалить"
-                                hidden>×</button>
+                        <button type="button" class="multi-select__remove" aria-label="Удалить роль" title="Удалить"
+                            hidden>×</button>
                     </div>
                 </div>
             </fieldset>
@@ -137,9 +124,7 @@
             <fieldset>
                 <legend>Стеки и технологии</legend>
 
-                <div class="multi-select"
-                     data-multi-select="stacks"
-                     data-name="stacks">
+                <div class="multi-select" data-multi-select="stacks" data-name="stacks">
                     <div class="multi-select__row">
                         <select class="multi-select__select" name="stacks[]">
                             <option value="">— выберите стек —</option>
@@ -209,17 +194,14 @@
                                 <option value="kafka">Kafka</option>
                             </optgroup>
                         </select>
-                        <button type="button"
-                                class="multi-select__remove"
-                                aria-label="Удалить технологию"
-                                title="Удалить"
-                                hidden>×</button>
+                        <button type="button" class="multi-select__remove" aria-label="Удалить технологию"
+                            title="Удалить" hidden>×</button>
                     </div>
                 </div>
             </fieldset>
 
-            <p>
-                <button type="submit">Сохранить профиль</button>
+            <p class="profile-actions">
+                <button type="button" id="saveProfile" class="btn-primary">Сохранить профиль</button>
             </p>
         </form>
     </main>
@@ -228,6 +210,7 @@
         <p><small>ФСП · Платформа ИТ-вакансий</small></p>
     </footer>
 
-    <script src="/FILLME.js" defer></script>
+    <script src="/profile_editing_script.js" defer></script>
 </body>
+
 </html>
