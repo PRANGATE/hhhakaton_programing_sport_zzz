@@ -1,12 +1,15 @@
 <!doctype html>
 <html lang="ru">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ФСП · Платформа ИТ-вакансий — профиль</title>
     <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/navigation_bar_styles.css" />
     <link rel="stylesheet" href="/profile_styles.css" />
 </head>
+
 <body>
     <header>
         <h1>Профиль</h1>
@@ -82,9 +85,7 @@
                     <li class="badge badge--unconfirmed">
                         <span class="badge__text">DevOps / SRE</span>
                         <span class="badge__status">Не подтверждено</span>
-                        <a class="badge__action"
-                           href="/test.html?role=devops"
-                           role="button">Пройти тест</a>
+                        <a class="badge__action" href="/test.html?role=devops" role="button">Пройти тест</a>
                     </li>
                 </ul>
             </fieldset>
@@ -100,22 +101,18 @@
                     <li class="badge badge--unconfirmed">
                         <span class="badge__text">PostgreSQL</span>
                         <span class="badge__status">Не подтверждено</span>
-                        <a class="badge__action"
-                           href="/test.html?stack=postgresql"
-                           role="button">Пройти тест</a>
+                        <a class="badge__action" href="/test.html?stack=postgresql" role="button">Пройти тест</a>
                     </li>
                 </ul>
             </fieldset>
 
             <p class="profile-actions">
-                <p class="profile-actions">
-                    <a class="profile-btn profile-btn--ghost" href="/profile_editing.html" role="button">
-                        Редактировать
-                    </a>
-                    <button type="button" id="exportPdf" class="profile-btn profile-btn--primary">
-                        Экспорт в PDF
-                    </button>
-                </p>
+                <a class="profile-btn profile-btn--ghost" href="/profile_editing.html" role="button">
+                    Редактировать
+                </a>
+                <button type="button" id="exportPdf" class="profile-btn profile-btn--primary">
+                    Экспорт в PDF
+                </button>
             </p>
         </form>
     </main>
@@ -123,8 +120,10 @@
     <footer>
         <p><small>ФСП · Платформа ИТ-вакансий</small></p>
     </footer>
-    
+
+    <script src="/navigation_bar_script.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="/profile_script.js" defer></script>
 </body>
+
 </html>
