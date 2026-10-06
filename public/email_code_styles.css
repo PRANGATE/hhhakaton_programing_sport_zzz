@@ -1,0 +1,346 @@
+/* ==========================================================================
+   ФСП · Платформа ИТ-вакансий — подтверждение email
+   ========================================================================== */
+
+:root {
+  --bg:       #0a0f1e;
+  --panel:    #111831;
+  --panel-2:  #0e1530;
+  --line:     #1f2a4d;
+  --text:     #e8eeff;
+  --muted:    #8b97bd;
+  --accent:   #4f7cff;
+  --accent-2: #ff4d5a;
+  --ok:       #2ecc71;
+  --radius:   12px;
+
+  --line-hover: #2b3a67;
+  --field-bg:   #0b1226;
+
+  --shadow:      0 18px 50px rgba(0, 0, 0, .45);
+  --shadow-btn:  0 10px 24px rgba(79, 124, 255, .28);
+  --ring:        0 0 0 3px rgba(79, 124, 255, .22);
+  --ring-danger: 0 0 0 3px rgba(255, 77, 90, .22);
+
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: -apple-system, "Segoe UI", Roboto, "Inter", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+/* --------------------------------------------------------------------------
+   Сброс / база
+   -------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  padding: 40px 20px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--text);
+
+  background:
+    radial-gradient(900px 520px at 50% -12%, rgba(79, 124, 255, .16), transparent 65%),
+    var(--bg);
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(79, 124, 255, .35);
+  color: #fff;
+}
+
+/* --------------------------------------------------------------------------
+   Логотип
+   -------------------------------------------------------------------------- */
+
+body > img {
+  display: block;
+  width: 120px;
+  max-width: 45vw;
+  height: auto;
+  user-select: none;
+  filter: drop-shadow(0 8px 22px rgba(79, 124, 255, .35));
+}
+
+/* --------------------------------------------------------------------------
+   Заголовок
+   -------------------------------------------------------------------------- */
+
+.email-title {
+  margin: 0;
+  font-size: clamp(22px, 4.5vw, 30px);
+  font-weight: 700;
+  letter-spacing: -.02em;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--text);
+}
+
+/* --------------------------------------------------------------------------
+   Панель с кодом
+   -------------------------------------------------------------------------- */
+
+.email-information-container {
+  width: min(420px, 100%);
+  padding: 28px 24px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.email-from {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
+  text-align: center;
+  word-break: break-all;
+}
+
+.email-from::before {
+  content: "✉ ";
+  opacity: .7;
+}
+
+/* --------------------------------------------------------------------------
+   PIN-код
+   -------------------------------------------------------------------------- */
+
+.pin-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.pin-cell {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 52px;
+  height: 56px;
+  padding: 0;
+
+  font-family: inherit;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  color: var(--text);
+
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  outline: none;
+
+  caret-color: var(--accent);
+  appearance: none;
+  -webkit-appearance: none;
+
+  transition:
+    border-color var(--transition),
+    background-color var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.pin-cell::-webkit-outer-spin-button,
+.pin-cell::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.pin-cell::placeholder {
+  color: #3b4870;
+  opacity: 1;
+}
+
+.pin-cell:hover { border-color: var(--line-hover); }
+
+.pin-cell:focus,
+.pin-cell:focus-visible {
+  border-color: var(--accent);
+  background: var(--field-bg);
+  box-shadow: var(--ring);
+  transform: translateY(-1px);
+}
+
+.pin-cell:not(:placeholder-shown) {
+  border-color: rgba(79, 124, 255, .55);
+}
+
+.pin-cell.is-error {
+  border-color: var(--accent-2);
+  box-shadow: var(--ring-danger);
+  animation: pin-shake .28s ease;
+}
+
+.pin-cell.is-ok { border-color: var(--ok); }
+
+@keyframes pin-shake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-4px); }
+  75%      { transform: translateX(4px); }
+}
+
+/* --------------------------------------------------------------------------
+   Срок действия кода
+   -------------------------------------------------------------------------- */
+
+.code-lifetime {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
+  text-align: center;
+}
+
+.code-lifetime::before {
+  content: "⏱ ";
+  opacity: .7;
+}
+
+/* --------------------------------------------------------------------------
+   Кнопки
+   -------------------------------------------------------------------------- */
+
+.buttons-container {
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.buttons-container button {
+  width: 100%;
+  padding: 14px 20px;
+
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: .01em;
+
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+
+  transition:
+    background-color var(--transition),
+    border-color var(--transition),
+    color var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.buttons-container button:active { transform: translateY(1px); }
+
+.buttons-container button:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.buttons-container button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+  filter: grayscale(.25);
+}
+
+/* Основная */
+.submit-b {
+  color: #fff;
+  background: linear-gradient(180deg, #5a86ff 0%, var(--accent) 100%);
+  box-shadow: var(--shadow-btn);
+}
+
+.submit-b:hover {
+  background: linear-gradient(180deg, #6a92ff 0%, #3f6ef0 100%);
+  box-shadow: 0 12px 28px rgba(79, 124, 255, .38);
+}
+
+/* Вторичная */
+.resend-b {
+  color: var(--muted);
+  background: transparent;
+  border-color: var(--line);
+}
+
+.resend-b:hover {
+  color: var(--text);
+  background: rgba(79, 124, 255, .08);
+  border-color: var(--line-hover);
+}
+
+/* --------------------------------------------------------------------------
+   Адаптив
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 420px) {
+  body {
+    padding: 28px 16px;
+    gap: 20px;
+  }
+
+  .email-information-container {
+    padding: 22px 16px;
+    gap: 16px;
+  }
+
+  .pin-container { gap: 6px; }
+
+  .pin-cell {
+    height: 48px;
+    font-size: 20px;
+    border-radius: 8px;
+  }
+
+  .buttons-container button {
+    padding: 13px 16px;
+    font-size: 14px;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --line: #3a4a7d;
+    --muted: #aab4d6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}

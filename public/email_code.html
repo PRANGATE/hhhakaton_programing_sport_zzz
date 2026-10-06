@@ -1,19 +1,30 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ФСП · Платформа ИТ-вакансий — подтверждение</title>
-<link rel="stylesheet" href="/styles.css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ФСП · Платформа ИТ-вакансий — подтверждение</title>
+    <link rel="stylesheet" href="/email_code_styles.css" />
 </head>
 <body>
-    <div>Подтвердите email</div>
-    <div class="pin-container">
-    <input type="password" maxlength="1" inputmode="numeric" class="pin-cell">
-    <input type="password" maxlength="1" inputmode="numeric" class="pin-cell">
-    <input type="password" maxlength="1" inputmode="numeric" class="pin-cell">
-    <input type="password" maxlength="1" inputmode="numeric" class="pin-cell">
-</div>
+    <img src="logos/logo_01.svg">
+    <div class="email-title">Подтвердите email</div>
+    <div class="email-information-container">
+        <div>от: emailfiller@scam.com</div>
+        <div class="pin-container">
+            <input maxlength="1" inputmode="numeric" class="pin-cell">
+            <input maxlength="1" inputmode="numeric" class="pin-cell">
+            <input maxlength="1" inputmode="numeric" class="pin-cell">
+            <input maxlength="1" inputmode="numeric" class="pin-cell">
+            <input maxlength="1" inputmode="numeric" class="pin-cell">
+            <input maxlength="1" inputmode="numeric" class="pin-cell">
+        </div>
+        <div class="code-lifetime">код действует 10 минут с момента отправки</div>
+    </div>
+    <div class="buttons-container">
+        <button class="submit-b">подтвердить и войти</button>
+        <button class="resend-b">отправить снова</button>
+    </div>
 
 <script>
 document.querySelectorAll('.pin-cell').forEach((cell, index, cells) => {
