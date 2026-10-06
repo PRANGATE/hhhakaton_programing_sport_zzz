@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ФСП · Платформа ИТ-вакансий — предложения</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/navigation_bar_styles.css" />
+    <link rel="stylesheet" href="/offers_styles.css" />
+</head>
+
+<body>
+    <header>
+        <h1>Предложения</h1>
+        <p>Здесь собраны офферы от работодателей. Выберите предложение слева, чтобы посмотреть детали.</p>
+    </header>
+
+    <main>
+        <div class="offers">
+
+            <!-- Левая колонка: список предложений -->
+            <aside class="offers__list" id="offersList" aria-label="Список предложений"></aside>
+
+            <!-- Правая колонка: детали выбранного предложения -->
+            <section class="offers__detail" id="offersDetail" aria-live="polite"></section>
+
+        </div>
+    </main>
+
+    <footer>
+        <p><small>ФСП · Платформа ИТ-вакансий</small></p>
+    </footer>
+
+    <script src="/navigation_bar_script.js" defer></script>
+    <script src="/offers_script.js" defer></script>
+</body>
+
+</html>
