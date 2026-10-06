@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ФСП · Платформа ИТ-вакансий — профиль</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/profile_styles.css" />
+</head>
+<body>
+    <header>
+        <h1>Профиль</h1>
+        <p>Ваши данные, роли и технологии. Подтверждённые отмечены зелёным, неподтверждённые — красным.</p>
+    </header>
+
+    <main>
+        <form action="#" method="post" novalidate>
+
+            <fieldset>
+                <legend>Персональные данные</legend>
+
+                <div class="profile-grid">
+                    <p>
+                        <span class="profile-label">Фамилия</span>
+                        <span class="profile-value">пупкин</span>
+                    </p>
+                    <p>
+                        <span class="profile-label">Имя</span>
+                        <span class="profile-value">залупкин</span>
+                    </p>
+                    <p>
+                        <span class="profile-label">Отчество</span>
+                        <span class="profile-value">оргиевич</span>
+                    </p>
+                    <p>
+                        <span class="profile-label">Электронная почта</span>
+                        <span class="profile-value">
+                            <a href="mailto:p.ivanov@example.com">p.upkin@example.com</a>
+                        </span>
+                    </p>
+                    <p>
+                        <span class="profile-label">Telegram</span>
+                        <span class="profile-value">
+                            <a href="https://t.me/pivanov" target="_blank" rel="noopener">@pupkin</a>
+                        </span>
+                    </p>
+                    <p>
+                        <span class="profile-label">Телефон</span>
+                        <span class="profile-value">
+                            <a href="tel:+79991234567">+7 (999) 123-45-67</a>
+                        </span>
+                    </p>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Опыт</legend>
+
+                <p>
+                    <span class="profile-label">Стаж</span>
+                    <span class="profile-value">5 лет</span>
+                </p>
+
+                <p>
+                    <span class="profile-label">О себе</span>
+                    <span class="profile-value profile-value--multiline">
+                        Backend-разработчик с опытом проектирования высоконагруженных
+                        сервисов на Python и Go. Люблю чистую архитектуру, менторство
+                        и задачи, где нужно копать глубоко.
+                    </span>
+                </p>
+            </fieldset>
+
+            <fieldset>
+                <legend>роли</legend>
+
+                <ul class="badge-list" data-badge-list="roles">
+                    <li class="badge badge--confirmed">
+                        <span class="badge__text">Backend-разработчик</span>
+                        <span class="badge__status">Подтверждено</span>
+                    </li>
+                    <li class="badge badge--unconfirmed">
+                        <span class="badge__text">DevOps / SRE</span>
+                        <span class="badge__status">Не подтверждено</span>
+                        <a class="badge__action"
+                           href="/test.html?role=devops"
+                           role="button">Пройти тест</a>
+                    </li>
+                </ul>
+            </fieldset>
+
+            <fieldset>
+                <legend>Стеки и технологии</legend>
+
+                <ul class="badge-list" data-badge-list="stacks">
+                    <li class="badge badge--confirmed">
+                        <span class="badge__text">Python</span>
+                        <span class="badge__status">Подтверждено</span>
+                    </li>
+                    <li class="badge badge--unconfirmed">
+                        <span class="badge__text">PostgreSQL</span>
+                        <span class="badge__status">Не подтверждено</span>
+                        <a class="badge__action"
+                           href="/test.html?stack=postgresql"
+                           role="button">Пройти тест</a>
+                    </li>
+                </ul>
+            </fieldset>
+
+            <p class="profile-actions">
+                <button type="button" id="exportPdf">Экспорт в PDF</button>
+            </p>
+        </form>
+    </main>
+
+    <footer>
+        <p><small>ФСП · Платформа ИТ-вакансий</small></p>
+    </footer>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="/profile_script.js" defer></script>
+</body>
+</html>
