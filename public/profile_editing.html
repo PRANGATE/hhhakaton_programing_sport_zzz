@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ФСП · Платформа ИТ-вакансий — подтверждение</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/navigation_bar_styles.css" />
+    <link rel="stylesheet" href="/profile_editing_styles.css" />
+</head>
+
+<body>
+    <header>
+        <h1>Подтверждение профиля</h1>
+        <p>Заполните данные — они будут использоваться для подбора вакансий.</p>
+    </header>
+
+    <main>
+        <form action="#" method="post" novalidate>
+
+            <fieldset>
+                <legend>Персональные данные</legend>
+
+                <p>
+                    <label for="lastName">Фамилия</label><br />
+                    <input type="text" id="lastName" name="lastName" autocomplete="family-name" required />
+                </p>
+
+                <p>
+                    <label for="firstName">Имя</label><br />
+                    <input type="text" id="firstName" name="firstName" autocomplete="given-name" required />
+                </p>
+
+                <p>
+                    <label for="middleName">Отчество</label><br />
+                    <input type="text" id="middleName" name="middleName" autocomplete="additional-name" />
+                </p>
+
+                <p>
+                    <label for="email">Электронная почта</label><br />
+                    <input type="email" id="email" name="email" autocomplete="email" required />
+                </p>
+
+                <p>
+                    <label for="telegram">Ссылка на Telegram</label><br />
+                    <input type="url" id="telegram" name="telegram" placeholder="https://t.me/username" />
+                </p>
+
+                <p>
+                    <label for="phone">Номер телефона</label><br />
+                    <input type="tel" id="phone" name="phone" autocomplete="tel" inputmode="tel"
+                        placeholder="+7 (___) ___-__-__" />
+                </p>
+            </fieldset>
+
+            <fieldset>
+                <legend>Опыт</legend>
+
+                <p>
+                    <label for="experience">Стаж (в годах)</label><br />
+                    <input type="number" id="experience" name="experience" min="0" max="60" step="0.5" />
+                </p>
+
+                <p>
+                    <label for="about">Коротко о себе</label><br />
+                    <textarea id="about" name="about" rows="5" cols="40" maxlength="500"
+                        placeholder="Пара предложений о вашем опыте и интересах"></textarea>
+                </p>
+            </fieldset>
+
+            <fieldset>
+                <legend>роли</legend>
+
+                <!--
+                    Каждый мультивыбор — это контейнер с data-multi-select и data-name.
+                    Внутри — одна «шаблонная» строка: .multi-select__row с <select>
+                    и кнопкой удаления. Скрипт найдёт контейнер по data-multi-select,
+                    возьмёт <option> из первого select и будет их клонировать.
+                -->
+                <div class="multi-select" data-multi-select="roles" data-name="roles">
+                    <div class="multi-select__row">
+                        <select class="multi-select__select" name="roles[]">
+                            <option value="">— выберите роль —</option>
+                            <optgroup label="Разработка">
+                                <option value="backend">Backend-разработчик</option>
+                                <option value="frontend">Frontend-разработчик</option>
+                                <option value="fullstack">Fullstack-разработчик</option>
+                                <option value="mobile">Мобильный разработчик</option>
+                                <option value="game">Game-разработчик</option>
+                                <option value="embedded">Embedded / системный разработчик</option>
+                            </optgroup>
+                            <optgroup label="Данные и ML">
+                                <option value="data-engineer">Data Engineer</option>
+                                <option value="data-analyst">Data Analyst</option>
+                                <option value="data-scientist">Data Scientist</option>
+                                <option value="ml-engineer">ML Engineer</option>
+                                <option value="bi">BI-аналитик</option>
+                            </optgroup>
+                            <optgroup label="Инфраструктура и безопасность">
+                                <option value="devops">DevOps / SRE</option>
+                                <option value="qa">QA / тестировщик</option>
+                                <option value="security">Информационная безопасность</option>
+                                <option value="sysadmin">Системный администратор</option>
+                                <option value="dba">Администратор БД</option>
+                            </optgroup>
+                            <optgroup label="Продукт и управление">
+                                <option value="pm">Product Manager</option>
+                                <option value="project-manager">Project Manager</option>
+                                <option value="ba">Бизнес-аналитик</option>
+                                <option value="techlead">Tech Lead</option>
+                                <option value="cto">CTO / руководитель разработки</option>
+                            </optgroup>
+                            <optgroup label="Дизайн">
+                                <option value="ux-ui">UX/UI-дизайнер</option>
+                                <option value="product-designer">Продуктовый дизайнер</option>
+                            </optgroup>
+                        </select>
+                        <button type="button" class="multi-select__remove" aria-label="Удалить роль" title="Удалить"
+                            hidden>×</button>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Стеки и технологии</legend>
+
+                <div class="multi-select" data-multi-select="stacks" data-name="stacks">
+                    <div class="multi-select__row">
+                        <select class="multi-select__select" name="stacks[]">
+                            <option value="">— выберите стек —</option>
+                            <optgroup label="Языки программирования">
+                                <option value="python">Python</option>
+                                <option value="javascript">JavaScript</option>
+                                <option value="typescript">TypeScript</option>
+                                <option value="java">Java</option>
+                                <option value="kotlin">Kotlin</option>
+                                <option value="csharp">C#</option>
+                                <option value="cpp">C / C++</option>
+                                <option value="go">Go</option>
+                                <option value="rust">Rust</option>
+                                <option value="php">PHP</option>
+                                <option value="ruby">Ruby</option>
+                                <option value="swift">Swift</option>
+                                <option value="scala">Scala</option>
+                                <option value="1c">1С</option>
+                            </optgroup>
+                            <optgroup label="Frontend">
+                                <option value="react">React</option>
+                                <option value="vue">Vue.js</option>
+                                <option value="angular">Angular</option>
+                                <option value="svelte">Svelte</option>
+                                <option value="nextjs">Next.js</option>
+                                <option value="nuxt">Nuxt</option>
+                            </optgroup>
+                            <optgroup label="Backend-фреймворки">
+                                <option value="django">Django</option>
+                                <option value="fastapi">FastAPI</option>
+                                <option value="flask">Flask</option>
+                                <option value="spring">Spring / Spring Boot</option>
+                                <option value="nestjs">NestJS</option>
+                                <option value="express">Express</option>
+                                <option value="laravel">Laravel</option>
+                                <option value="aspnet">ASP.NET Core</option>
+                                <option value="gin">Gin / Echo</option>
+                            </optgroup>
+                            <optgroup label="Мобильная разработка">
+                                <option value="android">Android (Kotlin/Java)</option>
+                                <option value="ios">iOS (Swift)</option>
+                                <option value="flutter">Flutter</option>
+                                <option value="react-native">React Native</option>
+                            </optgroup>
+                            <optgroup label="Базы данных">
+                                <option value="postgresql">PostgreSQL</option>
+                                <option value="mysql">MySQL</option>
+                                <option value="mongodb">MongoDB</option>
+                                <option value="redis">Redis</option>
+                                <option value="clickhouse">ClickHouse</option>
+                                <option value="oracle">Oracle</option>
+                            </optgroup>
+                            <optgroup label="DevOps и инфраструктура">
+                                <option value="docker">Docker</option>
+                                <option value="kubernetes">Kubernetes</option>
+                                <option value="terraform">Terraform</option>
+                                <option value="ansible">Ansible</option>
+                                <option value="ci-cd">CI/CD (GitLab CI, Jenkins)</option>
+                                <option value="aws">AWS</option>
+                                <option value="yandex-cloud">Yandex Cloud</option>
+                            </optgroup>
+                            <optgroup label="Данные и ML">
+                                <option value="pytorch">PyTorch</option>
+                                <option value="tensorflow">TensorFlow</option>
+                                <option value="spark">Apache Spark</option>
+                                <option value="airflow">Airflow</option>
+                                <option value="kafka">Kafka</option>
+                            </optgroup>
+                        </select>
+                        <button type="button" class="multi-select__remove" aria-label="Удалить технологию"
+                            title="Удалить" hidden>×</button>
+                    </div>
+                </div>
+            </fieldset>
+
+            <p class="profile-actions">
+                <button type="button" id="saveProfile" class="btn-primary">Сохранить профиль</button>
+            </p>
+        </form>
+    </main>
+
+    <footer>
+        <p><small>ФСП · Платформа ИТ-вакансий</small></p>
+    </footer>
+
+    <script src="/navigation_bar_script.js" defer></script>
+    <script src="/profile_editing_script.js" defer></script>
+</body>
+
+</html>

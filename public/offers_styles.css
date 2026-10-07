@@ -1,0 +1,354 @@
+/* ============================================================
+   ФСП · Платформа ИТ-вакансий — страница предложений
+   Файл: /offers_styles.css
+   Опирается на переменные из styles.css.
+   ============================================================ */
+
+/* Отступы страницы — как на форме редактирования профиля */
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+body > header:not(.navbar),
+body > main,
+body > footer {
+    width: 100%;
+    max-width: none;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+body > header:not(.navbar) {
+    padding-top: 32px;
+}
+
+body > footer {
+    padding-bottom: 64px;
+}
+
+/* ---------- Раскладка: список слева, детали справа ---------- */
+
+.offers {
+    display: grid;
+    /* пропорция 3 : 5 */
+    grid-template-columns: 3fr 5fr;
+    gap: 20px;
+    align-items: start;
+    margin-top: 24px;
+}
+
+/* ---------- Левая колонка ---------- */
+
+.offers__list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+}
+
+/* Одна карточка в списке */
+.offer-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    padding: 14px 16px;
+
+    text-align: left;
+    font: inherit;
+    color: var(--text);
+
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--line);
+    border-radius: 10px;
+
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.05s ease;
+}
+
+.offer-card:hover {
+    border-color: #2a3866;
+    background: #101a3b;
+}
+
+.offer-card:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.25);
+}
+
+.offer-card.is-active {
+    border-color: var(--accent);
+    background: rgba(79, 124, 255, 0.08);
+}
+
+/* Название компании */
+.offer-card__company {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--text);
+}
+
+/* Должность */
+.offer-card__position {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+/* Низ карточки: вилка + статус */
+.offer-card__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 2px;
+}
+
+.offer-card__salary {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+/* ---------- Статусная плашка в карточке ---------- */
+
+.status {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    white-space: nowrap;
+
+    /* дефолт — приглушённый */
+    color: var(--muted);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--line);
+}
+
+/* Цветные варианты — полупрозрачные, в тон палитре */
+.status--sent {
+    /* отправлено — серый */
+    color: var(--muted);
+    border-color: var(--line);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.status--viewed {
+    /* просмотрено — синий */
+    color: #9db4ff;
+    border-color: rgba(79, 124, 255, 0.5);
+    background: rgba(79, 124, 255, 0.1);
+}
+
+.status--accepted {
+    /* принято — зелёный */
+    color: #7ee2a8;
+    border-color: rgba(46, 204, 113, 0.5);
+    background: rgba(46, 204, 113, 0.1);
+}
+
+.status--rejected {
+    /* отклонено — красный */
+    color: #ff8b95;
+    border-color: rgba(255, 77, 90, 0.5);
+    background: rgba(255, 77, 90, 0.1);
+}
+
+/* Цветная полоска слева на карточке по статусу */
+.offer-card--sent     { border-left-color: var(--line); }
+.offer-card--viewed   { border-left-color: var(--accent); }
+.offer-card--accepted { border-left-color: var(--ok); }
+.offer-card--rejected { border-left-color: var(--accent-2); }
+
+/* ---------- Правая колонка ---------- */
+
+.offers__detail {
+    padding: 24px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    min-height: 360px;
+}
+
+.offer-detail__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 20px;
+}
+
+.offer-detail__company {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.offer-detail__position {
+    margin: 0;
+    font-size: 15px;
+    color: var(--muted);
+}
+
+.offer-detail__salary {
+    margin: 6px 0 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    white-space: nowrap;
+}
+
+/* Блок с описанием */
+.offer-detail__section {
+    margin-bottom: 20px;
+}
+
+.offer-detail__label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.offer-detail__text {
+    margin: 0;
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+.offer-detail__contact {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    text-decoration: none;
+    word-break: break-word;
+}
+
+.offer-detail__contact:hover {
+    border-color: var(--accent);
+}
+
+/* ---------- Кнопки внизу справа ---------- */
+
+.offer-detail__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+}
+
+.offer-detail__actions button {
+    padding: 12px 24px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease,
+                color 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
+}
+
+.offer-detail__actions button:active {
+    transform: translateY(1px);
+}
+
+.offer-detail__actions button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.35);
+}
+
+.btn-accept {
+    color: #fff;
+    background: var(--ok);
+    border: 1px solid var(--ok);
+}
+
+.btn-accept:hover {
+    background: #27b863;
+    border-color: #27b863;
+}
+
+.btn-reject {
+    color: var(--accent-2);
+    background: transparent;
+    border: 1px solid rgba(255, 77, 90, 0.6);
+}
+
+.btn-reject:hover {
+    background: rgba(255, 77, 90, 0.1);
+    border-color: var(--accent-2);
+}
+
+/* Заблокированные кнопки (для уже принятых/отклонённых) */
+.offer-detail__actions button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ---------- Заглушка, если ничего не выбрано ---------- */
+
+.offers__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 320px;
+    color: var(--muted);
+    text-align: center;
+    font-size: 15px;
+}
+
+/* ---------- Адаптив ---------- */
+
+@media (max-width: 900px) {
+    .offers {
+        grid-template-columns: 1fr;
+    }
+
+    .offers__list {
+        max-height: none;
+    }
+
+    .offer-detail__head {
+        flex-direction: column;
+    }
+
+    .offer-detail__actions {
+        flex-direction: column-reverse;
+    }
+
+    .offer-detail__actions button {
+        width: 100%;
+    }
+}

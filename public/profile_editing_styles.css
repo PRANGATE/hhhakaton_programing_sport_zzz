@@ -1,0 +1,339 @@
+/* ============================================================
+   ФСП · Платформа ИТ-вакансий
+   Файл: /FILLME.css
+   Опирается на переменные и базовые стили из общего файла.
+   ============================================================ */
+
+/* ---------- Раскладка страницы ---------- */
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+header,
+main,
+footer {
+    width: 100%;
+    max-width: none;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ---------- Шапка ---------- */
+
+header {
+    margin-bottom: 28px;
+}
+
+header h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+header p {
+    margin: 0;
+    color: var(--muted);
+}
+
+/* ---------- Форма ---------- */
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+fieldset {
+    width: 100%;
+    margin: 0;
+    padding: 22px 24px 6px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+
+legend {
+    padding: 0 8px;
+    margin-left: -8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+fieldset p {
+    margin: 0 0 18px;
+}
+
+label {
+    display: inline-block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+/* ---------- Поля ввода ---------- */
+
+input[type="text"],
+input[type="email"],
+input[type="url"],
+input[type="tel"],
+input[type="number"],
+textarea,
+select {
+    width: 100%;
+    padding: 10px 12px;
+    font: inherit;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.5;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--muted);
+    opacity: 0.7;
+}
+
+select {
+    padding-right: 36px;
+    background-image:
+        linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position:
+        calc(100% - 18px) calc(50% - 2px),
+        calc(100% - 13px) calc(50% - 2px);
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+select option,
+select optgroup {
+    background: var(--panel);
+    color: var(--text);
+}
+
+input:hover,
+textarea:hover,
+select:hover {
+    border-color: #2a3866;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.2);
+}
+
+select option:disabled {
+    color: var(--muted);
+    opacity: 0.4;
+}
+
+input:not(:placeholder-shown):invalid,
+textarea:invalid {
+    border-color: var(--accent-2);
+}
+
+input:not(:placeholder-shown):invalid:focus,
+textarea:invalid:focus {
+    box-shadow: 0 0 0 3px rgba(255, 77, 90, 0.2);
+}
+
+/* ============================================================
+   Персональные данные — 2 колонки
+   ============================================================ */
+
+fieldset:nth-of-type(1) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 16px;
+    align-items: start;
+}
+
+fieldset:nth-of-type(1) > legend {
+    grid-column: 1 / -1;
+    margin-bottom: 8px;
+}
+
+fieldset:nth-of-type(1) > p {
+    margin: 0 0 18px;
+}
+
+/* ============================================================
+   Опыт — поля в половину ширины (как одна колонка персональных)
+   ============================================================ */
+
+fieldset:nth-of-type(2) > p {
+    width: 50%;
+}
+
+/* ============================================================
+   Мультивыбор (Роли и Стеки) — половина ширины поля
+   ============================================================ */
+
+.multi-select {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.multi-select__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;      /* было: flex: 0 0 calc(50% - 6px); */
+    max-width: 100%;     /* на всякий случай, чтобы длинный пункт не вылезал */
+    min-width: 0;
+}
+
+.multi-select__select {
+    /* было: flex: 1 1 auto; */
+    flex: 0 0 auto;
+    /* width выставляет JS */
+}
+
+.multi-select__remove {
+    flex: 0 0 auto;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--muted);
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.multi-select__remove:hover {
+    color: var(--accent-2);
+    border-color: var(--accent-2);
+}
+
+.multi-select__remove:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 77, 90, 0.25);
+}
+
+.multi-select__remove[hidden] {
+    display: none;
+}
+
+/* ---------- Кнопка «Сохранить профиль» ---------- */
+
+form > p:last-child {
+    margin: 4px 0 0;
+    text-align: right;
+}
+
+.btn-primary {
+    padding: 12px 28px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
+}
+
+.btn-primary:hover {
+    background: #3f6cf0;
+}
+
+.btn-primary:active {
+    transform: translateY(1px);
+}
+
+.btn-primary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.35);
+}
+
+/* ---------- Футер ---------- */
+
+footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    text-align: center;
+}
+
+/* ============================================================
+   Адаптив
+   ============================================================ */
+
+/* Планшет — персональные уже в одну колонку */
+@media (max-width: 720px) {
+    fieldset:nth-of-type(1) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    fieldset:nth-of-type(2) > p {
+        width: 100%;
+    }
+}
+
+/* Телефон */
+@media (max-width: 560px) {
+    body {
+        padding: 20px 10px 48px;
+    }
+
+    header h1 {
+        font-size: 22px;
+    }
+
+    fieldset {
+        padding: 18px 14px 4px;
+    }
+
+    .multi-select__remove {
+        width: 34px;
+        height: 34px;
+    }
+
+    form > p:last-child {
+        text-align: stretch;
+    }
+
+    .btn-primary {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+    }
+}
