@@ -14,6 +14,7 @@ const handle = (fn) => async (req, res, next) => {
         details: err.errors.map(e => ({ path: e.path.join('.'), message: e.message })),
       });
     }
+    console.error('[profile] error:', err.message, err.stack);
     next(err);
   }
 };

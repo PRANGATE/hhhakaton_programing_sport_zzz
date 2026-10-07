@@ -250,7 +250,9 @@ fieldset:nth-of-type(2) > p {
 
 form > p:last-child {
     margin: 4px 0 0;
-    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
 }
 
 .btn-primary {
@@ -260,23 +262,40 @@ form > p:last-child {
     font-weight: 600;
     color: #fff;
     background: var(--accent);
-    border: none;
+    border: 1px solid var(--accent);
     border-radius: 10px;
     cursor: pointer;
-    transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
+    transition: background .15s ease, transform .05s ease, box-shadow .15s ease;
 }
+.btn-primary:hover  { background: #3f6cf0; border-color: #3f6cf0; }
+.btn-primary:active { transform: translateY(1px); }
+.btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+.btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(79,124,255,.35); }
 
-.btn-primary:hover {
-    background: #3f6cf0;
+.btn-ghost {
+    padding: 12px 28px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease, transform .05s ease;
 }
+.btn-ghost:hover  { border-color: var(--accent); background: var(--panel-2); }
+.btn-ghost:active { transform: translateY(1px); }
+.btn-ghost:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(79,124,255,.35); }
 
-.btn-primary:active {
-    transform: translateY(1px);
-}
-
-.btn-primary:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.35);
+@media (max-width: 560px) {
+    form > p:last-child {
+        flex-direction: column-reverse;
+    }
+    .btn-primary,
+    .btn-ghost {
+        width: 100%;
+    }
 }
 
 /* ---------- Футер ---------- */

@@ -16,6 +16,7 @@ export const getCandidate = async (userId) => {
     [userId]
   );
   if (!urows[0]) return null;
+
   return {
     user_id:          urows[0].id,
     email:            urows[0].email,
@@ -31,18 +32,41 @@ export const getCandidate = async (userId) => {
   };
 };
 
+// Колонки jsonb — их надо сериализовать вручную.
+const JSONB_FIELDS = new Set(['stacks', 'soft_skills', 'visibility', 'roles']);
+
+const toPg = (col, val) =>
+  JSONB_FIELDS.has(col) && val != null ? JSON.stringify(val) : val;
+
 export const upsertCandidate = async (userId, patch) => {
   const cols = Object.keys(patch);
   if (!cols.length) return getCandidate(userId);
 
   const insert = ['user_id', ...cols];
-  const params = [userId, ...cols.map(c => patch[c])];
+  const params = [userId, ...cols.map(c => toPg(c, patch[c]))];
   const placeholders = insert.map((_, i) => `$${i + 1}`);
-
   const updates = cols.map(c => `${c} = EXCLUDED.${c}`).join(', ');
 
   const { rows } = await query(
     `INSERT INTO profile.candidates (${insert.join(',')})
+     VALUES (${placeholders.join(',')})
+     ON CONFLICT (user_id) DO UPDATE
+       SET ${updates}, updated_at = now()
+     RETURNING *`,
+    params
+  );
+  return rows[0];
+};
+
+export const upsertEmployer = async (userId, patch) => {
+  const cols = Object.keys(patch);
+  const insert = ['user_id', ...cols];
+  const params = [userId, ...cols.map(c => toPg(c, patch[c]))];
+  const placeholders = insert.map((_, i) => `$${i + 1}`);
+  const updates = cols.map(c => `${c} = EXCLUDED.${c}`).join(', ');
+
+  const { rows } = await query(
+    `INSERT INTO profile.employers (${insert.join(',')})
      VALUES (${placeholders.join(',')})
      ON CONFLICT (user_id) DO UPDATE
        SET ${updates}, updated_at = now()
@@ -57,24 +81,6 @@ export const getEmployer = async (userId) => {
     `SELECT * FROM profile.employers WHERE user_id = $1`, [userId]
   );
   return rows[0] || null;
-};
-
-export const upsertEmployer = async (userId, patch) => {
-  const cols = Object.keys(patch);
-  const insert = ['user_id', ...cols];
-  const params = [userId, ...cols.map(c => patch[c])];
-  const placeholders = insert.map((_, i) => `$${i + 1}`);
-  const updates = cols.map(c => `${c} = EXCLUDED.${c}`).join(', ');
-
-  const { rows } = await query(
-    `INSERT INTO profile.employers (${insert.join(',')})
-     VALUES (${placeholders.join(',')})
-     ON CONFLICT (user_id) DO UPDATE
-       SET ${updates}, updated_at = now()
-     RETURNING *`,
-    params
-  );
-  return rows[0];
 };
 
 export const insertGradeHistory = async ({ userId, gradeId }) => {

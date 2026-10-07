@@ -20,8 +20,20 @@ document.addEventListener('DOMContentLoaded', () => {
     initPhoneMask('phone');
     document.querySelectorAll('[data-multi-select]').forEach(initMultiSelect);
 
-    const saveBtn = document.getElementById('saveProfile');
+    const saveBtn   = document.getElementById('saveProfile');
+    const cancelBtn = document.getElementById('cancelProfile');
+
     if (saveBtn) saveBtn.addEventListener('click', saveProfile);
+
+    if (cancelBtn) cancelBtn.addEventListener('click', () => {
+        const dirty = ['lastName','firstName','middleName','telegram','phone','about','experience']
+            .some(id => {
+                const el = document.getElementById(id);
+                return el && el.value !== el.defaultValue;
+            });
+        if (dirty && !confirm('Есть несохранённые изменения. Выйти без сохранения?')) return;
+        location.href = '/profile.html';
+    });
 
     loadForEdit();
 });
@@ -265,13 +277,24 @@ function splitName(full) {
 
 function setVal(id, v) {
     const el = document.getElementById(id);
-    if (el) el.value = v == null ? '' : String(v);
+    if (!el) return;
+    const val = v == null ? '' : String(v);
+    el.value = val;
+    el.defaultValue = val;   // важно для проверки dirty
 }
 
 async function loadForEdit() {
     try {
-        const { profile } = await api('/profile/me');
-        if (!profile) return;
+        const resp = await api('/profile/me');
+        console.log('[FSP] profile response:', resp);
+
+        const profile = resp?.profile;
+        if (!profile) {
+            console.warn('[FSP] profile is empty, ничего не заполняем');
+            return;
+        }
+
+        console.log('[FSP] email =', profile.email);
 
         const { lastName, firstName, middleName } = splitName(profile.full_name);
         setVal('lastName',   lastName);
