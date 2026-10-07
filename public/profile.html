@@ -13,106 +13,52 @@
 <body>
     <header>
         <h1>Профиль</h1>
-        <p>Ваши данные, роли и технологии. Подтверждённые отмечены зелёным, неподтверждённые — красным.</p>
+        <p>Ваши данные из профиля. Заполняется на странице редактирования.</p>
     </header>
 
     <main>
         <form action="#" method="post" novalidate>
 
             <fieldset>
-                <legend>Персональные данные</legend>
+            <legend>Персональные данные</legend>
 
-                <div class="profile-grid">
-                    <p>
-                        <span class="profile-label">Фамилия</span>
-                        <span class="profile-value">пупкин</span>
-                    </p>
-                    <p>
-                        <span class="profile-label">Имя</span>
-                        <span class="profile-value">залупкин</span>
-                    </p>
-                    <p>
-                        <span class="profile-label">Отчество</span>
-                        <span class="profile-value">оргиевич</span>
-                    </p>
-                    <p>
-                        <span class="profile-label">Электронная почта</span>
-                        <span class="profile-value">
-                            <a href="mailto:p.ivanov@example.com">p.upkin@example.com</a>
-                        </span>
-                    </p>
-                    <p>
-                        <span class="profile-label">Telegram</span>
-                        <span class="profile-value">
-                            <a href="https://t.me/pivanov" target="_blank" rel="noopener">@pupkin</a>
-                        </span>
-                    </p>
-                    <p>
-                        <span class="profile-label">Телефон</span>
-                        <span class="profile-value">
-                            <a href="tel:+79991234567">+7 (999) 123-45-67</a>
-                        </span>
-                    </p>
-                </div>
+            <div class="profile-grid">
+                <p><span class="profile-label">Фамилия</span>
+                <span class="profile-value" id="pf-lastName">—</span></p>
+                <p><span class="profile-label">Имя</span>
+                <span class="profile-value" id="pf-firstName">—</span></p>
+                <p><span class="profile-label">Отчество</span>
+                <span class="profile-value" id="pf-middleName">—</span></p>
+                <p><span class="profile-label">Электронная почта</span>
+                <span class="profile-value"><a id="pf-email" href="#">—</a></span></p>
+                <p><span class="profile-label">Telegram</span>
+                <span class="profile-value"><a id="pf-telegram" href="#" target="_blank" rel="noopener">—</a></span></p>
+                <p><span class="profile-label">Телефон</span>
+                <span class="profile-value"><a id="pf-phone" href="#">—</a></span></p>
+            </div>
             </fieldset>
 
             <fieldset>
-                <legend>Опыт</legend>
-
-                <p>
-                    <span class="profile-label">Стаж</span>
-                    <span class="profile-value">5 лет</span>
-                </p>
-
-                <p>
-                    <span class="profile-label">О себе</span>
-                    <span class="profile-value profile-value--multiline">
-                        Backend-разработчик с опытом проектирования высоконагруженных
-                        сервисов на Python и Go. Люблю чистую архитектуру, менторство
-                        и задачи, где нужно копать глубоко.
-                    </span>
-                </p>
+            <legend>Опыт</legend>
+            <p><span class="profile-label">Стаж</span>
+                <span class="profile-value" id="pf-experience">—</span></p>
+            <p><span class="profile-label">О себе</span>
+                <span class="profile-value profile-value--multiline" id="pf-about">—</span></p>
             </fieldset>
 
             <fieldset>
-                <legend>роли</legend>
-
-                <ul class="badge-list" data-badge-list="roles">
-                    <li class="badge badge--confirmed">
-                        <span class="badge__text">Backend-разработчик</span>
-                        <span class="badge__status">Подтверждено</span>
-                    </li>
-                    <li class="badge badge--unconfirmed">
-                        <span class="badge__text">DevOps / SRE</span>
-                        <span class="badge__status">Не подтверждено</span>
-                        <a class="badge__action" href="/test.html?role=devops" role="button">Пройти тест</a>
-                    </li>
-                </ul>
+            <legend>роли</legend>
+            <ul class="badge-list" id="pf-roles"></ul>
             </fieldset>
 
             <fieldset>
-                <legend>Стеки и технологии</legend>
-
-                <ul class="badge-list" data-badge-list="stacks">
-                    <li class="badge badge--confirmed">
-                        <span class="badge__text">Python</span>
-                        <span class="badge__status">Подтверждено</span>
-                    </li>
-                    <li class="badge badge--unconfirmed">
-                        <span class="badge__text">PostgreSQL</span>
-                        <span class="badge__status">Не подтверждено</span>
-                        <a class="badge__action" href="/test.html?stack=postgresql" role="button">Пройти тест</a>
-                    </li>
-                </ul>
+            <legend>Стеки и технологии</legend>
+            <ul class="badge-list" id="pf-stacks"></ul>
             </fieldset>
 
             <p class="profile-actions">
-                <a class="profile-btn profile-btn--ghost" href="/profile_editing.html" role="button">
-                    Редактировать
-                </a>
-                <button type="button" id="exportPdf" class="profile-btn profile-btn--primary">
-                    Экспорт в PDF
-                </button>
+            <a class="profile-btn profile-btn--ghost" href="/profile_editing.html" role="button">Редактировать</a>
+            <button type="button" id="exportPdf" class="profile-btn profile-btn--primary">Экспорт в PDF</button>
             </p>
         </form>
     </main>

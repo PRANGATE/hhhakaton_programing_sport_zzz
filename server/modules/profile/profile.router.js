@@ -27,6 +27,7 @@ const candidateSchema = z.object({
   industry_id:       z.string().max(60).optional(),
   specialization_id: z.string().max(60).optional(),
   target_grade_id:   z.enum(['junior','middle','senior']).optional(),
+  roles:             z.array(z.object({ id: z.string(), name: z.string() })).optional(),
   stacks:            z.array(z.object({ id: z.string(), name: z.string() })).optional(),
   soft_skills:       z.array(z.string()).optional(),
   visibility:        z.object({}).passthrough().optional(),

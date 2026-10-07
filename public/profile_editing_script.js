@@ -1,5 +1,5 @@
 /**
- * ФСП · Платформа ИТ-вакансий — логика формы подтверждения.
+ * ФСП · Платформа ИТ-вакансий — логика формы подтверждения профиля.
  *
  * Договорённости с HTML:
  *   • <input id="phone"> — маска телефона.
@@ -9,18 +9,41 @@
  * Скрипт ничего не хардкодит: находит мультивыборы по [data-multi-select],
  * список опций берёт из первого <select> внутри контейнера,
  * а ширину каждого <select> подгоняет под выбранный пункт.
+ *
+ * Плюс: при загрузке страницы тянет профиль из /api/v1/profile/me,
+ * предзаполняет поля, а по кнопке «Сохранить профиль» отправляет PATCH.
  */
+
+const TOKEN_KEY = 'fsp.access';
+
 document.addEventListener('DOMContentLoaded', () => {
     initPhoneMask('phone');
     document.querySelectorAll('[data-multi-select]').forEach(initMultiSelect);
 
-        const saveBtn = document.getElementById('saveProfile');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', () => {
-            window.location.href = '/profile.html';
-        });
-    }
+    const saveBtn = document.getElementById('saveProfile');
+    if (saveBtn) saveBtn.addEventListener('click', saveProfile);
+
+    loadForEdit();
 });
+
+/* ============================================================
+   API-хелпер
+   ============================================================ */
+
+async function api(path, opts = {}) {
+    const res = await fetch('/api/v1' + path, {
+        ...opts,
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + (localStorage.getItem(TOKEN_KEY) || ''),
+            ...(opts.headers || {}),
+        },
+    });
+    if (res.status === 401) { location.href = '/'; throw new Error('unauthorized'); }
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw Object.assign(new Error(body.error || 'http_error'), { status: res.status, body });
+    return body;
+}
 
 /* ============================================================
    1. Маска телефона
@@ -177,7 +200,6 @@ function refresh(container, meta) {
    3. Автоширина <select> под выбранный пункт
    ============================================================ */
 
-// Один переиспользуемый скрытый span для замеров.
 let _measurer = null;
 function getMeasurer() {
     if (_measurer) return _measurer;
@@ -195,11 +217,6 @@ function getMeasurer() {
     return _measurer;
 }
 
-/**
- * Устанавливает <select> ширину по тексту выбранного пункта
- * (или placeholder'а, если ничего не выбрано) с учётом padding,
- * border и места под стрелку.
- */
 function autoSizeSelect(select) {
     if (!select) return;
 
@@ -209,13 +226,12 @@ function autoSizeSelect(select) {
     const measurer = getMeasurer();
     const cs = getComputedStyle(select);
 
-    // Копируем шрифтовые свойства — иначе измерение соврёт.
-    measurer.style.fontFamily  = cs.fontFamily;
-    measurer.style.fontSize    = cs.fontSize;
-    measurer.style.fontWeight  = cs.fontWeight;
-    measurer.style.fontStyle   = cs.fontStyle;
-    measurer.style.letterSpacing = cs.letterSpacing;
-    measurer.style.textTransform = cs.textTransform;
+    measurer.style.fontFamily     = cs.fontFamily;
+    measurer.style.fontSize       = cs.fontSize;
+    measurer.style.fontWeight     = cs.fontWeight;
+    measurer.style.fontStyle      = cs.fontStyle;
+    measurer.style.letterSpacing  = cs.letterSpacing;
+    measurer.style.textTransform  = cs.textTransform;
     measurer.textContent = text;
 
     const textWidth = measurer.getBoundingClientRect().width;
@@ -225,13 +241,182 @@ function autoSizeSelect(select) {
     const bordLeft  = parseFloat(cs.borderLeftWidth)  || 0;
     const bordRight = parseFloat(cs.borderRightWidth) || 0;
 
-    // Место под стрелку, которую рисуем в CSS (padding-right = 36px уже включён
-    // в padRight, но на всякий случай добавим запас).
-    const MIN_WIDTH = 160; // чтобы placeholder «— выберите роль —» не сжимался в точку
+    const MIN_WIDTH = 160;
     const width = Math.max(
         MIN_WIDTH,
         Math.ceil(textWidth + padLeft + padRight + bordLeft + bordRight)
     );
 
     select.style.width = width + 'px';
+}
+
+/* ============================================================
+   4. Загрузка профиля и предзаполнение формы
+   ============================================================ */
+
+function splitName(full) {
+    const parts = String(full || '').trim().split(/\s+/).filter(Boolean);
+    return {
+        lastName:   parts[0] || '',
+        firstName:  parts[1] || '',
+        middleName: parts.slice(2).join(' '),
+    };
+}
+
+function setVal(id, v) {
+    const el = document.getElementById(id);
+    if (el) el.value = v == null ? '' : String(v);
+}
+
+async function loadForEdit() {
+    try {
+        const { profile } = await api('/profile/me');
+        if (!profile) return;
+
+        const { lastName, firstName, middleName } = splitName(profile.full_name);
+        setVal('lastName',   lastName);
+        setVal('firstName',  firstName);
+        setVal('middleName', middleName);
+        setVal('email',      profile.email || '');
+
+        if (profile.telegram) {
+            const handle = String(profile.telegram)
+                .replace(/^https?:\/\/t\.me\//i, '')
+                .replace(/^@/, '');
+            setVal('telegram', '@' + handle);
+        } else {
+            setVal('telegram', '');
+        }
+
+        setVal('phone',      profile.phone || '');
+        setVal('experience', profile.experience_years != null ? profile.experience_years : '');
+        setVal('about',      profile.about || '');
+
+        fillMultiSelect('roles',  profile.roles  || []);
+        fillMultiSelect('stacks', profile.stacks || []);
+    } catch (err) {
+        console.error('[FSP] load profile failed', err);
+    }
+}
+
+/**
+ * Заполняет конкретный мультивыбор выбранными значениями из профиля.
+ * Полностью перестраивает строки, чтобы не сбить нумерацию.
+ */
+function fillMultiSelect(kind, items) {
+    const container = document.querySelector(`[data-multi-select="${kind}"]`);
+    if (!container) return;
+
+    const templateSelect = container.querySelector('select');
+    if (!templateSelect) return;
+    const optionsHTML = templateSelect.innerHTML;
+    const fieldName   = templateSelect.getAttribute('name') || `${kind}[]`;
+
+    // Очищаем контейнер, оставляя только что пересозданные строки.
+    container.innerHTML = '';
+
+    // Всегда есть хотя бы одна пустая строка-приглашение.
+    const values = Array.isArray(items) && items.length ? items : [''];
+
+    values.forEach((it) => {
+        const row = document.createElement('div');
+        row.className = 'multi-select__row';
+
+        const sel = document.createElement('select');
+        sel.className = 'multi-select__select';
+        sel.name = fieldName;
+        sel.innerHTML = optionsHTML;
+        sel.value = typeof it === 'string' ? it : (it.id || '');
+        row.appendChild(sel);
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'multi-select__remove';
+        btn.setAttribute('aria-label', 'Удалить');
+        btn.title = 'Удалить';
+        btn.textContent = '×';
+        btn.hidden = !sel.value;
+        row.appendChild(btn);
+
+        container.appendChild(row);
+        autoSizeSelect(sel);
+    });
+
+    // refresh добавит пустую строку, если последняя заполнена,
+    // выставит disabled на выбранные пункты и покажет/скроет кнопки.
+    refresh(container, { optionsHTML, fieldName });
+}
+
+/* ============================================================
+   5. Чтение и сохранение
+   ============================================================ */
+
+function readMulti(kind) {
+    const container = document.querySelector(`[data-multi-select="${kind}"]`);
+    if (!container) return [];
+    const out = [];
+    container.querySelectorAll('select').forEach(sel => {
+        const v = sel.value;
+        if (!v) return;
+        const opt = sel.options[sel.selectedIndex];
+        out.push({ id: v, name: opt ? opt.textContent.trim() : v });
+    });
+    return out;
+}
+
+function normalizeTelegram(raw) {
+    let v = String(raw || '').trim();
+    if (!v) return '';
+    v = v.replace(/^https?:\/\/t\.me\//i, '').replace(/^@/, '');
+    return v ? '@' + v : '';
+}
+
+async function saveProfile() {
+    const btn = document.getElementById('saveProfile');
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Сохраняем…';
+
+    try {
+        const fullName = [
+            document.getElementById('lastName').value,
+            document.getElementById('firstName').value,
+            document.getElementById('middleName').value,
+        ].map(s => String(s || '').trim()).filter(Boolean).join(' ');
+
+        const expRaw = document.getElementById('experience').value;
+        const exp = expRaw === '' ? null : Number(expRaw);
+
+        const payload = {};
+
+        if (fullName)          payload.full_name = fullName;
+
+        const tg = normalizeTelegram(document.getElementById('telegram').value);
+        if (tg)                payload.telegram = tg;
+
+        const ph = document.getElementById('phone').value.trim();
+        if (ph)                payload.phone = ph;
+
+        const about = document.getElementById('about').value.trim();
+        if (about)             payload.about = about;
+
+        if (exp != null && Number.isFinite(exp)) payload.experience_years = exp;
+
+        payload.roles  = readMulti('roles');
+        payload.stacks = readMulti('stacks');
+
+        await api('/profile/me', {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        });
+
+        location.href = '/profile.html';
+    } catch (err) {
+        btn.disabled = false;
+        btn.textContent = orig;
+        const msg = err.body?.details?.[0]?.message
+                 || err.body?.error
+                 || err.message;
+        alert('Не удалось сохранить: ' + msg);
+    }
 }

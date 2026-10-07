@@ -2,9 +2,33 @@ import { query } from '../../db.js';
 
 export const getCandidate = async (userId) => {
   const { rows } = await query(
-    `SELECT * FROM profile.candidates WHERE user_id = $1`, [userId]
+    `SELECT c.*, u.email
+       FROM profile.candidates c
+       JOIN auth.users u ON u.id = c.user_id
+      WHERE c.user_id = $1`,
+    [userId]
   );
-  return rows[0] || null;
+  if (rows[0]) return rows[0];
+
+  // строки профиля ещё нет — отдаём минимум, чтобы UI не падал
+  const { rows: urows } = await query(
+    `SELECT id, email, role FROM auth.users WHERE id = $1`,
+    [userId]
+  );
+  if (!urows[0]) return null;
+  return {
+    user_id:          urows[0].id,
+    email:            urows[0].email,
+    full_name:        null,
+    telegram:         null,
+    phone:            null,
+    about:            null,
+    experience_years: null,
+    roles:            [],
+    stacks:           [],
+    soft_skills:      [],
+    visibility:       {},
+  };
 };
 
 export const upsertCandidate = async (userId, patch) => {
