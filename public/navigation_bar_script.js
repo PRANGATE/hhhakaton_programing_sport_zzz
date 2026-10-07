@@ -36,11 +36,11 @@
     }
 
     async function mount() {
-        // Не дублируем панель, если она уже есть.
-        if (document.querySelector('.navbar')) {
-            markActive(document);
-            return;
-        }
+        // Не монтируем стандартный навбар в кабинете работодателя —
+        // там свой (emp-nav, см. /employer/employer.js).
+        if (location.pathname.startsWith('/employer/')) return;
+
+        if (document.querySelector('.navbar')) { markActive(document); return; }
 
         try {
             const res = await fetch(NAVBAR_URL, { credentials: 'same-origin' });

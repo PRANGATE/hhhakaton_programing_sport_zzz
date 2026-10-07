@@ -1,0 +1,39 @@
+body { display: flex; flex-direction: column; }
+header, main, footer { width: 100%; padding: 0 16px; }
+header { padding-top: 32px; margin-bottom: 24px; }
+header h1 { margin: 0 0 6px; font-size: 28px; }
+header p  { margin: 0; color: var(--muted); }
+
+form { display: flex; flex-direction: column; gap: 20px; }
+fieldset {
+  padding: 20px 22px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+legend {
+  padding: 0 8px; font-size: 13px; font-weight: 600;
+  color: var(--muted); text-transform: uppercase; letter-spacing: .06em;
+}
+.picks { display: flex; flex-wrap: wrap; gap: 8px; }
+.pick {
+  padding: 8px 14px; font: inherit; font-size: 14px;
+  color: var(--text); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: 999px;
+  cursor: pointer; transition: .15s;
+}
+.pick:hover { border-color: var(--accent); }
+.pick.is-on {
+  border-color: var(--accent); color: #fff;
+  background: var(--accent);
+  box-shadow: 0 6px 18px rgba(79,124,255,.3);
+}
+.hint { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+.actions { text-align: right; }
+.btn-primary {
+  padding: 12px 26px; font: inherit; font-size: 15px; font-weight: 600;
+  color: #fff; background: var(--accent); border: none; border-radius: 10px;
+  cursor: pointer; transition: .15s;
+}
+.btn-primary:hover:not(:disabled) { background: #3f6cf0; }
+.btn-primary:disabled { opacity: .45; cursor: not-allowed; }

@@ -1,7 +1,11 @@
 import express from 'express';
 import pool from './db.js';
-import catalogRouter from './modules/catalog/catalog.router.js';
-import authRouter from './modules/auth/auth.router.js';
+import catalogRouter  from './modules/catalog/catalog.router.js';
+import authRouter     from './modules/auth/auth.router.js';
+import profileRouter  from './modules/profile/profile.router.js';
+import testRouter     from './modules/test/test.router.js';
+import inviteRouter   from './modules/invite/invite.router.js';
+import matchingRouter from './modules/matching/matching.router.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,8 +36,13 @@ app.get('/api/v1/config', (_req, res) => {
   });
 });
 
-app.use('/api/v1/catalog', catalogRouter);
-app.use('/api/v1/auth',    authRouter);
+// === РОУТЫ: ДО app.listen() ===
+app.use('/api/v1/catalog',     catalogRouter);
+app.use('/api/v1/auth',        authRouter);
+app.use('/api/v1/profile',     profileRouter);
+app.use('/api/v1/test',        testRouter);
+app.use('/api/v1/invitations', inviteRouter);
+app.use('/api/v1/matching',    matchingRouter);
 
 app.use((_req, res) => res.status(404).json({ error: 'not_found' }));
 

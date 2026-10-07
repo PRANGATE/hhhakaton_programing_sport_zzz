@@ -1,16 +1,15 @@
-# deploy.ps1 - полный деплой с ПЕРЕСОЗДАНИЕМ БД
-# ВНИМАНИЕ: удаляет все данные PostgreSQL (volume pgdata).
-# Пароль PostgreSQL берётся из .deploy-secrets.json (или генерируется, если файла нет).
-# Флаг -RotateSecrets дополнительно перегенерирует JWT-секреты и пароль БД.
+# deploy_up.ps1 - "up" обновление: пересобирает и перезапускает ТОЛЬКО приложение.
+# НЕ трогает контейнер PostgreSQL, его данные и пароли.
+# Секреты берутся из .deploy-secrets.json без изменений.
+# Если пароль в секретах расходится с паролем работающего postgres — упадёт
+# с подсказкой запустить .\deploy.ps1 (полный сброс).
 
 [CmdletBinding()]
-param(
-  [switch]$RotateSecrets
-)
+param()
 
 $ErrorActionPreference = "Stop"
 
-# ======================= НАСТРОЙКИ =======================
+# ======================= НАСТРОЙКИ (должны совпадать с deploy.ps1) =======================
 $ProjectPath   = "F:\hhru"
 $ImageName     = "fsp-hhru"
 $ImageTag      = "latest"
@@ -20,7 +19,6 @@ $VpsUser       = "root"
 $VpsHost       = "31.185.105.155"
 $VpsDockerDir  = "/home/PRANG/docker"
 $RemoteTar     = "$VpsDockerDir/fsp-hhru-image.tar"
-$PgVolumePath  = "$VpsDockerDir/pgdata"
 
 $ContainerName     = "fsp-app"
 $ContainerMigrate  = "fsp-migrate"
@@ -36,65 +34,34 @@ $PostgresDb    = "fsp"
 
 $SecretsFile   = Join-Path $ProjectPath ".deploy-secrets.json"
 $LocalTar      = Join-Path $env:TEMP "fsp-hhru-image.tar"
-# =========================================================
+# ==========================================================================================
 
 function Info($m) { Write-Host "==> $m" -ForegroundColor Cyan }
 function Ok($m)   { Write-Host "OK: $m"  -ForegroundColor Green }
 function Warn($m) { Write-Host "!! $m"   -ForegroundColor Yellow }
 
-function New-Secret([int]$len = 48) {
-  $chars = (48..57) + (65..90) + (97..122) + @(45, 95)
-  -join (1..$len | ForEach-Object { [char]($chars | Get-Random) })
-}
-
-function New-SecretsBlock {
-  [ordered]@{
-    POSTGRES_PASSWORD   = New-Secret 40
-    JWT_ACCESS_SECRET   = New-Secret 48
-    JWT_REFRESH_SECRET  = New-Secret 48
-    generated_at        = (Get-Date).ToString("o")
-  }
-}
-
-function Get-Secrets {
-  if (-not (Test-Path $SecretsFile)) {
-    Info "Секреты не найдены, генерирую новые"
-    $s = New-SecretsBlock
-    $s | ConvertTo-Json | Set-Content -Path $SecretsFile -Encoding UTF8
-    Ok "Секреты сохранены в $SecretsFile (gitignored)"
-    return $s
-  }
-
-  $secrets = Get-Content $SecretsFile -Raw | ConvertFrom-Json
-
-  if ($RotateSecrets) {
-    Warn "RotateSecrets: перегенерирую секреты. Все ранее выданные JWT станут невалидными."
-    Warn "Пользователи должны будут заново залогиниться. БД также будет пересоздана."
-    $confirm = Read-Host "Продолжить? (yes/no)"
-    if ($confirm -ne "yes") { throw "Отменено пользователем" }
-    $s = New-SecretsBlock
-    $s | ConvertTo-Json | Set-Content -Path $SecretsFile -Encoding UTF8
-    Ok "Секреты перегенерированы"
-    return $s
-  }
-
-  Info "Секреты загружены из $SecretsFile (сгенерированы $($secrets.generated_at))"
-  return $secrets
-}
-
-# --- проверки окружения ---
+# --- проверки ---
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
   throw "docker не найден. Запусти Docker Desktop."
 }
 if (-not (Test-Path (Join-Path $ProjectPath "Dockerfile"))) {
   throw "Dockerfile не найден в $ProjectPath"
 }
+if (-not (Test-Path $SecretsFile)) {
+  throw "Не найден $SecretsFile. Сначала запусти .\deploy.ps1 для первичной инициализации."
+}
 
-$sec = Get-Secrets
+$sec = Get-Content $SecretsFile -Raw | ConvertFrom-Json
+if (-not $sec.POSTGRES_PASSWORD -or
+    -not $sec.JWT_ACCESS_SECRET -or
+    -not $sec.JWT_REFRESH_SECRET) {
+  throw "В $SecretsFile не хватает полей. Запусти .\deploy.ps1 -RotateSecrets."
+}
+Info "Секреты загружены из $SecretsFile (сгенерированы $($sec.generated_at))"
+
 $PostgresPassword = $sec.POSTGRES_PASSWORD
 $JwtAccessSecret  = $sec.JWT_ACCESS_SECRET
 $JwtRefreshSecret = $sec.JWT_REFRESH_SECRET
-
 $DatabaseUrl = "postgres://${PostgresUser}:${PostgresPassword}@${ContainerPostgres}:5432/${PostgresDb}"
 
 $EnvVars = @(
@@ -137,28 +104,33 @@ scp $LocalTar "${sshTarget}:$RemoteTar"
 if ($LASTEXITCODE -ne 0) { throw "scp упал" }
 Ok "доставлено"
 
-# --- 4. СБРОС БД + миграции + перезапуск ---
-Info "!! Полный сброс PostgreSQL: удаляю контейнер и данные"
+# --- 4. миграции + перезапуск (БЕЗ сброса БД) ---
+Info "миграции + перезапуск приложения (данные PostgreSQL сохраняются)"
 $remoteLines = @(
   "set -e",
   "docker network inspect $NetworkName >/dev/null 2>&1 || docker network create $NetworkName",
 
-  # снести старый постгрес и его данные
-  "docker stop $ContainerPostgres >/dev/null 2>&1 || true",
-  "docker rm -f $ContainerPostgres >/dev/null 2>&1 || true",
-  "rm -rf '$PgVolumePath'",
-  "mkdir -p '$PgVolumePath'",
-
-  # поднять свежий постгрес с актуальным паролем
-  "docker run -d --name $ContainerPostgres --network $NetworkName --restart unless-stopped -e POSTGRES_USER=$PostgresUser -e POSTGRES_PASSWORD=$PostgresPassword -e POSTGRES_DB=$PostgresDb -v ${PgVolumePath}:/var/lib/postgresql/data postgres:16-alpine",
+  # postgres: только СТАРТУЕМ, если остановлен. Ничего не удаляем и не пересоздаём.
+  "if docker inspect $ContainerPostgres >/dev/null 2>&1; then",
+  "  docker start $ContainerPostgres >/dev/null 2>&1 || true",
+  "else",
+  "  echo '!! Контейнер $ContainerPostgres не найден.';",
+  "  echo '!! Первая инициализация: запусти .\\deploy.ps1';",
+  "  exit 2;",
+  "fi",
 
   "for i in {1..30}; do docker exec $ContainerPostgres pg_isready -U $PostgresUser -d $PostgresDb >/dev/null 2>&1 && break; sleep 1; done",
 
   "docker load -i '$RemoteTar'",
   "rm -f '$RemoteTar'",
 
-  "docker rm -f $ContainerMigrate >/dev/null 2>&1 || true",
-  "docker run --rm --name $ContainerMigrate --network $NetworkName -e DATABASE_URL='$DatabaseUrl' '$FullImage' npm run migrate:up",
+  # миграции (упадут, если пароль в DATABASE_URL не совпадает с реальным)
+  "if ! docker run --rm --name $ContainerMigrate --network $NetworkName -e DATABASE_URL='$DatabaseUrl' '$FullImage' npm run migrate:up; then",
+  "  echo '!! Миграции упали. Вероятно, пароль PostgreSQL в .deploy-secrets.json';",
+  "  echo '!! не совпадает с паролем работающего контейнера $ContainerPostgres.';",
+  "  echo '!! Запусти .\\deploy.ps1 (полный сброс) или .\\deploy.ps1 -RotateSecrets.';",
+  "  exit 3;",
+  "fi",
 
   "docker stop '$ContainerName' >/dev/null 2>&1 || true",
   "docker rm   '$ContainerName' >/dev/null 2>&1 || true",
@@ -170,8 +142,8 @@ $remoteLines = @(
 $remote = ($remoteLines -join "`n") + "`n"
 
 $remote | ssh $sshTarget "tr -d '\r' | bash -s"
-if ($LASTEXITCODE -ne 0) { throw "удалённый деплой упал" }
+if ($LASTEXITCODE -ne 0) { throw "удалённый деплой упал (см. диагностику выше)" }
 
 Remove-Item $LocalTar -Force -ErrorAction SilentlyContinue
 
-Ok "Готово (БД пересоздана): http://$VpsHost/"
+Ok "Готово (данные БД сохранены): http://$VpsHost/"

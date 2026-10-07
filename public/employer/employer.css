@@ -1,0 +1,113 @@
+/* Базовое — из styles.css. Здесь только то, что специфично для кабинета. */
+
+body { display: flex; flex-direction: column; min-height: 100vh; }
+
+.emp-layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 60px); }
+.emp-side {
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  padding: 20px 12px;
+}
+.emp-side__title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 0 10px 10px; }
+.emp-side a {
+  display: block; padding: 9px 12px; border-radius: 8px;
+  color: var(--muted); text-decoration: none; font-size: 14px;
+  transition: .15s;
+}
+.emp-side a:hover  { background: rgba(255,255,255,.04); color: var(--text); }
+.emp-side a.is-on  { background: rgba(79,124,255,.14); color: #fff; }
+
+.emp-main { padding: 32px 36px 64px; max-width: 1180px; }
+.emp-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; gap: 16px; }
+.emp-head h1 { font-size: 26px; margin: 0 0 4px; }
+.emp-head p  { margin: 0; color: var(--muted); font-size: 14px; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  margin-bottom: 16px;
+}
+.card__label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; display: block; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 13px; color: var(--muted); }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 10px 12px; font: inherit; font-size: 15px;
+  color: var(--text); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: 8px; outline: none;
+  transition: .15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,124,255,.18);
+}
+.field textarea { resize: vertical; min-height: 90px; }
+
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+  padding: 11px 20px; font: inherit; font-size: 14px; font-weight: 600;
+  border-radius: 10px; cursor: pointer; text-decoration: none;
+  border: 1px solid transparent; transition: .15s;
+}
+.btn--primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn--primary:hover { background: #3f6cf0; border-color: #3f6cf0; }
+.btn--ghost   { background: transparent; color: var(--text); border-color: var(--line); }
+.btn--ghost:hover { border-color: var(--accent); }
+.btn--danger  { background: transparent; color: var(--accent-2); border-color: rgba(255,77,90,.55); }
+.btn--danger:hover { background: rgba(255,77,90,.1); }
+.btn--cta     { background: var(--accent-2); color: #fff; border-color: var(--accent-2); }
+.btn--cta:hover { background: #e03a47; border-color: #e03a47; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn--sm { padding: 7px 12px; font-size: 13px; }
+
+.status { display: inline-flex; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; border: 1px solid var(--line); color: var(--muted); background: rgba(255,255,255,.04); }
+.status--sent     { color: var(--muted); }
+.status--viewed   { color: #9db4ff; border-color: rgba(79,124,255,.5); background: rgba(79,124,255,.1); }
+.status--accepted { color: #7ee2a8; border-color: rgba(46,204,113,.5); background: rgba(46,204,113,.1); }
+.status--rejected { color: #ff8b95; border-color: rgba(255,77,90,.5); background: rgba(255,77,90,.1); }
+
+.tag { display: inline-flex; padding: 2px 9px; border-radius: 6px; font-size: 12px; border: 1px solid var(--line); color: var(--muted); margin: 2px; }
+.tag--ok { border-color: rgba(79,124,255,.5); color: #9db4ff; background: rgba(79,124,255,.08); }
+.tag--fsp { border-color: rgba(255,77,90,.5); color: #ff8b95; background: rgba(255,77,90,.08); }
+
+.cand-row {
+  display: grid;
+  grid-template-columns: 90px 1fr auto auto;
+  gap: 16px; align-items: center;
+  padding: 14px 16px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--line);
+  border-radius: 10px; margin-bottom: 10px;
+}
+.cand-row:hover { border-color: var(--accent); }
+.cand-row--match { border-left-color: var(--accent); }
+.cand-row__id { font-weight: 700; font-size: 15px; }
+.cand-row__meta { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.cand-row__score { font-size: 22px; font-weight: 700; color: var(--accent); text-align: right; }
+.cand-row__score small { display: block; font-size: 10px; color: var(--muted); font-weight: 500; }
+
+.empty { padding: 40px 20px; text-align: center; color: var(--muted); font-size: 14px; }
+
+/* Мини-навбар для кабинета */
+.emp-nav {
+  display: flex; align-items: center; height: 60px;
+  padding: 0 24px; background: var(--panel); border-bottom: 1px solid var(--line);
+}
+.emp-nav__brand { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; color: var(--text); }
+.emp-nav__brand img { height: 30px; }
+.emp-nav__right { margin-left: auto; display: flex; align-items: center; gap: 14px; font-size: 13px; color: var(--muted); }
+.emp-nav__user { color: var(--text); font-weight: 500; }
+
+@media (max-width: 900px) {
+  .emp-layout { grid-template-columns: 1fr; }
+  .emp-side { display: flex; overflow-x: auto; padding: 8px; }
+  .emp-side a { white-space: nowrap; }
+  .emp-main { padding: 20px 14px 48px; }
+  .row2, .row3 { grid-template-columns: 1fr; }
+  .cand-row { grid-template-columns: 1fr; }
+}

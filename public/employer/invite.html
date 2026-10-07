@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ФСП · Приглашение кандидата</title>
+<link rel="stylesheet" href="/styles.css" />
+<link rel="stylesheet" href="/employer/employer.css" />
+</head>
+<body>
+<div class="emp-layout">
+  <main class="emp-main">
+    <div class="emp-head">
+      <div>
+        <h1>Приглашение кандидата</h1>
+        <p>Кандидат увидит вилку зарплаты до начала общения — это обязательное условие.</p>
+      </div>
+      <a href="/employer/matching.html" class="btn btn--ghost btn--sm">← К подборке</a>
+    </div>
+
+    <form id="invite-form">
+      <div class="card" id="candidate-card">
+        <span class="card__label">Кому</span>
+        <div id="candidate-info">Загружаем…</div>
+      </div>
+
+      <div class="card">
+        <div class="field">
+          <label>Описание предложения *</label>
+          <textarea name="offer" required minlength="3" maxlength="2000"
+            placeholder="Чем интересна команда, чем предстоит заниматься, формат работы…"></textarea>
+        </div>
+        <div class="field" style="margin-top:14px">
+          <label>Вакансия (необязательно — приглашение может быть без привязки)</label>
+          <input name="vacancy_title" placeholder="напр. Go-разработчик платёжной команды" />
+        </div>
+        <div class="row2" style="margin-top:14px">
+          <div class="field"><label>Зарплата «от», ₽ *</label><input type="number" name="salary_from" min="0" step="1000" required /></div>
+          <div class="field"><label>Зарплата «до», ₽ *</label><input type="number" name="salary_to" min="0" step="1000" required /></div>
+        </div>
+        <div class="field" style="margin-top:14px; max-width:280px">
+          <label>Способ связи</label>
+          <select name="channel">
+            <option value="telegram">Telegram</option>
+            <option value="email">Email</option>
+            <option value="phone">Телефон</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:12px; align-items:center">
+        <button type="submit" class="btn btn--cta" id="send-btn">Отправить приглашение →</button>
+        <span id="send-status" style="color:var(--muted); font-size:13px"></span>
+      </div>
+    </form>
+  </main>
+</div>
+
+<script type="module">
+import { mountShell, api, readForm, escapeHtml } from '/employer/employer.js';
+const user = await mountShell('matching');
+if (!user) throw new Error('auth');
+
+const candidateId = new URLSearchParams(location.search).get('candidate');
+const cardEl = document.getElementById('candidate-info');
+
+if (!candidateId) {
+  cardEl.innerHTML = '<div style="color:var(--accent-2)">Не указан кандидат.</div>';
+} else {
+  try {
+    const { candidate } = await api('/matching/candidates/' + candidateId);
+    cardEl.innerHTML = `
+      <div style="font-weight:700; font-size:16px">${escapeHtml(candidate.anon_id)}</div>
+      <div style="color:var(--muted); font-size:13px; margin-top:4px">
+        ${escapeHtml(candidate.specialization)} · ${escapeHtml(candidate.grade)} · тест ${candidate.test_score}%
+      </div>`;
+  } catch (err) { cardEl.textContent = 'Не удалось загрузить кандидата'; }
+}
+
+const form = document.getElementById('invite-form');
+const statusEl = document.getElementById('send-status');
+const sendBtn = document.getElementById('send-btn');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!candidateId) return alert('Нет кандидата');
+
+  const d = readForm(form);
+  const from = Number(d.salary_from), to = Number(d.salary_to);
+  if (!d.offer?.trim())   return alert('Опишите предложение');
+  if (!(from >= 0) || !(to >= 0)) return alert('Заполните вилку зарплаты');
+  if (to < from)          return alert('«до» должно быть больше или равно «от»');
+
+  sendBtn.disabled = true; statusEl.textContent = 'Отправляем…';
+  try {
+    await api('/invitations', {
+      method: 'POST',
+      body: JSON.stringify({
+        candidate_id: candidateId,
+        vacancy_title: d.vacancy_title || undefined,
+        offer: d.offer,
+        salary_from: from,
+        salary_to: to,
+        channel: d.channel,
+      }),
+    });
+    statusEl.textContent = '✓ Отправлено';
+    setTimeout(() => location.href = '/employer/invitations.html', 700);
+  } catch (err) {
+    statusEl.textContent = 'Ошибка: ' + err.message;
+    sendBtn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

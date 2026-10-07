@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ФСП · Подборка кандидатов</title>
+<link rel="stylesheet" href="/styles.css" />
+<link rel="stylesheet" href="/employer/employer.css" />
+</head>
+<body>
+<div class="emp-layout">
+  <main class="emp-main">
+    <div class="emp-head">
+      <div>
+        <h1>Подборка кандидатов</h1>
+        <p id="need-summary">Формируем на основе описанной потребности…</p>
+      </div>
+      <a href="/employer/needs.html" class="btn btn--ghost btn--sm">Изменить потребность</a>
+    </div>
+
+    <div id="list"></div>
+  </main>
+</div>
+
+<script type="module">
+import { mountShell, api, escapeHtml, fmtSalary } from '/employer/employer.js';
+const user = await mountShell('matching');
+if (!user) throw new Error('auth');
+
+const KEY = 'fsp.employer.need';
+const need = JSON.parse(sessionStorage.getItem(KEY) || 'null') || {
+  specialization: 'backend', grade: 'middle', stack: ['Go'], only_fsp: false,
+};
+
+const summary = document.getElementById('need-summary');
+summary.textContent = `${need.specialization || 'любая'} · ${need.grade || 'любой'} · стек: ${(need.stack || []).join(', ') || '—'}`;
+
+const listEl = document.getElementById('list');
+
+try {
+  const { items } = await api('/matching/query', { method: 'POST', body: JSON.stringify(need) });
+
+  if (!items.length) {
+    listEl.innerHTML = '<div class="empty">Никого не нашли. Попробуйте ослабить фильтры.</div>';
+  } else {
+    listEl.innerHTML = items.map(c => `
+      <div class="cand-row cand-row--match">
+        <div>
+          <div class="cand-row__id">${escapeHtml(c.anon_id)}</div>
+          <div class="cand-row__meta">${escapeHtml(c.grade)}</div>
+        </div>
+        <div>
+          <div style="font-size:14px; margin-bottom:6px">${(c.stacks || []).map(s => `<span class="tag tag--ok">${escapeHtml(s)}</span>`).join('')}</div>
+          <div class="cand-row__meta">${escapeHtml(c.explanation)}</div>
+        </div>
+        <div class="cand-row__score">${c.score}<small>score</small></div>
+        <div style="display:flex; gap:8px">
+          <a class="btn btn--ghost btn--sm" href="/employer/candidate.html?id=${c.id}">Карточка</a>
+          <a class="btn btn--primary btn--sm" href="/employer/invite.html?candidate=${c.id}">Пригласить</a>
+        </div>
+      </div>
+    `).join('');
+  }
+} catch (err) {
+  listEl.innerHTML = `<div class="empty">Ошибка: ${escapeHtml(err.message)}</div>`;
+}
+</script>
+</body>
+</html>

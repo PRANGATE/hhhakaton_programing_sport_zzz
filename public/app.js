@@ -2,13 +2,17 @@
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
+const TOKEN_KEY   = 'fsp.access';
+const REFRESH_KEY = 'fsp.refresh';
+const USER_KEY    = 'fsp.user';
+
 let toastTimer;
 function toast(msg) {
   const el = $('#toast');
   el.textContent = msg;
   el.classList.add('is-visible');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('is-visible'), 2200);
+  toastTimer = setTimeout(() => el.classList.remove('is-visible'), 2600);
 }
 
 // ---- переключатель роли ----
@@ -24,24 +28,34 @@ $$('.roles__btn').forEach(btn => {
   });
 });
 
-// ---- форма: пока без логики ----
-$('#login-form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target).entries());
-  if (!data.email || !data.password) {
-    toast('Заполните e-mail и пароль');
-    return;
-  }
-  toast(`Вход как «${currentRole === 'candidate' ? 'Кандидат' : 'Работодатель'}» — в разработке`);
-});
+// ---- API ----
+async function api(path, opts = {}) {
+  const res = await fetch('/api/v1' + path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw Object.assign(new Error(body.error || 'http_error'), { status: res.status, body });
+  return body;
+}
 
-// ---- ссылки-заглушки ----
-$$('[data-stub]').forEach(el => el.addEventListener('click', (e) => {
-  e.preventDefault();
-  toast('Функционал в разработке');
-}));
+function saveSession(user, access, refresh) {
+  localStorage.setItem(TOKEN_KEY, access);
+  localStorage.setItem(REFRESH_KEY, refresh);
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+}
 
-// ---- загрузка конфига и подготовка Keycloak ----
+function redirectByRole(role) {
+  if (role === 'employer')  location.href = '/employer/profile.html';
+  else                       location.href = '/profile.html';
+}
+
+// ---- форма входа/регистрации ----
+// Меняем поведение: кнопка "Войти" слева, ссылка "Зарегистрироваться" ниже.
+// Форма одна: сначала пробуем login, если 401 и есть флаг "register" — регистрируемся.
+let mode = 'login'; // 'login' | 'register'
+
+// ---- инициализация Keycloak-кнопки (заглушка) ----
 async function loadConfig() {
   try {
     const res = await fetch('/api/v1/config', { cache: 'no-store' });
@@ -51,31 +65,83 @@ async function loadConfig() {
 
 async function initKeycloak(cfg) {
   const btn = $('#fsp-id-btn');
-
+  if (!btn) return;
   if (!cfg?.keycloak?.enabled) {
-    // Режим заглушки — интеграция уже «вшита», включается переменными окружения
     btn.addEventListener('click', () => toast('Вход через ФСП ID — в разработке'));
     return;
   }
-
-  try {
-    const { default: Keycloak } = await import('/vendor/keycloak/keycloak.js');
-    const kc = new Keycloak({
-      url: cfg.keycloak.url,
-      realm: cfg.keycloak.realm,
-      clientId: cfg.keycloak.clientId,
-    });
-
-    const ok = await kc.init({ onLoad: 'check-sso', pkceMethod: 'S256' });
-    if (ok) toast('Сессия ФСП ID активна');
-
-    btn.addEventListener('click', () => kc.login({ redirectUri: window.location.origin }));
-  } catch (err) {
-    console.error('[fsp] keycloak init failed', err);
-    btn.addEventListener('click', () => toast('Не удалось подключиться к ФСП ID'));
-  }
+  btn.addEventListener('click', () => toast('Keycloak включён, но интеграция — Post-MVP'));
 }
 
+// ---- обработка submit ----
+$('#login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target).entries());
+  if (!data.email || !data.password) return toast('Заполните e-mail и пароль');
+
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  const original = submitBtn.textContent;
+
+  try {
+    let out;
+    if (mode === 'register') {
+      submitBtn.textContent = 'Создаём аккаунт…';
+      out = await api('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: data.email, password: data.password,
+          role: currentRole, consent: true,
+        }),
+      });
+    } else {
+      submitBtn.textContent = 'Входим…';
+      try {
+        out = await api('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email: data.email, password: data.password }),
+        });
+      } catch (err) {
+        if (err.status === 401) {
+          // Пробуем зарегистрировать — прототип, удобно.
+          mode = 'register';
+          submitBtn.textContent = 'Регистрируем…';
+          out = await api('/auth/register', {
+            method: 'POST',
+            body: JSON.stringify({
+              email: data.email, password: data.password,
+              role: currentRole, consent: true,
+            }),
+          });
+        } else throw err;
+      }
+    }
+
+    saveSession(out.user, out.accessToken, out.refreshToken);
+
+    // Всегда просим ввести код (прототип: любой 6-значный).
+    sessionStorage.setItem('fsp.verify.email', out.user.email);
+    sessionStorage.setItem('fsp.verify.role',  out.user.role);
+    location.href = '/email_code.html';
+  } catch (err) {
+    const msg = err.body?.error || err.message;
+    if (msg === 'email_taken')          toast('E-mail уже занят — войдите');
+    else if (msg === 'invalid_credentials') toast('Неверный e-mail или пароль');
+    else                                toast('Ошибка: ' + msg);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = original;
+    mode = 'login';
+  }
+});
+
+// ---- заглушки для ссылок ----
+$$('[data-stub]').forEach(el => el.addEventListener('click', (e) => {
+  e.preventDefault();
+  toast('Функционал в разработке');
+}));
+
+// ---- init ----
 (async () => {
   const cfg = await loadConfig();
   if (cfg?.appName) document.title = `${cfg.appName} — Вход`;

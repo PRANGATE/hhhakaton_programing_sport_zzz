@@ -15,3 +15,8 @@ export const loginSchema = z.object({
 export const refreshSchema = z.object({
   refreshToken: z.string().min(10),
 });
+
+export const verifyEmailSchema = z.object({
+  email: z.string().trim().toLowerCase().email('Некорректный email'),
+  code:  z.string().regex(/^\d{6}$/, 'Код — 6 цифр'),
+});

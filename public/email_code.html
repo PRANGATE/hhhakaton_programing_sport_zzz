@@ -3,46 +3,212 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ФСП · Платформа ИТ-вакансий — подтверждение</title>
+    <title>ФСП · Подтверждение e-mail</title>
     <link rel="stylesheet" href="/styles.css" />
     <link rel="stylesheet" href="/email_code_styles.css" />
+    <style>
+        /* Пара маленьких локальных штрихов, не трогаем основной stylesheet */
+        .email-info-row { display: flex; gap: 8px; align-items: center; justify-content: center; }
+        .email-info-row .email-from { flex: 0 1 auto; }
+        .email-info-row .change-link {
+            font-size: 12px; color: var(--accent); cursor: pointer;
+            text-decoration: underline; background: none; border: 0; padding: 0;
+        }
+        .inline-error {
+            font-size: 12.5px; color: var(--accent-2);
+            min-height: 16px; text-align: center;
+        }
+    </style>
 </head>
 <body>
-    <img src="logos/logo_01.svg">
+    <img src="logos/logo_01.svg" alt="ФСП">
     <div class="email-title">Подтвердите email</div>
     <div class="email-information-container">
-        <div>от: emailfiller@scam.com</div>
-        <div class="pin-container">
-            <input maxlength="1" inputmode="numeric" class="pin-cell">
-            <input maxlength="1" inputmode="numeric" class="pin-cell">
-            <input maxlength="1" inputmode="numeric" class="pin-cell">
-            <input maxlength="1" inputmode="numeric" class="pin-cell">
-            <input maxlength="1" inputmode="numeric" class="pin-cell">
-            <input maxlength="1" inputmode="numeric" class="pin-cell">
+        <div>Прототип: введите <b>любые 6 цифр</b></div>
+        <div class="email-info-row">
+            <div class="email-from" id="target-email">от: —</div>
+            <button type="button" class="change-link" id="change-email">изменить</button>
+        </div>
+        <div class="pin-container" id="pin-container">
+            <input maxlength="1" inputmode="numeric" autocomplete="one-time-code" class="pin-cell">
+            <input maxlength="1" inputmode="numeric" autocomplete="one-time-code" class="pin-cell">
+            <input maxlength="1" inputmode="numeric" autocomplete="one-time-code" class="pin-cell">
+            <input maxlength="1" inputmode="numeric" autocomplete="one-time-code" class="pin-cell">
+            <input maxlength="1" inputmode="numeric" autocomplete="one-time-code" class="pin-cell">
+            <input maxlength="1" inputmode="numeric" autocomplete="one-time-code" class="pin-cell">
         </div>
         <div class="code-lifetime">код действует 10 минут с момента отправки</div>
+        <div class="inline-error" id="err"></div>
     </div>
     <div class="buttons-container">
-        <button class="submit-b">подтвердить и войти</button>
-        <button class="resend-b">отправить снова</button>
+        <button class="submit-b" id="verify-btn">подтвердить и войти</button>
+        <button class="resend-b" id="resend-btn">отправить снова</button>
     </div>
 
-<script>
-document.querySelectorAll('.pin-cell').forEach((cell, index, cells) => {
-    cell.addEventListener('input', () => {
-        if (cell.value && index < cells.length - 1) {
-            cells[index + 1].focus();
-        }
-    });
-    
-    cell.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && !cell.value && index > 0) {
-            cells[index - 1].focus();
-        }
-    });
+<script type="module">
+import { saveSession, redirectByRole } from '/auth.js';
+
+const cells      = Array.from(document.querySelectorAll('.pin-cell'));
+const emailEl    = document.getElementById('target-email');
+const errEl      = document.getElementById('err');
+const verifyBtn  = document.getElementById('verify-btn');
+const resendBtn  = document.getElementById('resend-btn');
+const changeBtn  = document.getElementById('change-email');
+
+// --- e-mail: из сессии или спрашиваем вручную ---
+let email = sessionStorage.getItem('fsp.verify.email') || '';
+if (!email) {
+  const guess = prompt('Введите e-mail, на который регистрировались:', '');
+  if (guess && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guess.trim())) {
+    email = guess.trim().toLowerCase();
+    sessionStorage.setItem('fsp.verify.email', email);
+  } else {
+    location.href = '/';
+    throw new Error('no email');
+  }
+}
+emailEl.textContent = 'от: ' + email;
+
+changeBtn.addEventListener('click', () => {
+  const next = prompt('Введите другой e-mail:', email);
+  if (next && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(next.trim())) {
+    email = next.trim().toLowerCase();
+    sessionStorage.setItem('fsp.verify.email', email);
+    emailEl.textContent = 'от: ' + email;
+    clearAll();
+    cells[0].focus();
+  }
 });
 
-// Автофокус
-document.querySelector('.pin-cell').focus();
+// --- Хелперы ---
+function setError(msg = '') { errEl.textContent = msg; }
+function clearError() { setError(''); }
+
+function clearAll() {
+  cells.forEach(c => { c.value = ''; c.classList.remove('is-error', 'is-ok'); });
+}
+
+function getCode() { return cells.map(c => c.value).join(''); }
+function isFull()  { return getCode().length === 6; }
+
+function focusIndex(i) {
+  if (i < 0 || i >= cells.length) return;
+  cells[i].focus();
+  // выделяем символ, чтобы ввод сразу заменял
+  cells[i].select?.();
+}
+
+// --- Автопереход: основной сценарий ---
+cells.forEach((cell, index) => {
+
+  // Ввод символа (обычный или из автозаполнения / вставки)
+  cell.addEventListener('input', () => {
+    clearError();
+    // оставляем только последнюю введённую цифру
+    const digits = String(cell.value).replace(/\D/g, '');
+    if (!digits) { cell.value = ''; return; }
+
+    cell.value = digits[0];
+    cell.classList.add('is-ok');
+
+    // автопереход к следующему
+    if (index < cells.length - 1) focusIndex(index + 1);
+
+    // если поле последнее и всё заполнено — автосабмит
+    if (isFull()) verify();
+  });
+
+  // Клавиатура: backspace и стрелки
+  cell.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace') {
+      if (cell.value) {
+        // очищаем текущее, остаёмся на месте
+        cell.value = '';
+        cell.classList.remove('is-ok');
+        e.preventDefault();
+      } else if (index > 0) {
+        // идём назад и стираем
+        focusIndex(index - 1);
+        cells[index - 1].value = '';
+        cells[index - 1].classList.remove('is-ok');
+        e.preventDefault();
+      }
+    } else if (e.key === 'ArrowLeft'  && index > 0) { focusIndex(index - 1); e.preventDefault(); }
+    else if   (e.key === 'ArrowRight' && index < cells.length - 1) { focusIndex(index + 1); e.preventDefault(); }
+    else if (e.key === 'Enter') { verify(); }
+  });
+
+  // Вставка всего кода сразу (Ctrl+V)
+  cell.addEventListener('paste', (e) => {
+    const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+    const digits = text.replace(/\D/g, '').slice(0, cells.length);
+    if (!digits) return;
+    e.preventDefault();
+    cells.forEach((c, i) => {
+      c.value = digits[i] || '';
+      c.classList.toggle('is-ok', !!digits[i]);
+    });
+    const nextEmpty = digits.length < cells.length ? digits.length : cells.length - 1;
+    focusIndex(nextEmpty);
+    if (isFull()) verify();
+  });
+
+  // Клик по полю — фокус на нём
+  cell.addEventListener('focus', () => cell.select?.());
+});
+
+cells[0].focus();
+
+// --- Отправка на сервер ---
+let submitting = false;
+async function verify() {
+  if (submitting) return;
+  const code = getCode();
+  if (code.length !== 6) { setError('Введите 6 цифр'); return; }
+
+  submitting = true;
+  clearError();
+  verifyBtn.disabled = true;
+  const orig = verifyBtn.textContent;
+  verifyBtn.textContent = 'Проверяем…';
+
+  try {
+    const res = await fetch('/api/v1/auth/verify-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const code = body.error || 'http_error';
+      if (code === 'invalid_code')      throw new Error('Неверный код');
+      if (code === 'not_found')         throw new Error('Пользователь с таким e-mail не найден');
+      if (code === 'validation_error')  throw new Error('Код должен состоять из 6 цифр');
+      throw new Error(code);
+    }
+
+    // Успех: сервер вернул свежие токены и записал email_verified_at в БД
+    saveSession(body.user, body.accessToken, body.refreshToken);
+
+    sessionStorage.removeItem('fsp.verify.email');
+    sessionStorage.removeItem('fsp.verify.role');
+
+    redirectByRole(body.user.role);
+  } catch (err) {
+    setError(String(err.message || err));
+    cells.forEach(c => c.classList.add('is-error'));
+    setTimeout(() => cells.forEach(c => c.classList.remove('is-error')), 400);
+    verifyBtn.disabled = false;
+    verifyBtn.textContent = orig;
+    submitting = false;
+  }
+}
+
+verifyBtn.addEventListener('click', (e) => { e.preventDefault(); verify(); });
+resendBtn.addEventListener('click', () => {
+  setError('');
+  alert('Прототип: код не отправляется, введите любые 6 цифр.');
+});
 </script>
 </body>
+</html>

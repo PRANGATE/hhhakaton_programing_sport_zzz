@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ФСП · Мои приглашения</title>
+<link rel="stylesheet" href="/styles.css" />
+<link rel="stylesheet" href="/employer/employer.css" />
+<style>
+  table { width:100%; border-collapse: collapse; font-size:14px; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing:.06em; color:var(--muted); }
+  td b { color: var(--text); }
+  .salary { color: var(--accent); font-weight: 700; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="emp-layout">
+  <main class="emp-main">
+    <div class="emp-head">
+      <div>
+        <h1>Мои приглашения</h1>
+        <p>Статусы синхронизированы с кандидатами. Контакты раскрываются после «принято».</p>
+      </div>
+      <a class="btn btn--primary" href="/employer/matching.html">＋ Новое приглашение</a>
+    </div>
+
+    <div id="list"></div>
+  </main>
+</div>
+
+<script type="module">
+import { mountShell, api, escapeHtml, fmtSalary } from '/employer/employer.js';
+const user = await mountShell('invitations');
+if (!user) throw new Error('auth');
+
+const listEl = document.getElementById('list');
+const STATUS_LABEL = { sent: 'Отправлено', viewed: 'Просмотрено', accepted: 'Принято', rejected: 'Отклонено' };
+
+try {
+  const { items } = await api('/invitations');
+  if (!items.length) {
+    listEl.innerHTML = '<div class="empty">Приглашений пока нет. Зайдите в <a href="/employer/matching.html" style="color:var(--accent)">подборку</a>.</div>';
+  } else {
+    listEl.innerHTML = `
+      <div class="card" style="padding:0; overflow:hidden">
+        <table>
+          <thead><tr>
+            <th>Кандидат</th><th>Вакансия</th><th>Вилка</th><th>Дата</th><th>Статус</th><th>Контакт</th>
+          </tr></thead>
+          <tbody>
+            ${items.map(i => {
+              const contact = i.status === 'accepted'
+                ? `<span style="color:var(--accent)">${escapeHtml(i.candidate_email)}</span>`
+                : `<span style="color:var(--muted)">🔒 после «принято»</span>`;
+              return `
+                <tr>
+                  <td><b>${escapeHtml(i.candidate_email)}</b></td>
+                  <td>${escapeHtml(i.vacancy_title || '—')}</td>
+                  <td class="salary">${fmtSalary(i.salary_from, i.salary_to)}</td>
+                  <td>${new Date(i.created_at).toLocaleDateString('ru-RU')}</td>
+                  <td><span class="status status--${i.status}">${STATUS_LABEL[i.status] || i.status}</span></td>
+                  <td>${contact}</td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+} catch (err) {
+  listEl.innerHTML = `<div class="empty">Ошибка: ${escapeHtml(err.message)}</div>`;
+}
+</script>
+</body>
+</html>

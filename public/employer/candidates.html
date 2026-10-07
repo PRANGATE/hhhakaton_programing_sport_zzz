@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ФСП · Банк кандидатов</title>
+<link rel="stylesheet" href="/styles.css" />
+<link rel="stylesheet" href="/employer/employer.css" />
+</head>
+<body>
+<div class="emp-layout">
+  <main class="emp-main">
+    <div class="emp-head">
+      <div>
+        <h1>Банк кандидатов</h1>
+        <p>Поиск по категориям. Уточнение запроса не сбрасывает сохранённую подборку.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row3">
+        <div class="field"><label>Специализация</label>
+          <select id="f-spec">
+            <option value="">все</option>
+            <option value="backend">Backend</option>
+            <option value="frontend">Frontend</option>
+          </select>
+        </div>
+        <div class="field"><label>Грейд</label>
+          <select id="f-grade">
+            <option value="">все</option>
+            <option value="junior">Junior</option>
+            <option value="middle">Middle</option>
+            <option value="senior">Senior</option>
+          </select>
+        </div>
+        <div class="field"><label>Стек</label><input id="f-stack" placeholder="Go, Kafka" /></div>
+      </div>
+      <div style="margin-top:12px; display:flex; gap:12px; align-items:center">
+        <label style="display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px">
+          <input type="checkbox" id="f-fsp" style="width:auto" /> только с ФСП
+        </label>
+        <button id="apply" class="btn btn--primary btn--sm" style="margin-left:auto">Применить</button>
+      </div>
+    </div>
+
+    <div id="list"></div>
+  </main>
+</div>
+
+<script type="module">
+import { mountShell, api, escapeHtml } from '/employer/employer.js';
+const user = await mountShell('candidates');
+if (!user) throw new Error('auth');
+
+const listEl = document.getElementById('list');
+
+async function search() {
+  const body = {
+    specialization: document.getElementById('f-spec').value || undefined,
+    grade:          document.getElementById('f-grade').value || undefined,
+    stack:          document.getElementById('f-stack').value
+                      ? document.getElementById('f-stack').value.split(',').map(s => s.trim()).filter(Boolean)
+                      : undefined,
+    only_fsp:       document.getElementById('f-fsp').checked || undefined,
+  };
+  listEl.innerHTML = '<div class="empty">Ищем…</div>';
+  try {
+    const { items } = await api('/matching/query', { method: 'POST', body: JSON.stringify(body) });
+    if (!items.length) { listEl.innerHTML = '<div class="empty">Ничего не найдено.</div>'; return; }
+    listEl.innerHTML = items.map(c => `
+      <div class="cand-row">
+        <div>
+          <div class="cand-row__id">${escapeHtml(c.anon_id)}</div>
+          <div class="cand-row__meta">${escapeHtml(c.grade)}</div>
+        </div>
+        <div>
+          <div style="font-size:14px; margin-bottom:6px">${(c.stacks || []).map(s => `<span class="tag tag--ok">${escapeHtml(s)}</span>`).join('')}</div>
+          <div class="cand-row__meta">${escapeHtml(c.explanation)}</div>
+        </div>
+        <div class="cand-row__score">${c.score}<small>score</small></div>
+        <div style="display:flex; gap:8px">
+          <a class="btn btn--ghost btn--sm" href="/employer/candidate.html?id=${c.id}">Карточка</a>
+          <a class="btn btn--primary btn--sm" href="/employer/invite.html?candidate=${c.id}">Пригласить</a>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    listEl.innerHTML = `<div class="empty">Ошибка: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+document.getElementById('apply').addEventListener('click', search);
+search();
+</script>
+</body>
+</html>

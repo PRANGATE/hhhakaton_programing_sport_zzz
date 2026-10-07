@@ -99,7 +99,12 @@ const issueTokens = async ({ user, ip, userAgent }) => {
   });
 
   return {
-    user: { id: user.id, email: user.email, role: user.role },
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      email_verified_at: user.email_verified_at || null,
+    },
     accessToken: signAccess(user),
     refreshToken,
     expiresIn: Math.floor(ttlToMs(ACCESS_TTL) / 1000),
@@ -148,3 +153,29 @@ export const logout = async (refreshToken) => {
 
 // --- verify access ---
 export const verifyAccessToken = (token) => jwt.verify(token, ACCESS_SECRET);
+
+// ПРОТОТИП: реальную почту не шлём — принимаем любой 6-значный код.
+// В проде: сгенерировать код, сохранить хеш в auth.email_codes (TTL 10 мин)
+// и сравнить. Сейчас интерфейс совпадает, чтобы потом подменить.
+export const verifyEmail = async ({ email, code, ip, userAgent }) => {
+  if (!/^\d{6}$/.test(String(code || ''))) {
+    const err = new Error('invalid_code');
+    err.code = 'INVALID_CODE';
+    throw err;
+  }
+  const user = await repo.findUserByEmail(email);
+  if (!user) {
+    const err = new Error('not_found');
+    err.code = 'NOT_FOUND';
+    throw err;
+  }
+  if (!user.email_verified_at) await repo.markEmailVerified(user.id);
+
+  return issueTokens({
+    user: {
+      id: user.id, email: user.email, role: user.role,
+      email_verified_at: new Date().toISOString(),
+    },
+    ip, userAgent,
+  });
+};

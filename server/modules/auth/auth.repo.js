@@ -61,3 +61,11 @@ export const revokeSession = async (id) => {
     [id]
   );
 };
+
+export const markEmailVerified = async (userId) => {
+  await query(
+    `UPDATE auth.users SET email_verified_at = now()
+      WHERE id = $1 AND email_verified_at IS NULL`,
+    [userId]
+  );
+};

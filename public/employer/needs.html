@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ФСП · Описание потребности</title>
+<link rel="stylesheet" href="/styles.css" />
+<link rel="stylesheet" href="/employer/employer.css" />
+</head>
+<body>
+<div class="emp-layout">
+  <main class="emp-main">
+    <div class="emp-head">
+      <div>
+        <h1>Описание потребности</h1>
+        <p>На основе этих данных формируется подборка кандидатов.</p>
+      </div>
+    </div>
+
+    <form id="need-form">
+      <div class="card">
+        <div class="row2">
+          <div class="field"><label>Специализация</label>
+            <select name="specialization">
+              <option value="">— любая —</option>
+              <option value="backend" selected>Backend</option>
+              <option value="frontend">Frontend</option>
+              <option value="mobile">Mobile</option>
+              <option value="data-analytics">Data &amp; Analytics</option>
+              <option value="devops">DevOps / SRE</option>
+              <option value="qa">QA</option>
+              <option value="infosec">Information Security</option>
+              <option value="gamedev">Game Dev</option>
+            </select>
+          </div>
+          <div class="field"><label>Грейд</label>
+            <select name="grade">
+              <option value="">— любой —</option>
+              <option value="junior">Junior</option>
+              <option value="middle" selected>Middle</option>
+              <option value="senior">Senior</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:14px">
+          <label>Требуемый стек (через запятую)</label>
+          <input name="stack" placeholder="Go, PostgreSQL, Kafka, Docker" value="Go, PostgreSQL, Kafka, Docker" />
+          <small style="color:var(--muted); font-size:12px">Совпадение по стеку объясняется в подборке.</small>
+        </div>
+
+        <div class="field" style="margin-top:14px">
+          <label>Чем занимается команда</label>
+          <textarea name="about" placeholder="12 инженеров, микросервисы на Go, Kafka, Kubernetes. Highload."></textarea>
+        </div>
+
+        <div style="margin-top:12px">
+          <label style="display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px">
+            <input type="checkbox" name="only_fsp" style="width:auto" />
+            Только кандидаты с достижениями ФСП
+          </label>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:12px">
+        <button type="submit" class="btn btn--primary">Сохранить и сформировать подборку →</button>
+        <a href="/employer/profile.html" class="btn btn--ghost">← Профиль</a>
+      </div>
+    </form>
+  </main>
+</div>
+
+<script type="module">
+import { mountShell, readForm } from '/employer/employer.js';
+const user = await mountShell('needs');
+if (!user) throw new Error('auth');
+
+const KEY = 'fsp.employer.need';
+const form = document.getElementById('need-form');
+const saved = JSON.parse(sessionStorage.getItem(KEY) || 'null');
+if (saved) {
+  Object.entries(saved).forEach(([k, v]) => {
+    const el = form.elements.namedItem(k);
+    if (!el) return;
+    if (el.type === 'checkbox') el.checked = !!v;
+    else if (k === 'stack') el.value = Array.isArray(v) ? v.join(', ') : v;
+    else el.value = v;
+  });
+}
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const d = readForm(form);
+  const need = {
+    specialization: d.specialization || '',
+    grade:          d.grade || '',
+    stack:          d.stack ? d.stack.split(',').map(s => s.trim()).filter(Boolean) : [],
+    about:          d.about || '',
+    only_fsp:       !!form.elements.namedItem('only_fsp').checked,
+  };
+  sessionStorage.setItem(KEY, JSON.stringify(need));
+  location.href = '/employer/matching.html';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+body { display: flex; flex-direction: column; }
+header, main, footer { width: 100%; padding: 0 16px; }
+header { padding-top: 32px; margin-bottom: 18px; position: relative; }
+header h1 { margin: 0 0 6px; font-size: 26px; }
+header p  { margin: 0; color: var(--muted); font-size: 14px; }
+
+.timer {
+  position: absolute; right: 16px; top: 32px;
+  font-size: 22px; font-weight: 700; color: var(--accent);
+}
+
+main { flex: 1; display: flex; flex-direction: column; }
+
+.question {
+  padding: 22px 24px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin-bottom: 18px;
+}
+.prompt { font-size: 17px; line-height: 1.55; margin: 0 0 18px; }
+
+.opts { display: flex; flex-direction: column; gap: 8px; }
+.opt {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; text-align: left; font: inherit; font-size: 15px;
+  color: var(--text); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: 10px;
+  cursor: pointer; transition: .15s;
+}
+.opt:hover { border-color: var(--accent); }
+.opt.is-on { border-color: var(--accent); background: rgba(79,124,255,.12); }
+.opt b {
+  width: 26px; height: 26px; border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--bg); border: 1px solid var(--line);
+  font-weight: 700; flex: none;
+}
+.opt.is-on b { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+textarea {
+  width: 100%; padding: 12px 14px;
+  font: inherit; font-size: 15px; line-height: 1.55; color: var(--text);
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 10px; resize: vertical; outline: none;
+}
+textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,124,255,.18); }
+
+.nav { display: flex; justify-content: space-between; margin-top: auto; padding: 18px 0 32px; }
+.btn-primary, .btn-ghost {
+  padding: 12px 26px; font: inherit; font-size: 15px; font-weight: 600;
+  border-radius: 10px; cursor: pointer; transition: .15s;
+}
+.btn-primary { color: #fff; background: var(--accent); border: 1px solid var(--accent); }
+.btn-primary:hover:not(:disabled) { background: #3f6cf0; }
+.btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+.btn-ghost { color: var(--text); background: transparent; border: 1px solid var(--line); }
+.btn-ghost:hover:not(:disabled) { border-color: var(--accent); }
+.btn-ghost:disabled { opacity: .4; cursor: not-allowed; }

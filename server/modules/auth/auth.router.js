@@ -19,6 +19,8 @@ const handle = (fn) => async (req, res, next) => {
     if (err.code === 'EMAIL_TAKEN')          return res.status(409).json({ error: 'email_taken' });
     if (err.code === 'INVALID_CREDENTIALS')  return res.status(401).json({ error: 'invalid_credentials' });
     if (err.code === 'INVALID_REFRESH')      return res.status(401).json({ error: 'invalid_refresh' });
+    if (err.code === 'INVALID_CODE')         return res.status(400).json({ error: 'invalid_code' });
+    if (err.code === 'NOT_FOUND')            return res.status(404).json({ error: 'not_found' });
     next(err);
   }
 };
@@ -56,3 +58,9 @@ router.get('/me', requireAuth, (req, res) => {
 });
 
 export default router;
+
+router.post('/verify-email', handle(async (req, res) => {
+  const body = schemas.verifyEmailSchema.parse(req.body);
+  const out  = await svc.verifyEmail({ ...body, ...clientCtx(req) });
+  res.json(out);
+}));

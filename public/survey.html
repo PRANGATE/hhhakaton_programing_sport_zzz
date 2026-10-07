@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ФСП · Платформа ИТ-вакансий — опрос</title>
+<link rel="stylesheet" href="/styles.css" />
+<link rel="stylesheet" href="/navigation_bar_styles.css" />
+<link rel="stylesheet" href="/survey_styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Опрос</h1>
+    <p>Отрасль, специализация и предполагаемый грейд — от них зависит уровень теста.</p>
+  </header>
+
+  <main>
+    <form id="survey-form" novalidate>
+      <fieldset>
+        <legend>01 · Отрасль</legend>
+        <div class="picks" id="industries"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>02 · Специализация</legend>
+        <div class="picks" id="specializations"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>03 · Предполагаемый грейд</legend>
+        <div class="picks" id="grades"></div>
+        <p class="hint">Грейд не понижается принудительно: при непрохождении предложим уровень ниже.</p>
+      </fieldset>
+
+      <p class="actions">
+        <button type="submit" id="start-test" class="btn-primary" disabled>Перейти к тестированию →</button>
+      </p>
+    </form>
+  </main>
+
+  <footer><p><small>ФСП · Платформа ИТ-вакансий</small></p></footer>
+
+  <script src="/navigation_bar_script.js" defer></script>
+  <script src="/survey_script.js" defer></script>
+</body>
+</html>
