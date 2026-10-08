@@ -2,21 +2,28 @@ import { verifyAccessToken } from './auth.service.js';
 import * as repo from './auth.repo.js';
 
 export const requireAuth = async (req, res, next) => {
+  const h = req.headers.authorization || '';
+  const [scheme, token] = h.split(' ');
+  if (scheme !== 'Bearer' || !token) {
+    return res.status(401).json({ error: 'unauthorized', reason: 'no_token' });
+  }
+
+  let payload;
   try {
-    const h = req.headers.authorization || '';
-    const [scheme, token] = h.split(' ');
-    if (scheme !== 'Bearer' || !token) {
-      return res.status(401).json({ error: 'unauthorized' });
-    }
+    payload = verifyAccessToken(token);
+  } catch {
+    return res.status(401).json({ error: 'unauthorized', reason: 'invalid_token' });
+  }
 
-    const payload = verifyAccessToken(token);
+  try {
     const user = await repo.findUserById(payload.sub);
-    if (!user) return res.status(401).json({ error: 'unauthorized' });
-
+    if (!user) {
+      return res.status(401).json({ error: 'unauthorized', reason: 'user_not_found' });
+    }
     req.user = user;
     next();
-  } catch {
-    res.status(401).json({ error: 'unauthorized' });
+  } catch (err) {
+    next(err);
   }
 };
 

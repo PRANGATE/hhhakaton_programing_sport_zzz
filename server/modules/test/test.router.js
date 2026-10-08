@@ -19,6 +19,10 @@ const handle = (fn) => async (req, res, next) => {
     if (err.code === 'NOT_ENOUGH_QUESTIONS') return res.status(503).json({ error: 'not_enough_questions' });
     if (err.code === 'NOT_FOUND')             return res.status(404).json({ error: 'not_found' });
     if (err.code === 'ATTEMPT_CLOSED')        return res.status(409).json({ error: 'attempt_closed' });
+    if (err.code === 'LLM_UNAVAILABLE') return res.status(503).json({
+      error:   'llm_unavailable',
+      message: 'Сервер не выдал задания, попробуйте позже',
+    });
     next(err);
   }
 };

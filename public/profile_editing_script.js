@@ -51,7 +51,14 @@ async function api(path, opts = {}) {
             ...(opts.headers || {}),
         },
     });
-    if (res.status === 401) { location.href = '/'; throw new Error('unauthorized'); }
+    if (res.status === 401) {
+        localStorage.removeItem('fsp.access');
+        localStorage.removeItem('fsp.refresh');
+        localStorage.removeItem('fsp.user');
+        sessionStorage.clear();
+        location.href = '/';
+        throw new Error('unauthorized');
+    }
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw Object.assign(new Error(body.error || 'http_error'), { status: res.status, body });
     return body;

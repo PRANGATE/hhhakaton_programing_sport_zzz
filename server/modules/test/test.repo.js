@@ -82,3 +82,28 @@ export const countAttemptsForGrade = async (userId, specId, gradeId, sinceDays =
   );
   return rows[0].n;
 };
+
+// Сохраняет задания, сгенерированные LLM, чтобы FK из test.answers сработал.
+// Требует колонок generated_by_llm / model в test.questions (см. миграцию).
+export const persistGeneratedQuestions = async ({ specializationId, targetGradeId, questions }) => {
+  const out = [];
+  for (const q of questions) {
+    const { rows } = await query(
+      `INSERT INTO test.questions
+         (specialization_id, grade_id, topic, difficulty, kind, prompt,
+          options, correct, rubric, is_anchor, generated_by_llm, model)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,false,true,$10)
+       RETURNING id, topic, difficulty, kind, prompt, options`,
+      [
+        specializationId, targetGradeId,
+        q.topic, q.difficulty, q.kind, q.prompt,
+        q.options ? JSON.stringify(q.options) : null,
+        q.correct ? JSON.stringify(q.correct) : null,
+        q.rubric  ? JSON.stringify(q.rubric)  : null,
+        q.model || null,
+      ]
+    );
+    out.push(rows[0]);
+  }
+  return out;
+};

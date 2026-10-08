@@ -36,6 +36,7 @@ form.addEventListener('submit', async (e) => {
     const out = await api('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
+      skipAuthRedirect: true,
     });
 
     saveSession(out.user, out.accessToken, out.refreshToken);
@@ -51,11 +52,16 @@ form.addEventListener('submit', async (e) => {
     redirectByRole(out.user.role);
   } catch (err) {
     const code = err.body?.error || err.message;
-    if (code === 'invalid_credentials') toast('Неверный e-mail или пароль', 'error');
-    else if (code === 'validation_error') toast('Проверьте правильность полей', 'error');
-    else                                  toast('Ошибка: ' + code, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = orig;
+    const reason = err.body?.reason;
+
+    if (code === 'invalid_credentials') {
+      toast('Неверный e-mail или пароль. Если база сбрасывалась — зарегистрируйтесь заново.', 'error');
+    } else if (reason === 'user_not_found') {
+      toast('Сессия устарела. Войдите заново.', 'error');
+    } else if (code === 'validation_error') {
+      toast('Проверьте правильность полей', 'error');
+    } else {
+      toast('Ошибка: ' + code, 'error');
+    }
   }
 });

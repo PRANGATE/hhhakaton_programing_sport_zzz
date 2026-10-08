@@ -42,13 +42,13 @@ form.addEventListener('submit', async (e) => {
         email,
         password,
         role: currentRole,
-        consent: true,           // Zod ждёт literal(true)
+        consent: true,
       }),
+      skipAuthRedirect: true,
     });
 
     saveSession(out.user, out.accessToken, out.refreshToken);
 
-    // Дальше — подтверждение e-mail
     sessionStorage.setItem('fsp.verify.email', out.user.email);
     sessionStorage.setItem('fsp.verify.role',  out.user.role);
     location.href = '/email_code.html';

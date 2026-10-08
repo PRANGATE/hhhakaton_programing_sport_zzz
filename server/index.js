@@ -6,6 +6,7 @@ import profileRouter  from './modules/profile/profile.router.js';
 import testRouter     from './modules/test/test.router.js';
 import inviteRouter   from './modules/invite/invite.router.js';
 import matchingRouter from './modules/matching/matching.router.js';
+import aiRouter from './modules/ai/ai.router.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -43,7 +44,7 @@ app.use('/api/v1/profile',     profileRouter);
 app.use('/api/v1/test',        testRouter);
 app.use('/api/v1/invitations', inviteRouter);
 app.use('/api/v1/matching',    matchingRouter);
-
+app.use('/api/v1/ai',          aiRouter);
 app.use((_req, res) => res.status(404).json({ error: 'not_found' }));
 
 app.use((err, _req, res, _next) => {

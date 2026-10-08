@@ -26,11 +26,19 @@ export function toast(msg, kind = 'info') {
 }
 
 export async function api(path, opts = {}) {
+  const { skipAuthRedirect, ...rest } = opts;
   const res = await fetch('/api/v1' + path, {
-    ...opts,
-    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+    ...rest,
+    headers: { 'Content-Type': 'application/json', ...(rest.headers || {}) },
   });
   const body = await res.json().catch(() => ({}));
+
+  if (res.status === 401 && !skipAuthRedirect) {
+    clearSession();
+    sessionStorage.clear();
+    location.href = '/';
+    throw Object.assign(new Error('unauthorized'), { status: 401, body });
+  }
   if (!res.ok) throw Object.assign(new Error(body.error || 'http_error'), { status: res.status, body });
   return body;
 }
