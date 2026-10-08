@@ -43,7 +43,7 @@ export function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// Рендер левого меню + верхней панели.
+// Рендер общей верхней панели работодателя.
 export async function mountShell(activeKey, opts = {}) {
   const user = getUser();
   if (!user || user.role !== 'employer') {
@@ -52,42 +52,51 @@ export async function mountShell(activeKey, opts = {}) {
     return null;
   }
 
-  // Верхний бар
-  const nav = document.createElement('header');
-  nav.className = 'emp-nav';
-  nav.innerHTML = `
-    <a class="emp-nav__brand" href="/employer/profile.html">
-      <img src="/logos/logo_01.svg" alt="ФСП">
-      <span>ФСП · Кабинет работодателя</span>
-    </a>
-    <div class="emp-nav__right">
-      <span class="emp-nav__user">${escapeHtml(user.email)}</span>
-      <a href="#" id="logout-btn" class="btn btn--ghost btn--sm">Выйти</a>
-    </div>`;
-  document.body.insertBefore(nav, document.body.firstChild);
-  nav.querySelector('#logout-btn').addEventListener('click', async (e) => {
-    e.preventDefault();
-    try { await api('/auth/logout', { method: 'POST', body: JSON.stringify({}) }); } catch {}
-    clearSession();
-    location.href = '/';
-  });
+  document.body.dataset.navbarState = 'employer';
 
-  // Левый сайдбар
-  const layout = document.querySelector('.emp-layout');
-  const items = [
-    ['profile',     '/employer/profile.html',     'Профиль компании'],
-    ['needs',       '/employer/needs.html',       'Потребность'],
-    ['matching',    '/employer/matching.html',    'Подборка'],
-    ['candidates',  '/employer/candidates.html',  'Банк кандидатов'],
-    ['invitations', '/employer/invitations.html', 'Мои приглашения'],
-  ];
-  const side = document.createElement('aside');
-  side.className = 'emp-side';
-  side.innerHTML = `<div class="emp-side__title">Кабинет</div>` +
-    items.map(([k, href, label]) =>
-      `<a href="${href}" class="${k === activeKey ? 'is-on' : ''}">${label}</a>`
-    ).join('');
-  layout.insertBefore(side, layout.firstChild);
+  // navigation_bar_script.js находится в public и сам выбирает
+  // navigation_bar_employer.html для страниц /employer/*.
+  let nav = document.querySelector('.navbar');
+  if (!nav && window.FSPNavbar?.mount) {
+    nav = await window.FSPNavbar.mount();
+  }
+
+  if (nav) {
+    const navKey = ({
+      candidate: 'candidates',
+      candidates: 'candidates',
+      invitations: 'invitations',
+      invite: 'invitations',
+      matching: 'matching',
+      needs: 'needs',
+      profile: 'profile-company',
+    })[activeKey] || activeKey;
+
+    nav.querySelectorAll('.navbar__link.is-active').forEach(link => {
+      link.classList.remove('is-active');
+      link.removeAttribute('aria-current');
+    });
+
+    const activeLink = nav.querySelector('.navbar__link[data-nav="' + navKey + '"]');
+    if (activeLink) {
+      activeLink.classList.add('is-active');
+      activeLink.setAttribute('aria-current', 'page');
+    }
+
+    const userEl = nav.querySelector('#navbar-user');
+    if (userEl) userEl.textContent = user.email || '';
+
+    const logout = nav.querySelector('#navbar-logout');
+    if (logout && !logout.dataset.bound) {
+      logout.dataset.bound = '1';
+      logout.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try { await api('/auth/logout', { method: 'POST', body: JSON.stringify({}) }); } catch {}
+        clearSession();
+        location.href = '/';
+      });
+    }
+  }
 
   return user;
 }

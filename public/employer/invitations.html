@@ -6,6 +6,7 @@
 <title>ФСП · Мои приглашения</title>
 <link rel="stylesheet" href="/styles.css" />
 <link rel="stylesheet" href="/employer/employer.css" />
+<link rel="stylesheet" href="/navigation_bar_styles.css" />
 <style>
   table { width:100%; border-collapse: collapse; font-size:14px; }
   th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); }
@@ -13,10 +14,11 @@
   td b { color: var(--text); }
   .salary { color: var(--accent); font-weight: 700; white-space: nowrap; }
 </style>
+  <script src="/navigation_bar_script.js"></script>
 </head>
-<body>
-<div class="emp-layout">
-  <main class="emp-main">
+<body data-navbar-state="employer">
+
+<main class="emp-main">
     <div class="emp-head">
       <div>
         <h1>Мои приглашения</h1>
@@ -26,8 +28,7 @@
     </div>
 
     <div id="list"></div>
-  </main>
-</div>
+</main>
 
 <script type="module">
 import { mountShell, api, escapeHtml, fmtSalary } from '/employer/employer.js';

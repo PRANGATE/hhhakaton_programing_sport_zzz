@@ -6,10 +6,12 @@
 <title>ФСП · Профиль компании</title>
 <link rel="stylesheet" href="/styles.css" />
 <link rel="stylesheet" href="/employer/employer.css" />
+<link rel="stylesheet" href="/navigation_bar_styles.css" />
+  <script src="/navigation_bar_script.js"></script>
 </head>
-<body>
-<div class="emp-layout">
-  <main class="emp-main">
+<body data-navbar-state="employer">
+
+<main class="emp-main">
     <div class="emp-head">
       <div>
         <h1>Профиль компании</h1>
@@ -63,8 +65,7 @@
         <span id="save-status" style="color:var(--muted); font-size:13px"></span>
       </div>
     </form>
-  </main>
-</div>
+</main>
 
 <script type="module">
 import { mountShell, api, readForm } from '/employer/employer.js';

@@ -6,17 +6,18 @@
 <title>ФСП · Карточка кандидата</title>
 <link rel="stylesheet" href="/styles.css" />
 <link rel="stylesheet" href="/employer/employer.css" />
+<link rel="stylesheet" href="/navigation_bar_styles.css" />
+  <script src="/navigation_bar_script.js"></script>
 </head>
-<body>
-<div class="emp-layout">
-  <main class="emp-main">
+<body data-navbar-state="employer">
+
+<main class="emp-main">
     <div id="root"><div class="empty">Загружаем…</div></div>
-  </main>
-</div>
+</main>
 
 <script type="module">
 import { mountShell, api, escapeHtml } from '/employer/employer.js';
-const user = await mountShell('candidates');
+const user = await mountShell('candidate');
 if (!user) throw new Error('auth');
 
 const root = document.getElementById('root');
