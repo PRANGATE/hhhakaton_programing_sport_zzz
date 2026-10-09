@@ -1,19 +1,18 @@
-# deploy_up.ps1 - "up" обновление: пересобирает и перезапускает ТОЛЬКО приложение.
-# НЕ трогает контейнер PostgreSQL, его данные и пароли.
-# Секреты берутся из .deploy-secrets.json без изменений.
-# Если пароль в секретах расходится с паролем работающего postgres — упадёт
-# с подсказкой запустить .\deploy.ps1 (полный сброс).
+# deploy_up.ps1 - "up" без сброса БД. Туннель перезапускается,
+# PostgreSQL и его данные остаются.
 
 [CmdletBinding()]
 param()
 
 $ErrorActionPreference = "Stop"
 
-# ======================= НАСТРОЙКИ (должны совпадать с deploy.ps1) =======================
+# ======================= НАСТРОЙКИ (совпадают с deploy.ps1) =======================
 $ProjectPath   = "F:\hhru"
 $ImageName     = "fsp-hhru"
 $ImageTag      = "latest"
 $FullImage     = "${ImageName}:${ImageTag}"
+$TunnelImage   = "fsp-ollama-tunnel:latest"
+$TunnelDockerfile = "tunnel\Dockerfile"
 
 $VpsUser       = "root"
 $VpsHost       = "31.185.105.155"
@@ -23,24 +22,25 @@ $RemoteTar     = "$VpsDockerDir/fsp-hhru-image.tar"
 $ContainerName     = "fsp-app"
 $ContainerMigrate  = "fsp-migrate"
 $ContainerPostgres = "fsp-postgres"
+$ContainerTunnel   = "fsp-ollama-tunnel"
 $NetworkName       = "fsp-net"
 
-$PortMapping   = "80:8080"
-$MemoryLimit   = "320m"
-$CpuLimit      = "0.5"
+$PortMapping        = "80:8080"
+$TunnelPortMapping  = "4010:4010"
+$MemoryLimit        = "320m"
+$CpuLimit           = "0.5"
 
 $PostgresUser  = "fsp"
 $PostgresDb    = "fsp"
 
 $SecretsFile   = Join-Path $ProjectPath ".deploy-secrets.json"
 $LocalTar      = Join-Path $env:TEMP "fsp-hhru-image.tar"
-# ==========================================================================================
+# ==================================================================================
 
 function Info($m) { Write-Host "==> $m" -ForegroundColor Cyan }
 function Ok($m)   { Write-Host "OK: $m"  -ForegroundColor Green }
 function Warn($m) { Write-Host "!! $m"   -ForegroundColor Yellow }
 
-# --- проверки ---
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
   throw "docker не найден. Запусти Docker Desktop."
 }
@@ -48,20 +48,20 @@ if (-not (Test-Path (Join-Path $ProjectPath "Dockerfile"))) {
   throw "Dockerfile не найден в $ProjectPath"
 }
 if (-not (Test-Path $SecretsFile)) {
-  throw "Не найден $SecretsFile. Сначала запусти .\deploy.ps1 для первичной инициализации."
+  throw "Не найден $SecretsFile. Сначала .\deploy.ps1."
 }
 
 $sec = Get-Content $SecretsFile -Raw | ConvertFrom-Json
-if (-not $sec.POSTGRES_PASSWORD -or
-    -not $sec.JWT_ACCESS_SECRET -or
-    -not $sec.JWT_REFRESH_SECRET) {
-  throw "В $SecretsFile не хватает полей. Запусти .\deploy.ps1 -RotateSecrets."
+if (-not $sec.POSTGRES_PASSWORD -or -not $sec.JWT_ACCESS_SECRET -or
+    -not $sec.JWT_REFRESH_SECRET -or -not $sec.TUNNEL_SECRET) {
+  throw "В $SecretsFile не хватает полей (нужен TUNNEL_SECRET). Запусти .\deploy.ps1 -RotateSecrets."
 }
-Info "Секреты загружены из $SecretsFile (сгенерированы $($sec.generated_at))"
+Info "Секреты загружены из $SecretsFile"
 
 $PostgresPassword = $sec.POSTGRES_PASSWORD
 $JwtAccessSecret  = $sec.JWT_ACCESS_SECRET
 $JwtRefreshSecret = $sec.JWT_REFRESH_SECRET
+$TunnelSecret     = $sec.TUNNEL_SECRET
 $DatabaseUrl = "postgres://${PostgresUser}:${PostgresPassword}@${ContainerPostgres}:5432/${PostgresDb}"
 
 $EnvVars = @(
@@ -76,60 +76,55 @@ $EnvVars = @(
   "KEYCLOAK_ENABLED=false",
   "KEYCLOAK_URL=https://id.fsp.example",
   "KEYCLOAK_REALM=fsp",
-  "KEYCLOAK_CLIENT_ID=fsp-web"
+  "KEYCLOAK_CLIENT_ID=fsp-web",
+  "OLLAMA_URL=http://${ContainerTunnel}:11434",
+  "LLM_MODE=hybrid",
+  "LLM_PROVIDER=ollama",
+  "LLM_MODEL=llama3.1:8b",
+  "LLM_TIMEOUT_MS=60000"
 )
 $EnvArgs = ($EnvVars | ForEach-Object { "-e `"$_`"" }) -join " "
 
-# --- 1. сборка ---
 Info "Сборка $FullImage"
 docker build -t $FullImage $ProjectPath
-if ($LASTEXITCODE -ne 0) { throw "docker build упал" }
-Ok "образ собран"
+if ($LASTEXITCODE -ne 0) { throw "docker build (app) упал" }
 
-# --- 2. save ---
+Info "Сборка $TunnelImage"
+docker build -f (Join-Path $ProjectPath $TunnelDockerfile) -t $TunnelImage $ProjectPath
+if ($LASTEXITCODE -ne 0) { throw "docker build (tunnel) упал" }
+
 Info "docker save -> $LocalTar"
-docker save -o $LocalTar $FullImage
+docker save -o $LocalTar $FullImage $TunnelImage
 if ($LASTEXITCODE -ne 0) { throw "docker save упал" }
 Ok ("tar: {0:N1} MB" -f ((Get-Item $LocalTar).Length / 1MB))
 
 $sshTarget = "$VpsUser@$VpsHost"
-
-# --- 3. mkdir + scp ---
-Info "mkdir на VPS"
 ssh $sshTarget "mkdir -p '$VpsDockerDir'"
-if ($LASTEXITCODE -ne 0) { throw "ssh/mkdir упал" }
-
-Info "scp -> $RemoteTar"
 scp $LocalTar "${sshTarget}:$RemoteTar"
 if ($LASTEXITCODE -ne 0) { throw "scp упал" }
-Ok "доставлено"
 
-# --- 4. миграции + перезапуск (БЕЗ сброса БД) ---
-Info "миграции + перезапуск приложения (данные PostgreSQL сохраняются)"
+Info "миграции + перезапуск (данные PostgreSQL сохраняются)"
 $remoteLines = @(
   "set -e",
   "docker network inspect $NetworkName >/dev/null 2>&1 || docker network create $NetworkName",
 
-  # postgres: только СТАРТУЕМ, если остановлен. Ничего не удаляем и не пересоздаём.
   "if docker inspect $ContainerPostgres >/dev/null 2>&1; then",
   "  docker start $ContainerPostgres >/dev/null 2>&1 || true",
   "else",
-  "  echo '!! Контейнер $ContainerPostgres не найден.';",
-  "  echo '!! Первая инициализация: запусти .\\deploy.ps1';",
-  "  exit 2;",
+  "  echo '!! Контейнер $ContainerPostgres не найден. Первая инициализация: .\\deploy.ps1'; exit 2;",
   "fi",
-
   "for i in {1..30}; do docker exec $ContainerPostgres pg_isready -U $PostgresUser -d $PostgresDb >/dev/null 2>&1 && break; sleep 1; done",
 
   "docker load -i '$RemoteTar'",
   "rm -f '$RemoteTar'",
 
-  # миграции (упадут, если пароль в DATABASE_URL не совпадает с реальным)
+  # Туннель пересоздаём всегда — он stateless
+  "docker stop $ContainerTunnel >/dev/null 2>&1 || true",
+  "docker rm -f $ContainerTunnel >/dev/null 2>&1 || true",
+  "docker run -d --name $ContainerTunnel --network $NetworkName --restart unless-stopped -p $TunnelPortMapping -e TUNNEL_PORT=4010 -e TUNNEL_API_PORT=11434 -e TUNNEL_SECRET='$TunnelSecret' '$TunnelImage'",
+
   "if ! docker run --rm --name $ContainerMigrate --network $NetworkName -e DATABASE_URL='$DatabaseUrl' '$FullImage' npm run migrate:up; then",
-  "  echo '!! Миграции упали. Вероятно, пароль PostgreSQL в .deploy-secrets.json';",
-  "  echo '!! не совпадает с паролем работающего контейнера $ContainerPostgres.';",
-  "  echo '!! Запусти .\\deploy.ps1 (полный сброс) или .\\deploy.ps1 -RotateSecrets.';",
-  "  exit 3;",
+  "  echo '!! Миграции упали. Вероятно, пароль PostgreSQL в .deploy-secrets.json не совпадает.'; exit 3;",
   "fi",
 
   "docker stop '$ContainerName' >/dev/null 2>&1 || true",
@@ -137,13 +132,12 @@ $remoteLines = @(
   "docker run -d --name '$ContainerName' --network $NetworkName --restart unless-stopped --memory=$MemoryLimit --cpus=$CpuLimit -p $PortMapping $EnvArgs '$FullImage'",
 
   "docker image prune -f >/dev/null",
-  "docker stats --no-stream '$ContainerName'"
+  "docker stats --no-stream '$ContainerName' '$ContainerTunnel'"
 )
 $remote = ($remoteLines -join "`n") + "`n"
 
 $remote | ssh $sshTarget "tr -d '\r' | bash -s"
-if ($LASTEXITCODE -ne 0) { throw "удалённый деплой упал (см. диагностику выше)" }
+if ($LASTEXITCODE -ne 0) { throw "удалённый деплой упал" }
 
 Remove-Item $LocalTar -Force -ErrorAction SilentlyContinue
-
 Ok "Готово (данные БД сохранены): http://$VpsHost/"

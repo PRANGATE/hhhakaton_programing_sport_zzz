@@ -1,7 +1,5 @@
-# deploy.ps1 - полный деплой с ПЕРЕСОЗДАНИЕМ БД
-# ВНИМАНИЕ: удаляет все данные PostgreSQL (volume pgdata).
-# Пароль PostgreSQL берётся из .deploy-secrets.json (или генерируется, если файла нет).
-# Флаг -RotateSecrets дополнительно перегенерирует JWT-секреты и пароль БД.
+# deploy.ps1 - полный деплой с ПЕРЕСОЗДАНИЕМ БД.
+# Дополнительно поднимает контейнер fsp-ollama-tunnel.
 
 [CmdletBinding()]
 param(
@@ -16,6 +14,9 @@ $ImageName     = "fsp-hhru"
 $ImageTag      = "latest"
 $FullImage     = "${ImageName}:${ImageTag}"
 
+$TunnelImage     = "fsp-ollama-tunnel:latest"
+$TunnelDockerfile = "tunnel\Dockerfile"
+
 $VpsUser       = "root"
 $VpsHost       = "31.185.105.155"
 $VpsDockerDir  = "/home/PRANG/docker"
@@ -25,11 +26,13 @@ $PgVolumePath  = "$VpsDockerDir/pgdata"
 $ContainerName     = "fsp-app"
 $ContainerMigrate  = "fsp-migrate"
 $ContainerPostgres = "fsp-postgres"
+$ContainerTunnel   = "fsp-ollama-tunnel"
 $NetworkName       = "fsp-net"
 
-$PortMapping   = "80:8080"
-$MemoryLimit   = "320m"
-$CpuLimit      = "0.5"
+$PortMapping        = "80:8080"
+$TunnelPortMapping  = "4010:4010"
+$MemoryLimit        = "320m"
+$CpuLimit           = "0.5"
 
 $PostgresUser  = "fsp"
 $PostgresDb    = "fsp"
@@ -52,6 +55,7 @@ function New-SecretsBlock {
     POSTGRES_PASSWORD   = New-Secret 40
     JWT_ACCESS_SECRET   = New-Secret 48
     JWT_REFRESH_SECRET  = New-Secret 48
+    TUNNEL_SECRET       = New-Secret 48
     generated_at        = (Get-Date).ToString("o")
   }
 }
@@ -69,13 +73,23 @@ function Get-Secrets {
 
   if ($RotateSecrets) {
     Warn "RotateSecrets: перегенерирую секреты. Все ранее выданные JWT станут невалидными."
-    Warn "Пользователи должны будут заново залогиниться. БД также будет пересоздана."
     $confirm = Read-Host "Продолжить? (yes/no)"
     if ($confirm -ne "yes") { throw "Отменено пользователем" }
     $s = New-SecretsBlock
     $s | ConvertTo-Json | Set-Content -Path $SecretsFile -Encoding UTF8
     Ok "Секреты перегенерированы"
     return $s
+  }
+
+  # миграция: дописываем отсутствующие поля без сброса остального
+  $changed = $false
+  if (-not $secrets.TUNNEL_SECRET) {
+    Warn "TUNNEL_SECRET отсутствует — генерирую и дописываю в $SecretsFile"
+    $secrets | Add-Member -NotePropertyName TUNNEL_SECRET -NotePropertyValue (New-Secret 48) -Force
+    $changed = $true
+  }
+  if ($changed) {
+    $secrets | ConvertTo-Json | Set-Content -Path $SecretsFile -Encoding UTF8
   }
 
   Info "Секреты загружены из $SecretsFile (сгенерированы $($secrets.generated_at))"
@@ -89,11 +103,15 @@ if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
 if (-not (Test-Path (Join-Path $ProjectPath "Dockerfile"))) {
   throw "Dockerfile не найден в $ProjectPath"
 }
+if (-not (Test-Path (Join-Path $ProjectPath $TunnelDockerfile))) {
+  throw "Не найден $TunnelDockerfile"
+}
 
 $sec = Get-Secrets
 $PostgresPassword = $sec.POSTGRES_PASSWORD
 $JwtAccessSecret  = $sec.JWT_ACCESS_SECRET
 $JwtRefreshSecret = $sec.JWT_REFRESH_SECRET
+$TunnelSecret     = $sec.TUNNEL_SECRET
 
 $DatabaseUrl = "postgres://${PostgresUser}:${PostgresPassword}@${ContainerPostgres}:5432/${PostgresDb}"
 
@@ -109,19 +127,31 @@ $EnvVars = @(
   "KEYCLOAK_ENABLED=false",
   "KEYCLOAK_URL=https://id.fsp.example",
   "KEYCLOAK_REALM=fsp",
-  "KEYCLOAK_CLIENT_ID=fsp-web"
+  "KEYCLOAK_CLIENT_ID=fsp-web",
+
+  # LLM: идём через HTTP-фасад туннеля
+  "OLLAMA_URL=http://${ContainerTunnel}:11434",
+  "LLM_MODE=hybrid",
+  "LLM_PROVIDER=ollama",
+  "LLM_MODEL=llama3.1:8b",
+  "LLM_TIMEOUT_MS=60000"
 )
 $EnvArgs = ($EnvVars | ForEach-Object { "-e `"$_`"" }) -join " "
 
-# --- 1. сборка ---
+# --- 1. сборка обоих образов ---
 Info "Сборка $FullImage"
 docker build -t $FullImage $ProjectPath
-if ($LASTEXITCODE -ne 0) { throw "docker build упал" }
-Ok "образ собран"
+if ($LASTEXITCODE -ne 0) { throw "docker build (app) упал" }
+Ok "образ приложения собран"
 
-# --- 2. save ---
+Info "Сборка $TunnelImage"
+docker build -f (Join-Path $ProjectPath $TunnelDockerfile) -t $TunnelImage $ProjectPath
+if ($LASTEXITCODE -ne 0) { throw "docker build (tunnel) упал" }
+Ok "образ туннеля собран"
+
+# --- 2. save обоих образов ---
 Info "docker save -> $LocalTar"
-docker save -o $LocalTar $FullImage
+docker save -o $LocalTar $FullImage $TunnelImage
 if ($LASTEXITCODE -ne 0) { throw "docker save упал" }
 Ok ("tar: {0:N1} MB" -f ((Get-Item $LocalTar).Length / 1MB))
 
@@ -137,35 +167,40 @@ scp $LocalTar "${sshTarget}:$RemoteTar"
 if ($LASTEXITCODE -ne 0) { throw "scp упал" }
 Ok "доставлено"
 
-# --- 4. СБРОС БД + миграции + перезапуск ---
-Info "!! Полный сброс PostgreSQL: удаляю контейнер и данные"
+# --- 4. сброс БД + туннель + миграции + перезапуск ---
+Info "!! Полный сброс PostgreSQL и перезапуск стека"
 $remoteLines = @(
   "set -e",
   "docker network inspect $NetworkName >/dev/null 2>&1 || docker network create $NetworkName",
 
-  # снести старый постгрес и его данные
+  # PostgreSQL — сносим и поднимаем заново
   "docker stop $ContainerPostgres >/dev/null 2>&1 || true",
   "docker rm -f $ContainerPostgres >/dev/null 2>&1 || true",
   "rm -rf '$PgVolumePath'",
   "mkdir -p '$PgVolumePath'",
-
-  # поднять свежий постгрес с актуальным паролем
   "docker run -d --name $ContainerPostgres --network $NetworkName --restart unless-stopped -e POSTGRES_USER=$PostgresUser -e POSTGRES_PASSWORD=$PostgresPassword -e POSTGRES_DB=$PostgresDb -v ${PgVolumePath}:/var/lib/postgresql/data postgres:16-alpine",
-
   "for i in {1..30}; do docker exec $ContainerPostgres pg_isready -U $PostgresUser -d $PostgresDb >/dev/null 2>&1 && break; sleep 1; done",
 
+  # Грузим оба образа из tar
   "docker load -i '$RemoteTar'",
   "rm -f '$RemoteTar'",
 
+  # Туннель Ollama
+  "docker stop $ContainerTunnel >/dev/null 2>&1 || true",
+  "docker rm -f $ContainerTunnel >/dev/null 2>&1 || true",
+  "docker run -d --name $ContainerTunnel --network $NetworkName --restart unless-stopped -p $TunnelPortMapping -e TUNNEL_PORT=4010 -e TUNNEL_API_PORT=11434 -e TUNNEL_SECRET='$TunnelSecret' '$TunnelImage'",
+
+  # Миграции
   "docker rm -f $ContainerMigrate >/dev/null 2>&1 || true",
   "docker run --rm --name $ContainerMigrate --network $NetworkName -e DATABASE_URL='$DatabaseUrl' '$FullImage' npm run migrate:up",
 
+  # Приложение
   "docker stop '$ContainerName' >/dev/null 2>&1 || true",
   "docker rm   '$ContainerName' >/dev/null 2>&1 || true",
   "docker run -d --name '$ContainerName' --network $NetworkName --restart unless-stopped --memory=$MemoryLimit --cpus=$CpuLimit -p $PortMapping $EnvArgs '$FullImage'",
 
   "docker image prune -f >/dev/null",
-  "docker stats --no-stream '$ContainerName'"
+  "docker stats --no-stream '$ContainerName' '$ContainerTunnel'"
 )
 $remote = ($remoteLines -join "`n") + "`n"
 
@@ -175,3 +210,5 @@ if ($LASTEXITCODE -ne 0) { throw "удалённый деплой упал" }
 Remove-Item $LocalTar -Force -ErrorAction SilentlyContinue
 
 Ok "Готово (БД пересоздана): http://$VpsHost/"
+Ok "Туннель Ollama слушает ws://${VpsHost}:4010/ollama-tunnel"
+Ok "Запусти на домашнем ПК: powershell -File .\scripts\start-tunnel.ps1"

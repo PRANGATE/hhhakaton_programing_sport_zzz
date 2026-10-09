@@ -24,18 +24,31 @@ export async function resolveProvider() {
 
   for (const name of candidates()) {
     const loader = LOADERS[name];
-    if (!loader) continue;
+    if (!loader) {
+      console.log(`[llm.provider] no loader for "${name}"`);
+      continue;
+    }
     try {
+      console.log(`[llm.provider] loading "${name}"…`);
       const mod = await loader();
       const provider = mod.default;
-      if (!provider) continue;
-      const healthy = await Promise.resolve(provider.health()).catch(() => false);
+      if (!provider) {
+        console.log(`[llm.provider] "${name}" has no default export`);
+        continue;
+      }
+      console.log(`[llm.provider] checking health of "${name}"…`);
+      const healthy = await Promise.resolve(provider.health())
+        .catch((e) => {
+          console.error(`[llm.provider] "${name}".health() threw:`, e?.message || e);
+          return false;
+        });
+      console.log(`[llm.provider] "${name}" health = ${healthy}`);
       if (healthy) {
         cache = { provider, at: Date.now() };
         return provider;
       }
-    } catch {
-      // модуля нет / упал — пробуем следующий
+    } catch (err) {
+      console.error(`[llm.provider] loader for "${name}" failed:`, err?.message || err);
     }
   }
 
