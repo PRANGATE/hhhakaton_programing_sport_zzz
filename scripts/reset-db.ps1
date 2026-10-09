@@ -1,4 +1,4 @@
-# scripts/reset-db.ps1
+﻿# scripts/reset-db.ps1
 #
 # Жёсткий сброс локального Postgres-стека.
 # Все docker-вызовы обёрнуты в ErrorActionPreference='Continue',

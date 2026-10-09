@@ -1,4 +1,4 @@
-# scripts/start-tunnel.ps1
+﻿# scripts/start-tunnel.ps1
 # Запускает клиент туннеля на домашнем ПК.
 # TUNNEL_SECRET берётся из .deploy-secrets.json или .env (что найдётся).
 # VpsHost по умолчанию 127.0.0.1 (локальный docker compose),

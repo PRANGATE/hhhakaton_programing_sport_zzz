@@ -1,36 +1,16 @@
 <!doctype html>
 <html lang="ru">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ФСП · Платформа ИТ-вакансий — Вход</title>
-<link rel="stylesheet" href="/styles.css" />
-<link rel="stylesheet" href="/index_styles.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ФСП · Платформа ИТ-вакансий — Вход</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/index_styles.css" />
 </head>
+
 <body>
   <div class="layout">
-
-    <aside class="brand">
-      <div class="brand__logo">
-        <span class="brand__mark">ФСП</span>
-        <span class="brand__sub">Федерация спортивного программирования</span>
-      </div>
-
-      <h1 class="brand__title">Платформа&nbsp;ИТ&#8209;вакансий</h1>
-      <p class="brand__lead">
-        Работодатель находит категорию с подтверждённым грейдом&nbsp;—
-        и сам выходит на кандидата с предложением и уровнем зарплаты.
-      </p>
-
-      <ul class="brand__points">
-        <li>Категория присваивается по&nbsp;опросу и&nbsp;тесту, а&nbsp;не&nbsp;по&nbsp;резюме</li>
-        <li>Достижения ФСП усиливают профиль кандидата</li>
-        <li>Уровень зарплаты виден до&nbsp;начала общения</li>
-      </ul>
-
-      <footer class="brand__footer">© ФСП, 2026 · прототип</footer>
-    </aside>
-
     <main class="panel">
       <div class="panel__inner">
         <h2 class="panel__title">Вход в личный кабинет</h2>
@@ -39,14 +19,14 @@
         <form class="form" id="login-form" novalidate>
           <label class="field">
             <span class="field__label">E-mail</span>
-            <input class="field__input" type="email" name="email"
-                   placeholder="you@example.com" autocomplete="email" required />
+            <input class="field__input" type="email" name="email" placeholder="you@example.com" autocomplete="email"
+              required />
           </label>
 
           <label class="field">
             <span class="field__label">Пароль</span>
-            <input class="field__input" type="password" name="password"
-                   placeholder="••••••••" autocomplete="current-password" required />
+            <input class="field__input" type="password" name="password" placeholder="••••••••"
+              autocomplete="current-password" required />
           </label>
 
           <div class="form__row">
@@ -75,6 +55,9 @@
           Продолжая, вы соглашаетесь с обработкой персональных данных
           в соответствии с ФЗ&nbsp;№&nbsp;152&#8209;ФЗ.
         </p>
+        <p class="legal" style="text-align:center; margin-top:12px;">
+          © ФСП, 2026 · прототип
+        </p>
       </div>
     </main>
   </div>
@@ -83,4 +66,5 @@
 
   <script type="module" src="/login.js"></script>
 </body>
+
 </html>
