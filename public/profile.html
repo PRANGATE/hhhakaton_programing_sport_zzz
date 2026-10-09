@@ -13,57 +13,65 @@
 <body>
     <header>
         <h1>Профиль</h1>
-        <p>Ваши данные из профиля. Заполняется на странице редактирования.</p>
     </header>
 
     <main>
         <form action="#" method="post" novalidate>
 
             <fieldset>
-            <legend>Персональные данные</legend>
+                <legend>Персональные данные</legend>
 
-            <div class="profile-grid">
-                <p><span class="profile-label">Фамилия</span>
-                <span class="profile-value" id="pf-lastName">—</span></p>
-                <p><span class="profile-label">Имя</span>
-                <span class="profile-value" id="pf-firstName">—</span></p>
-                <p><span class="profile-label">Отчество</span>
-                <span class="profile-value" id="pf-middleName">—</span></p>
-                <p><span class="profile-label">Электронная почта</span>
-                <span class="profile-value"><a id="pf-email" href="#">—</a></span></p>
-                <p><span class="profile-label">Telegram</span>
-                <span class="profile-value"><a id="pf-telegram" href="#" target="_blank" rel="noopener">—</a></span></p>
-                <p><span class="profile-label">Телефон</span>
-                <span class="profile-value"><a id="pf-phone" href="#">—</a></span></p>
-            </div>
+                <div class="profile-grid">
+                    <p><span class="profile-label">Фамилия</span>
+                        <span class="profile-value" id="pf-lastName">—</span>
+                    </p>
+                    <p><span class="profile-label">Имя</span>
+                        <span class="profile-value" id="pf-firstName">—</span>
+                    </p>
+                    <p><span class="profile-label">Отчество</span>
+                        <span class="profile-value" id="pf-middleName">—</span>
+                    </p>
+                    <p><span class="profile-label">Электронная почта</span>
+                        <span class="profile-value"><a id="pf-email" href="#">—</a></span>
+                    </p>
+                    <p><span class="profile-label">Telegram</span>
+                        <span class="profile-value"><a id="pf-telegram" href="#" target="_blank"
+                                rel="noopener">—</a></span>
+                    </p>
+                    <p><span class="profile-label">Телефон</span>
+                        <span class="profile-value"><a id="pf-phone" href="#">—</a></span>
+                    </p>
+                </div>
             </fieldset>
 
             <fieldset>
-            <legend>Опыт</legend>
-            <p><span class="profile-label">Стаж</span>
-                <span class="profile-value" id="pf-experience">—</span></p>
-            <p><span class="profile-label">О себе</span>
-                <span class="profile-value profile-value--multiline" id="pf-about">—</span></p>
+                <legend>Опыт</legend>
+                <p><span class="profile-label">Стаж</span>
+                    <span class="profile-value" id="pf-experience">—</span>
+                </p>
+                <p><span class="profile-label">О себе</span>
+                    <span class="profile-value profile-value--multiline" id="pf-about">—</span>
+                </p>
             </fieldset>
 
             <fieldset>
-            <legend>роли</legend>
-            <ul class="badge-list" id="pf-roles"></ul>
+                <legend>роли</legend>
+                <ul class="badge-list" id="pf-roles"></ul>
             </fieldset>
 
             <fieldset>
-            <legend>Стеки и технологии</legend>
-            <ul class="badge-list" id="pf-stacks"></ul>
-            </fieldset>
+                <legend>Стеки и технологии</legend>
+                <ul class="badge-list" id="pf-stacks"></ul>
+            </fieldset><br>
 
             <p class="profile-actions">
-            <a class="profile-btn profile-btn--ghost" href="/profile_editing.html" role="button">Редактировать</a>
-            <button type="button" id="exportPdf" class="profile-btn profile-btn--primary">Экспорт в PDF</button>
+                <a class="profile-btn profile-btn--ghost" href="/profile_editing.html" role="button">Редактировать</a>
+                <button type="button" id="exportPdf" class="profile-btn profile-btn--primary">Экспорт в PDF</button>
             </p>
         </form>
     </main>
 
-    <footer>
+    <footer class="site-footer">
         <p><small>ФСП · Платформа ИТ-вакансий</small></p>
     </footer>
 

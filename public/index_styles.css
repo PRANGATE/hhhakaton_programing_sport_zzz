@@ -8,9 +8,20 @@
 .panel {
     display: grid;
     place-items: center;
+    align-content: center;   /* ← новое: не растягивать строки грида по всей высоте */
+    gap: 16px;               /* ← новое: отступ между лидом и карточкой */
     padding: 40px 24px;
     min-height: 100vh;
     background: var(--bg);
+}
+
+.panel__lead {
+    max-width: 420px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: center;
 }
 
 .panel__inner {
