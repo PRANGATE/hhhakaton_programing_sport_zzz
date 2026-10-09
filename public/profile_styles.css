@@ -146,9 +146,23 @@ body.is-printing footer {
     min-height: 100px;
 }
 
-/* Второй fieldset (Опыт) — как в форме создания, поля в половину */
-fieldset:nth-of-type(2) > p {
-    width: 50%;
+fieldset {
+    width: 100%;
+    margin: 0;
+    padding: 22px 24px 6px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+
+legend {
+    padding: 0 8px;
+    margin-left: -8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
 /* --- Список бейджей ролей/технологий --- */

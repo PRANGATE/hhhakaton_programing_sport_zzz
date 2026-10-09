@@ -111,3 +111,53 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
   .row2, .row3 { grid-template-columns: 1fr; }
   .cand-row { grid-template-columns: 1fr; }
 }
+
+/* Банк кандидатов: рабочая область 50/50. Существующая визуальная тема не меняется. */
+.candidates-page { width: 100%; max-width: none; }
+.candidates-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.candidates-list-pane,
+.candidate-preview-pane { min-width: 0; }
+.candidate-preview-card {
+  min-height: 240px;
+  position: sticky;
+  top: 20px;
+}
+.candidate-preview__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.candidate-preview__head h2 { margin: 0 0 4px; font-size: 22px; }
+.candidate-preview__head p { margin: 0; color: var(--muted); font-size: 14px; }
+.candidate-preview__section {
+  padding-top: 16px;
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.candidate-preview__fsp-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.candidate-preview__contacts {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.cand-row { cursor: pointer; }
+.cand-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cand-row--selected { border-color: var(--accent); }
+
+@media (max-width: 900px) {
+  .candidates-workspace { grid-template-columns: 1fr; }
+  .candidate-preview-card { position: static; }
+}
