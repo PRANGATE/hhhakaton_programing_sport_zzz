@@ -218,7 +218,10 @@
 
   // ---------- init ----------
   function init() {
-    if (!getToken()) { window.location.href = '/'; return; }
+    if (!getToken()) { location.href = '/'; return; }
+
+  // Страница опроса? Если нет контейнеров — это /testing.html, выходим тихо.
+    if (!document.getElementById('industries')) return;
 
     // 1. Пришли со страницы опроса с ошибкой — показываем сообщение в поле задания.
     const errMessage = sessionStorage.getItem('fsp.test.error');

@@ -1,6 +1,6 @@
 // server/modules/ai/llm.ollama.js
 //
-// Провайдер LLM поверх Ollama. Может говорить как с локальной Ollama,
+// Провайдер LLM поверх Ollama. Говорит как с локальной Ollama,
 // так и с HTTP-фасадом туннеля на VPS (OLLAMA_URL настраивается через env).
 //
 // Контракт с ai.service.js:
@@ -60,8 +60,10 @@ function extractJson(text) {
   if (!text) throw new Error('empty_llm_output');
   let s = String(text).trim();
 
+  // снять markdown-обёртку ```json ... ```
   s = s.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
 
+  // найти первый { или [
   const first = (() => {
     const a = s.indexOf('[');
     const o = s.indexOf('{');
@@ -72,12 +74,12 @@ function extractJson(text) {
   })();
   if (first > 0) s = s.slice(first);
 
-  // обрезаем хвост после сбалансированных скобок
-  const open = s[0];
+  // обрезать по парной скобке (учитывая строки и экранирование)
+  const open  = s[0];
   const close = open === '[' ? ']' : '}';
   let depth = 0;
   let inStr = false;
-  let esc = false;
+  let esc   = false;
   for (let i = 0; i < s.length; i++) {
     const ch = s[i];
     if (inStr) {
@@ -94,8 +96,39 @@ function extractJson(text) {
   return JSON.parse(s);
 }
 
+// ---------- нормализация распарсенного ответа в массив ----------
+// Ollama с format:'json' иногда возвращает:
+//   • [{...}, {...}]              — массив (идеал)
+//   • { questions: [{...}] }      — объект с ключом
+//   • { tasks: [...] }            — другой частый ключ
+//   • { topic, prompt, ... }      — один вопрос как объект
+//   • {}                          — модель не справилась
+//
+// Возвращаем всегда массив (возможно пустой).
+
+function toQuestionList(parsed) {
+  if (Array.isArray(parsed)) return parsed;
+  if (!parsed || typeof parsed !== 'object') return [];
+
+  // Частые ключи-обёртки
+  for (const k of ['questions', 'items', 'tasks', 'data', 'result', 'results']) {
+    if (Array.isArray(parsed[k])) return parsed[k];
+  }
+
+  // Любой массив-значение с непустой длиной
+  for (const k of Object.keys(parsed)) {
+    if (Array.isArray(parsed[k]) && parsed[k].length) return parsed[k];
+  }
+
+  // Единственный объект, похожий на вопрос
+  if (typeof parsed.prompt === 'string' && parsed.kind) return [parsed];
+
+  return [];
+}
+
 // ---------- нормализация одного задания ----------
-// Приводим «сырой» ответ модели к форме, которую ждёт test.repo.persistGeneratedQuestions.
+// Приводим «сырой» ответ модели к форме, которую ждёт
+// test.repo.persistGeneratedQuestions.
 
 function normalizeQuestion(raw) {
   if (!raw || typeof raw !== 'object') throw new Error('bad_question_shape');
@@ -113,7 +146,7 @@ function normalizeQuestion(raw) {
   if (kind === 'single' || kind === 'multi') {
     const rawOpts = Array.isArray(raw.options) ? raw.options : [];
     options = rawOpts
-      .map(o => (o && typeof o === 'object' ? (o.text ?? o.value ?? '') : o))
+      .map(o => (o && typeof o === 'object' ? (o.text || o.value || '') : o))
       .map(o => String(o).trim())
       .filter(Boolean);
 
@@ -122,13 +155,19 @@ function normalizeQuestion(raw) {
 
     if (kind === 'single') {
       let c = raw.correct;
-      if (c && typeof c === 'object') c = c.index ?? c.correct ?? 0;
+      if (c && typeof c === 'object') {
+        c = (c.index != null) ? c.index
+          : (c.correct != null) ? c.correct
+          : 0;
+      }
       c = Number(c);
       correct = Number.isInteger(c) && c >= 0 && c < options.length ? c : 0;
     } else {
       let arr = raw.correct;
       if (arr && typeof arr === 'object' && !Array.isArray(arr)) {
-        arr = arr.indices ?? arr.correct ?? [];
+        arr = (arr.indices != null) ? arr.indices
+          : (arr.correct != null) ? arr.correct
+          : [];
       }
       arr = Array.isArray(arr) ? arr : [];
       correct = arr
@@ -139,7 +178,9 @@ function normalizeQuestion(raw) {
     }
   } else {
     let r = raw.rubric;
-    if (r && typeof r === 'object' && !Array.isArray(r)) r = r.criteria ?? [];
+    if (r && typeof r === 'object' && !Array.isArray(r)) {
+      r = (r.criteria != null) ? r.criteria : [];
+    }
     rubric = Array.isArray(r) ? r.map(String).map(s => s.trim()).filter(Boolean) : [];
     if (rubric.length < 2) rubric = ['Корректность', 'Полнота', 'Обоснованность'];
   }
@@ -176,7 +217,14 @@ function buildGenSystem({ specializationId, targetGradeId, count }) {
 - "options" и "correct" — только для kind=single/multi.
 - для single: "correct" — индекс верного варианта (число).
 - для multi: "correct" — массив индексов верных вариантов.
-- для text: "rubric" — массив критериев оценки.`;
+- для text: "rubric" — массив критериев оценки.
+
+ВАЖНО ПРО ФОРМАТ ОТВЕТА:
+- Ответ должен начинаться символом '[' и заканчиваться символом ']'.
+- Ответ — МАССИВ из ровно ${count} объектов, а не один объект.
+- НЕ оборачивай в {"questions": [...]}, {"items": [...]} или другой объект.
+- Если не можешь выполнить — верни пустой массив [].
+- Первый символ ответа — '[', последний — ']'.`;
 }
 
 // ---------- сам провайдер ----------
@@ -184,7 +232,7 @@ function buildGenSystem({ specializationId, targetGradeId, count }) {
 export default {
   name: 'ollama',
 
-    async health() {
+  async health() {
     const probeUrl = `${URL}/api/tags`;
     const timeoutMs = Math.min(TIMEOUT, 5000);
     try {
@@ -229,9 +277,24 @@ export default {
           temperature: TEMP,
         });
 
-        const parsed = extractJson(raw);
-        const list = Array.isArray(parsed) ? parsed : (parsed.questions || []);
-        if (!Array.isArray(list) || !list.length) throw new Error('empty_questions_array');
+        let parsed;
+        try {
+          parsed = extractJson(raw);
+        } catch (err) {
+          console.warn(`[llm.ollama] JSON parse failed: ${err.message}`);
+          console.warn('[llm.ollama] raw response:', String(raw).slice(0, 800));
+          throw new Error('bad_json: ' + err.message);
+        }
+
+        const list = toQuestionList(parsed);
+        if (!list.length) {
+          console.warn('[llm.ollama] raw response:', String(raw).slice(0, 800));
+          console.warn('[llm.ollama] parsed type:', Array.isArray(parsed) ? 'array' : typeof parsed);
+          console.warn('[llm.ollama] parsed keys:', parsed && typeof parsed === 'object'
+            ? Object.keys(parsed).join(', ')
+            : String(parsed));
+          throw new Error('empty_questions_array');
+        }
 
         const normalized = [];
         for (const q of list) {
@@ -262,7 +325,13 @@ export default {
   async evaluateAnswer({ question, payload }) {
     if (!question) throw new Error('no_question');
     const rubric = Array.isArray(question.rubric) ? question.rubric : [];
-    const answer = payload?.text ?? payload?.choice ?? payload?.choices ?? payload;
+
+    // Берём первое не-null значение. Без смешивания || и ?? в одном выражении —
+    // это SyntaxError в JavaScript.
+    const answer = (payload?.text != null) ? payload.text
+      : (payload?.choice != null) ? payload.choice
+      : (payload?.choices != null) ? payload.choices
+      : payload;
 
     const system = `Ты — эксперт-ревьюер. Оцени ответ кандидата по фиксированной рубрике.
 Рубрика: ${JSON.stringify(rubric)}
