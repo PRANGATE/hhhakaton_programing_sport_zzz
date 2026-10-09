@@ -31,16 +31,23 @@
 │         Node.js + Express                        │
 │  • API Gateway (middleware: auth, валидация)     │
 │  • Домены: Auth, Profile, Test, Matching,        │
-│    Invite, Vacancy, Chat                         │
+│    Invite, Vacancy, Chat, News, Admin            │
 │  • AI Service (обёртка над LLM)                  │
 └────┬──────────────────────────────┬──────────────┘
      │ SQL                          │ HTTP
      ▼                              ▼
-┌──────────────┐              ┌──────────────┐
-│ PostgreSQL   │              │ LLM-провайдер│
-│ schema-per-  │              │ (Yandex,     │
-│ service      │              │  Giga, ...)  │
-└──────────────┘              └──────────────┘
+┌──────────────┐              ┌──────────────────────┐
+│ PostgreSQL   │              │ Ollama Tunnel        │
+│ schema-per-  │              │ (:11434 HTTP-фасад,  │
+│ service      │              │  :4010 WS)           │
+└──────────────┘              └──────────┬───────────┘
+                                         │ WebSocket
+                                         ▼
+                              ┌──────────────────────┐
+                              │ Локальный ПК         │
+                              │ (Ollama на 127.0.0.1 │
+                              │  :11434)             │
+                              └──────────────────────┘
 ```
 
 ## Кто за что отвечает
@@ -55,7 +62,8 @@
 ### Node.js / Express
 
 - Аутентификация, сессии, работа с PostgreSQL.
-- Вся бизнес-логика: тесты, категоризация, подбор, приглашения, чат.
+- Вся бизнес-логика: тесты, категоризация, подбор, приглашения, чат,
+  новости, админ-панель.
 - Интеграция с Keycloak / ФСП ID, ФСП-реестром, e-mail.
 - **Не раздаёт статику** (в целевом состоянии) — только JSON и генерация PDF.
 
@@ -76,17 +84,34 @@
  1. Работодатель → HTTPS → nginx
  2. nginx: TLS handshake, отдал index.html из public/
  3. Браузер загрузил styles.css и app.js
- 4. JS fetch('/api/matching/search', {...})
+ 4. JS fetch('/api/matching/query', {...})
  5. nginx: location /api/ → proxy_pass app:3000
  6. Express: middleware auth → проверка JWT
  7. Express: validate (zod)
- 8. Matching Service → AI Service → LLM: разбор запроса
- 9. AI Service вернул структурированный фильтр
-10. Matching Service → PostgreSQL: выборка кандидатов
-11. Matching Service → AI Service → LLM: ранжирование с объяснением
-12. Express → JSON → nginx → браузер
-13. JS отрендерил список с обоснованием
+ 8. Matching Service → формульный скоринг (LLM — Post-MVP)
+ 9. Matching Service → PostgreSQL: выборка кандидатов
+10. Express → JSON → nginx → браузер
+11. JS отрендерил список с обоснованием
 ```
+
+## Ollama Tunnel — почему LLM не в контейнере
+
+Хакатон-инфраструктура не предоставляет GPU. Чтобы использовать реальную
+LLM (а не заглушку) на недорогом VPS, AI-провайдер вынесен на домашний ПК
+разработчика:
+
+- на VPS поднимается контейнер `fsp-ollama-tunnel` — лёгкий (128 MB),
+  слушает `:4010` (WebSocket) и `:11434` (HTTP-фасад);
+- на домашнем ПК запускается клиент `tunnel/client.js`, который стартует
+  Ollama и открывает WebSocket к VPS;
+- `fsp-app` ходит на `http://ollama-tunnel:11434/api/*` как на обычную
+  Ollama — провайдер `llm.ollama.js` ничего не знает про туннель.
+
+Если клиент не подключён, HTTP-фасад отдаёт 503, `health()` провайдера
+возвращает `false`, AI-модуль уходит в fallback на пул эталонных задач.
+Продукт продолжает работать.
+
+Подробнее — см. `_docs/integrations.md § Ollama Tunnel`.
 
 ## Путь эволюции
 

@@ -10,49 +10,61 @@
 </head>
 <body>
 
-<section class="main-hero">
-    <h1>Новости платформы</h1>
-    <p>Обновления, объявления и важные события проекта ФСП · ИТ-вакансии.</p>
-</section>
+<div class="main-page">
 
-<main>
+    <!-- Плашка «режим администратора», видна только админу -->
+    <div id="admin-banner" class="admin-banner" hidden>
+        <span class="admin-banner__badge">ADMIN</span>
+        <span>Режим администратора</span>
+    </div>
 
-    <!-- Блок публикации новости — виден только администратору -->
-    <section id="admin-compose" class="admin-block" hidden>
-        <h2>Опубликовать новость</h2>
-        <form id="news-form" novalidate>
-            <input name="title" placeholder="Заголовок" maxlength="200" required />
-            <textarea name="body" rows="6" placeholder="Текст новости…" maxlength="10000" required></textarea>
-            <div style="display:flex; gap:12px; align-items:center">
-                <button type="submit" class="btn-primary">Опубликовать</button>
-                <span id="news-status" aria-live="polite"></span>
-            </div>
-        </form>
+    <section class="main-hero">
+        <h1>Новости платформы</h1>
+        <p>Обновления, объявления и важные события проекта ФСП · ИТ-вакансии.</p>
     </section>
 
-    <!-- Список новостей -->
-    <section id="news-list" class="news-list" aria-label="Новости">
-        <div class="empty">Загружаем новости…</div>
-    </section>
+    <main>
 
-    <!-- Панель управления анкетами — видна только администратору -->
-    <section id="admin-panel" class="admin-block" hidden>
-        <h2>Управление анкетами</h2>
-        <div class="admin-grid">
-            <div>
-                <h3>Соискатели</h3>
-                <div id="admin-candidates"><div class="empty">Загружаем…</div></div>
+        <!-- Публикация новости — только для админа -->
+        <section id="admin-compose" class="admin-block is-hidden">
+            <h2>Опубликовать новость</h2>
+            <form id="news-form" novalidate>
+                <input name="title" placeholder="Заголовок" maxlength="200" required />
+                <textarea name="body" rows="6" placeholder="Текст новости…" maxlength="10000" required></textarea>
+                <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap">
+                    <button type="submit" class="btn-primary">Опубликовать</button>
+                    <span id="news-status" aria-live="polite"></span>
+                </div>
+            </form>
+        </section>
+
+        <!-- Список новостей -->
+        <section id="news-list" class="news-list" aria-label="Новости">
+            <div class="empty">Загружаем…</div>
+        </section>
+
+        <!-- Управление анкетами — только для админа -->
+        <section id="admin-panel" class="admin-block is-hidden">
+            <h2>Управление анкетами</h2>
+            <div class="admin-grid">
+                <div>
+                    <h3>Соискатели</h3>
+                    <div id="admin-candidates"><div class="empty">Загружаем…</div></div>
+                </div>
+                <div>
+                    <h3>Работодатели</h3>
+                    <div id="admin-employers"><div class="empty">Загружаем…</div></div>
+                </div>
             </div>
-            <div>
-                <h3>Работодатели</h3>
-                <div id="admin-employers"><div class="empty">Загружаем…</div></div>
-            </div>
-        </div>
-    </section>
+        </section>
 
-</main>
+    </main>
 
-<footer><p><small>ФСП · Платформа ИТ-вакансий</small></p></footer>
+    <footer class="site-footer">
+        <p><small>ФСП · Платформа ИТ-вакансий</small></p>
+    </footer>
+
+</div>
 
 <script src="/navigation_bar_script.js" defer></script>
 <script src="/main_script.js" defer></script>

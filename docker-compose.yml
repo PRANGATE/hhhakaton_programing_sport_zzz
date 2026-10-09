@@ -17,6 +17,22 @@ services:
     mem_limit: 512m
     cpus: 0.5
 
+  ollama-tunnel:
+    build:
+      context: .
+      dockerfile: tunnel/Dockerfile
+    image: fsp-ollama-tunnel:latest
+    container_name: fsp-ollama-tunnel
+    restart: unless-stopped
+    ports:
+      - "4010:4010"
+    environment:
+      TUNNEL_PORT: "4010"
+      TUNNEL_API_PORT: "11434"
+      TUNNEL_SECRET: ${TUNNEL_SECRET:-change_me_tunnel_secret}
+    mem_limit: 128m
+    cpus: 0.25
+
   migrate:
     build: .
     image: fsp-hhru:latest
@@ -51,6 +67,12 @@ services:
       KEYCLOAK_URL: "https://id.fsp.example"
       KEYCLOAK_REALM: "fsp"
       KEYCLOAK_CLIENT_ID: "fsp-web"
+
+      OLLAMA_URL: "http://ollama-tunnel:11434"
+      LLM_MODE: "hybrid"
+      LLM_PROVIDER: "ollama"
+      LLM_MODEL: "llama3.1:8b"
+      LLM_TIMEOUT_MS: "60000"
     volumes:
       - ./public:/app/public
       - ./server:/app/server
@@ -60,6 +82,8 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+      ollama-tunnel:
+        condition: service_started
     mem_limit: 320m
     cpus: 0.5
     healthcheck:

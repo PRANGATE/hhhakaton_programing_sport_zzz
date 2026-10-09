@@ -1,23 +1,38 @@
 (function () {
-    const EMPLOYEE_NAV_URL = '/navigation_bar.html';
-    const EMPLOYER_NAV_URL = '/navigation_bar_employer.html';
+    const NAVBAR_URLS = {
+        employee: '/navigation_bar.html',
+        employer: '/navigation_bar_employer.html',
+        admin:    '/navigation_bar_admin.html',
+    };
 
-    // Маршруты: путь → ключ активного пункта.
-    // main.html доступен обеим ролям, поэтому есть в обоих словарях.
+    const ROLE_TO_KIND = {
+        candidate: 'employee',
+        employer:  'employer',
+        admin:     'admin',
+    };
+
+    // Путь → ключ активного пункта, отдельно для каждой роли
     const EMPLOYEE_ROUTES = {
         '/main.html':            'main',
         '/profile.html':         'profile',
         '/profile_editing.html': 'profile',
+        '/survey.html':          'testing',
         '/testing.html':         'testing',
+        '/testing_result.html':  'testing',
         '/jobs.html':            'jobs',
         '/offers.html':          'offers',
         '/settings.html':        'settings',
     };
 
-    const EMPLOYER_ROOT_ROUTES = {
+    const EMPLOYER_ROUTES = {
         '/main.html': 'main',
     };
 
+    const ADMIN_ROUTES = {
+        '/main.html': 'main',
+    };
+
+    // Короткие имена (которые передаёт mountShell) → ключ data-nav
     const EMPLOYER_KEYS = {
         main:        'main',
         candidate:   'candidates',
@@ -29,52 +44,58 @@
         profile:     'profile-company',
     };
 
+    const ADMIN_KEYS = {
+        main: 'main',
+    };
+
+    function getUser() {
+        try { return JSON.parse(localStorage.getItem('fsp.user') || 'null'); }
+        catch { return null; }
+    }
+
     function isEmployerPath() {
         return window.location.pathname.startsWith('/employer/');
     }
 
-    // Определяем, какую панель показывать: по пути или по роли из localStorage.
-    // Это позволяет работодателю видеть «свою» панель и на /main.html.
-    function resolveNavKind() {
-        if (isEmployerPath()) return 'employer';
-        try {
-            const user = JSON.parse(localStorage.getItem('fsp.user') || 'null');
-            if (user?.role === 'employer') return 'employer';
-        } catch (_) {}
-        return 'employee';
+    function isAdminPath() {
+        return window.location.pathname.startsWith('/admin/');
     }
 
-    function getActiveKey(activeKey) {
-        const kind = resolveNavKind();
+    // Порядок приоритетов:
+    // 1) явный путь /admin/* или /employer/*
+    // 2) роль из localStorage (работает и на /main.html)
+    // 3) fallback — кандидатская панель
+    function resolveNavKind() {
+        if (isAdminPath())    return 'admin';
+        if (isEmployerPath()) return 'employer';
 
+        const user = getUser();
+        return ROLE_TO_KIND[user?.role] || 'employee';
+    }
+
+    function getActiveKey(kind, activeKey) {
         if (activeKey) {
-            return kind === 'employer'
-                ? (EMPLOYER_KEYS[activeKey] || activeKey)
-                : activeKey;
+            if (kind === 'employer') return EMPLOYER_KEYS[activeKey] || activeKey;
+            if (kind === 'admin')    return ADMIN_KEYS[activeKey]    || activeKey;
+            return activeKey;
         }
 
         const path = window.location.pathname.replace(/\/+$/, '') || '/';
 
-        if (kind === 'employer') {
-            return EMPLOYER_ROOT_ROUTES[path] || '';
-        }
+        if (kind === 'employer') return EMPLOYER_ROUTES[path] || '';
+        if (kind === 'admin')    return ADMIN_ROUTES[path]    || '';
         return EMPLOYEE_ROUTES[path] || '';
     }
 
-    function markActive(nav, activeKey) {
+    function markActive(nav, kind, activeKey) {
         if (!nav) return;
-
-        const key = getActiveKey(activeKey);
+        const key = getActiveKey(kind, activeKey);
 
         nav.querySelectorAll('.navbar__link').forEach(link => {
             const active = Boolean(key && link.dataset.nav === key);
             link.classList.toggle('is-active', active);
-
-            if (active) {
-                link.setAttribute('aria-current', 'page');
-            } else {
-                link.removeAttribute('aria-current');
-            }
+            if (active) link.setAttribute('aria-current', 'page');
+            else        link.removeAttribute('aria-current');
         });
     }
 
@@ -83,7 +104,6 @@
         if (!button || button.dataset.bound === '1') return;
 
         button.dataset.bound = '1';
-
         button.addEventListener('click', async event => {
             event.preventDefault();
 
@@ -103,59 +123,52 @@
             } catch (error) {
                 console.warn('[FSP] Ошибка запроса выхода:', error);
             } finally {
-                ['fsp.access', 'fsp.refresh', 'fsp.user']
-                    .forEach(key => localStorage.removeItem(key));
+                localStorage.removeItem('fsp.access');
+                localStorage.removeItem('fsp.refresh');
+                localStorage.removeItem('fsp.user');
                 sessionStorage.clear();
+
                 window.location.href = '/';
             }
         });
     }
 
-    async function loadEmployeeEmail(nav) {
-        const emailNode = nav?.querySelector('#navbar-email');
-        if (!emailNode) return;
+    async function fillEmail(nav) {
+        const node = nav?.querySelector('#navbar-email, #navbar-user');
+        if (!node) return;
 
-        try {
-            const user = JSON.parse(localStorage.getItem('fsp.user') || 'null');
-            emailNode.textContent = user?.email || user?.profile?.email || '';
-        } catch (_) {}
+        const user = getUser();
+        if (user?.email) node.textContent = user.email;
 
         const token = localStorage.getItem('fsp.access');
         if (!token) return;
 
+        // Для не-админов и не-employer-ов подтягиваем email из профиля
         try {
-            const response = await fetch('/api/v1/profile/me', {
+            const r = await fetch('/api/v1/profile/me', {
                 headers: { Authorization: 'Bearer ' + token },
                 credentials: 'same-origin',
             });
-            if (!response.ok) return;
-
-            const data = await response.json();
-            const email =
-                data?.profile?.email ||
-                data?.user?.email    ||
-                data?.email;
-
+            if (!r.ok) return;
+            const data = await r.json();
+            const email = data?.profile?.email || data?.user?.email || data?.email;
             if (email) {
-                emailNode.textContent = email;
-                const user = JSON.parse(localStorage.getItem('fsp.user') || '{}');
-                user.email = email;
-                localStorage.setItem('fsp.user', JSON.stringify(user));
+                node.textContent = email;
+                const u = getUser() || {};
+                u.email = email;
+                localStorage.setItem('fsp.user', JSON.stringify(u));
             }
-        } catch (error) {
-            console.warn('[FSP] Не удалось загрузить почту:', error);
-        }
+        } catch (_) {}
     }
 
     async function mount(activeKey) {
         const kind = resolveNavKind();
-        const url  = kind === 'employer' ? EMPLOYER_NAV_URL : EMPLOYEE_NAV_URL;
+        const url  = NAVBAR_URLS[kind];
 
         let nav = document.querySelector('header.navbar');
 
-        // Если уже вставлена панель «не той» роли — заменяем.
-        if (nav && nav.dataset.navbarState !== kind &&
-            (kind === 'employer' || nav.dataset.navbarState === 'employer')) {
+        // Если на странице уже стоит панель другой роли — снести и поставить нужную
+        if (nav && nav.dataset.navbarState !== kind) {
             nav.remove();
             nav = null;
         }
@@ -163,52 +176,34 @@
         if (!nav) {
             const response = await fetch(url, { credentials: 'same-origin' });
             if (!response.ok) {
-                throw new Error(
-                    'Не удалось загрузить ' + url + ': HTTP ' + response.status
-                );
+                throw new Error(`Не удалось загрузить ${url}: HTTP ${response.status}`);
             }
 
             const html = await response.text();
-            const template = document.createElement('template');
-            template.innerHTML = html.trim();
-            nav = template.content.querySelector('header.navbar');
-
-            if (!nav) {
-                throw new Error('В файле навигации не найден header.navbar');
-            }
+            const tpl = document.createElement('template');
+            tpl.innerHTML = html.trim();
+            nav = tpl.content.querySelector('header.navbar');
+            if (!nav) throw new Error('В файле навигации не найден header.navbar');
 
             nav.dataset.navbarState = kind;
             document.body.insertBefore(nav, document.body.firstChild);
         }
 
-        markActive(nav, activeKey);
+        markActive(nav, kind, activeKey);
         bindLogout(nav);
-
-        if (kind === 'employer') {
-            const userNode = nav.querySelector('#navbar-user');
-            try {
-                const user = JSON.parse(localStorage.getItem('fsp.user') || 'null');
-                if (userNode) userNode.textContent = user?.email || '';
-            } catch (_) {}
-        } else {
-            loadEmployeeEmail(nav);
-        }
+        fillEmail(nav);
 
         return nav;
     }
 
-    // Экспортируем для mountShell() из /employer/employer.js
+    // Экспорт для mountShell() кабинета работодателя
     window.FSPNavbar = { mount };
 
-    // Автозагрузка для всех страниц, кроме /employer/*
-    // (там панель монтирует mountShell).
+    // Автозагрузка — для всех, кроме /employer/* (там панель ставит mountShell)
     if (!isEmployerPath()) {
         const start = () => {
-            mount().catch(error => {
-                console.error('[FSP] Ошибка загрузки навигации:', error);
-            });
+            mount().catch(err => console.error('[FSP] Навигация:', err));
         };
-
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', start, { once: true });
         } else {

@@ -48,7 +48,7 @@ PostgreSQL и выделенным AI-слоем.
 
 - аутентификация, сессии, JWT;
 - работа с PostgreSQL (CRUD, транзакции);
-- бизнес-логика (тесты, категоризация, подбор, приглашения);
+- бизнес-логика (тесты, категоризация, подбор, приглашения, новости);
 - интеграция с Keycloak / ФСП ID;
 - интеграция с внешними API (ФСП, ATS, e-mail);
 - раздача динамического контента (JSON, PDF-генерация);
@@ -71,7 +71,7 @@ PostgreSQL и выделенным AI-слоем.
 **Как устроен:**
 
 - единый сервис **AI Service**, за интерфейсом `LlmProvider`;
-- провайдер переключается флагом (YandexGPT / GigaChat / OpenAI / локальный);
+- провайдер переключается флагом (YandexGPT / GigaChat / OpenAI / Ollama);
 - кеш промптов в Redis, очереди на тяжёлые задачи, квоты на пользователя;
 - fallback на пул задач и формульный скоринг, если LLM недоступен;
 - **ПДн в LLM не уходят** — только обезличенные признаки.
@@ -114,12 +114,19 @@ PostgreSQL и выделенным AI-слоем.
                 │  service     │        │  • квоты         │   │  очереди      │
                 └──────────────┘        │  • fallback      │   └───────────────┘
                                         └────────┬─────────┘
-                                                 │
+                                                 │ HTTP :11434
                                                  ▼
                                         ┌──────────────────┐
-                                        │  LLM-провайдер   │
-                                        │ (Yandex/Giga/... │
-                                        │  или локальный)  │
+                                        │ Ollama Tunnel    │
+                                        │ (:11434 HTTP,    │
+                                        │  :4010 WS)       │
+                                        └────────┬─────────┘
+                                                 │ WebSocket
+                                                 ▼
+                                        ┌──────────────────┐
+                                        │ Локальный ПК     │
+                                        │ (Ollama на       │
+                                        │  127.0.0.1:11434)│
                                         └──────────────────┘
 
               (Post-MVP, по мере роста)
@@ -155,10 +162,11 @@ PostgreSQL и выделенным AI-слоем.
 
 ```nginx
 upstream api {
-    server app:3000;
+    server 127.0.0.1:3000;
     keepalive 32;
 }
 
+limit_req_zone $binary_remote_addr zone=api_limit:10m  rate=30r/s;
 limit_req_zone $binary_remote_addr zone=auth_limit:10m rate=5r/m;
 
 map $http_upgrade $connection_upgrade {
@@ -167,20 +175,25 @@ map $http_upgrade $connection_upgrade {
 }
 
 server {
-    listen 80;
+    listen 8080 default_server;
     server_name _;
 
-    root /var/www/public;
+    root /app/public;
     index index.html;
 
-    client_max_body_size 20m;
-    client_body_timeout 30s;
+    server_tokens off;
+
+    access_log /dev/stdout;
+    error_log  /dev/stderr warn;
+
+    client_max_body_size  20m;
+    client_body_timeout   30s;
     client_header_timeout 15s;
 
     gzip on;
     gzip_vary on;
     gzip_min_length 1024;
-    gzip_proxied any;
+    gzip_proxied    any;
     gzip_comp_level 5;
     gzip_types
         text/plain text/css text/xml
@@ -191,7 +204,6 @@ server {
     add_header X-Frame-Options          "SAMEORIGIN"                       always;
     add_header Referrer-Policy          "strict-origin-when-cross-origin"  always;
     add_header Permissions-Policy       "geolocation=(), microphone=()"    always;
-    # HSTS — только после включения валидного TLS.
 
     location / {
         try_files $uri $uri/ /index.html;
@@ -199,7 +211,7 @@ server {
         add_header Cache-Control "public, max-age=3600";
     }
 
-    location ~* \.(css|js|png|jpg|jpeg|svg|gif|ico|woff2?)$ {
+    location ~* \.(css|js|png|jpg|jpeg|svg|gif|ico|woff2?|ttf|eot)$ {
         expires 30d;
         add_header Cache-Control "public, immutable";
         access_log off;
@@ -207,6 +219,9 @@ server {
     }
 
     location /api/ {
+        limit_req zone=api_limit burst=60 nodelay;
+        limit_req_status 429;
+
         proxy_pass http://api;
         proxy_http_version 1.1;
         proxy_set_header Host              $host;
@@ -217,12 +232,12 @@ server {
         proxy_set_header Upgrade           $http_upgrade;
         proxy_set_header Connection        $connection_upgrade;
 
-        proxy_read_timeout    60s;   # LLM может думать долго
+        proxy_read_timeout    60s;
         proxy_connect_timeout 5s;
         proxy_send_timeout    30s;
     }
 
-    location /api/auth/ {
+    location /api/v1/auth/ {
         limit_req zone=auth_limit burst=10 nodelay;
         limit_req_status 429;
 
@@ -238,6 +253,16 @@ server {
     location = /health {
         proxy_pass http://api;
         access_log off;
+    }
+
+    location = /ready {
+        proxy_pass http://api;
+        access_log off;
+    }
+
+    location = /metrics {
+        deny all;
+        return 404;
     }
 
     location ~ /\.(?!well-known) {
@@ -362,11 +387,11 @@ server {
 
 **Функции:**
 - **ИИ-разбор свободного запроса работодателя** через AI Service →
-  структурированный фильтр `(специализация, грейд, стек, софт-скиллы)`;
+  структурированный фильтр (Post-MVP);
 - определение категорий;
-- **LLM-ранжирование** топ-N кандидатов + объяснимость;
+- **LLM-ранжирование** топ-N кандидатов + объяснимость (Post-MVP);
 - fallback: формульный скоринг
-  `score = w1*testScore + w2*fspContribution + w3*freshness + w4*completeness`;
+  `score = 0.50*test + 0.25*fsp + 0.15*freshness + 0.10*stackMatch`;
 - история подборок;
 - фильтры без потери исходной подборки.
 
@@ -391,7 +416,44 @@ server {
 
 ---
 
-### 5.9. Vacancy Service
+### 5.9. News Service ⭐ *(новый)*
+
+**Задача:** публикация и чтение новостей платформы.
+
+**Функции:**
+- публичный список новостей (`GET /api/v1/news`);
+- публикация (`POST /api/v1/news`) и удаление (`DELETE /api/v1/news/:id`)
+  — только для роли `admin`;
+- пагинация и сортировка по `published_at`.
+
+**Схема БД:** `news`: `posts`.
+
+**Потребители:** `main.html` (лента для всех ролей).
+
+Не имеет собственной нагрузки и релизного цикла — выносить в отдельный
+процесс не планируется.
+
+---
+
+### 5.10. Admin (не сервис, а роль)
+
+Управление анкетами — это не отдельный сервис, а набор эндпоинтов
+`/api/v1/admin/*` с `requireRole('admin')`, работающих поверх
+`auth.users`, `profile.candidates`, `profile.employers`.
+
+**Функции:**
+- список соискателей (`GET /admin/candidates`);
+- список работодателей (`GET /admin/employers`);
+- удаление пользователя (`DELETE /admin/{candidates|employers}/:userId`)
+  — каскадно через FK `ON DELETE CASCADE`.
+
+**Интерфейс:** встроен в `main.html`, показывается только админу.
+Отдельная панель навигации (`navigation_bar_admin.html`) — без
+«Профиля» и «Тестирования».
+
+---
+
+### 5.11. Vacancy Service
 
 **Задача:** публикация и ведение вакансий.
 
@@ -405,7 +467,7 @@ server {
 
 ---
 
-### 5.10. FSP Integration Service
+### 5.12. FSP Integration Service
 
 **Задача:** интеграция с реестром ФСП.
 
@@ -420,7 +482,7 @@ server {
 
 ---
 
-### 5.11. Notification Service
+### 5.13. Notification Service
 
 **Задача:** уведомления.
 
@@ -434,22 +496,21 @@ server {
 
 ---
 
-### 5.12. AI Service ⭐ *(новый)*
+### 5.14. AI Service ⭐
 
 **Задача:** единая точка для всех вызовов LLM.
 
 **Функции:**
 - **абстракция `LlmProvider`** — переключение провайдера флагом
-  (YandexGPT / GigaChat / OpenAI / Ollama локально);
-- **Prompt management** — шаблоны с версиями, тесты промптов, деплой без кода;
-- **Кеш промптов в Redis** — одинаковые запросы не гоняем дважды;
-- **Очереди** (BullMQ / RabbitMQ) — тяжёлые генерации и оценки асинхронно;
-- **Rate-limit и квоты** — на пользователя и на сервис, защита от runaway-расхода;
-- **Fallback** — если провайдер упал или вернул мусор → пул задач / формула;
-- **Логирование** — `prompt_hash`, `model`, `tokens_in/out`, `latency`, `cost`;
-- **Анонимизация** — ПДн не уходят в LLM, только обезличенные признаки;
-- **Anti-prompt-injection** — пользовательский ввод не вставляется в системный
-  промпт, только в отведённые слоты с экранированием.
+  (YandexGPT / GigaChat / OpenAI / Ollama);
+- **Prompt management** — шаблоны с версиями, тесты промптов;
+- **Кеш промптов в Redis**;
+- **Очереди** (BullMQ) — тяжёлые генерации асинхронно;
+- **Rate-limit и квоты** — на пользователя и на сервис;
+- **Fallback** — если провайдер упал → пул задач;
+- **Логирование** — `prompt_hash`, `model`, `tokens_in/out`, `latency`;
+- **Анонимизация** — ПДн не уходят в LLM;
+- **Anti-prompt-injection** — пользовательский ввод только в user-слоты.
 
 **Схема БД:** `ai`: `prompts`, `prompt_versions`, `llm_calls`, `cache_entries`,
 `quotas`.
@@ -458,7 +519,31 @@ server {
 
 ---
 
-### 5.13. Chat Service ⭐ *(новый)*
+### 5.15. Ollama Tunnel ⭐ *(инфраструктурный)*
+
+**Задача:** проброс LLM с домашнего ПК разработчика к `fsp-app` на VPS.
+
+**Функции:**
+- WebSocket-сервер на `:4010` — принимает клиента с домашнего ПК;
+- HTTP-фасад на `:11434`, эмулирующий Ollama API — для `fsp-app`;
+- инкапсуляция HTTP-запроса в JSON и обратно через WS;
+- возврат `503 tunnel_unavailable`, если клиент не подключён.
+
+**Не является сервисом продукта.** Инфраструктурная надстройка для
+хакатон-деплоя, там где нет GPU на VPS. В проде заменяется реальным
+LLM-провайдером (YandexGPT, GigaChat) или Ollama на GPU-хосте.
+
+**Ресурсы:** 128 MB, 0.25 vCPU.
+
+**Файлы:**
+- `tunnel/server.js` — сервер (в образе `fsp-ollama-tunnel`);
+- `tunnel/client.js` — клиент (на домашнем ПК);
+- `tunnel/Dockerfile` — сборка образа;
+- `scripts/start-tunnel.ps1` / `.sh` — запуск.
+
+---
+
+### 5.16. Chat Service *(Post-MVP)*
 
 **Задача:** диалог между принявшим приглашение кандидатом и работодателем.
 
@@ -466,22 +551,18 @@ server {
 - диалоги и сообщения (WebSocket / SSE для real-time);
 - история переписки;
 - **ИИ-помощник работодателя**: по запросу выдаёт 3–5 предложений вопросов
-  для кандидата, сгруппированных по темам («опыт», «soft skills», «мотивация»,
-  «уточнить стек»);
+  для кандидата, сгруппированных по темам;
 - флаг «ИИ-помощник использован» — прозрачность для кандидата;
-- работает через AI Service, промпт кешируется по
-  `(candidate_hash, vacancy_hash)`;
-- **в LLM уходят только обезличенные данные**: категория, стек, ответы тестов,
-  агрегированные достижения. Без ФИО и контактов.
+- работает через AI Service;
+- **в LLM уходят только обезличенные данные**.
 
 **Схема БД:** `chat`: `conversations`, `messages`, `ai_suggestions`.
 
-**Интеграции:** AI Service (генерация вопросов), Notification Service
-(уведомления о новых сообщениях).
+**Интеграции:** AI Service (генерация вопросов), Notification Service.
 
 ---
 
-### 5.14. Analytics Service *(Post-MVP)*
+### 5.17. Analytics Service *(Post-MVP)*
 
 **Задача:** аналитика для работодателей и продукта.
 
@@ -490,14 +571,14 @@ server {
 - время до ответа;
 - конверсии по категориям;
 - продуктовые метрики;
-- **метрики AI** — доля успешных генераций, средняя стоимость на пользователя,
-  распределение оценок LLM по грейдам (для валидации).
+- **метрики AI** — доля успешных генераций, средняя стоимость, распределение
+  оценок LLM по грейдам.
 
 **Хранилище:** отдельная БД PostgreSQL или ClickHouse.
 
 ---
 
-### 5.15. Moderation / Anti-fraud *(Post-MVP)*
+### 5.18. Moderation / Anti-fraud *(Post-MVP)*
 
 **Задача:** защита от фиктивных вакансий.
 
@@ -512,7 +593,7 @@ server {
 
 ---
 
-### 5.16. ATS Integration *(Post-MVP)*
+### 5.19. ATS Integration *(Post-MVP)*
 
 **Задача:** интеграция с ATS работодателей.
 
@@ -539,30 +620,29 @@ server {
    `(специализация, грейд, тема, сложность)` → структурированный JSON:
    текст задачи, варианты или поле для свободного ответа, рубрика оценки.
 2. **Оценка ответа** по рубрике:
-   `(задание, рубрика, ответ)` → `{score: 0-100, breakdown: [...], feedback}`.
+   `(задание, рубрика, ответ)` → `{score: 0-100, breakdown, feedback}`.
 3. **Итоговый балл** — агрегация по заданиям с весами.
 
 **Как решаем проблему сопоставимости** (ТЗ прямо предупреждает: «генерация
 нейросетью не гарантирует сопоставимую сложность»):
 
 - **Якорные задачи** — пул из ~30 эталонных заданий, откалиброванных
-  экспертом. Каждое новое сгенерированное задание проходит «поверку»:
-  LLM-difficulty-classifier определяет уровень, и если расхождение с
-  заявленным грейдом > X — задание отбрасывается.
+  экспертом. Каждое новое сгенерированное задание проходит «поверку».
 - **Рубрики, а не «правильный ответ»** — оценка идёт по критериям
-  (корректность, полнота, алгоритмическая сложность). Это даёт
-  стабильность оценки между кандидатами.
+  (корректность, полнота, алгоритмическая сложность).
 - **Double-check** для спорных ответов (score 40–60%) — второй прогон
   или self-consistency (несколько прогонов, медиана).
 - **Логирование для валидации** — каждый тест и оценка сохраняются,
-  можно считать дискриминативность и проверять распределение по грейдам.
+  можно считать дискриминативность.
 
-**Fallback:** если AI Service недоступен → задания из заранее
-подготовленного пула эталонных, оценка по ключам.
+**Fallback:** если AI Service недоступен → задания из пула.
+
+**Провайдер в хакатон-версии:** Ollama, модель `llama3.1:8b`, формат
+`format: 'json'`, таймаут 60 секунд (`LLM_TIMEOUT_MS`). Режим `LLM_MODE=hybrid`.
 
 ### 6.2. ИИ в подборе (Matching Service)
 
-**Что делает LLM:**
+**Что делает LLM (Post-MVP):**
 
 1. **Разбор свободного запроса** работодателя:
    > «Нужен бэкендер на Go, чтобы умел в микросервисы, был опыт с Kafka,
@@ -578,30 +658,23 @@ server {
      "nice_to_have": ["Kafka", "microservices"]
    }
    ```
-2. **Ранжирование** — топ-50 кандидатов (уже отобранных по фильтру)
-   → LLM возвращает порядок + объяснение «почему этот выше».
-3. **Генерация объяснений** для UI: «совпадение по стеку 4/5, грейд
-   совпал, есть достижения ФСП, свежий профиль».
+2. **Ранжирование** — топ-50 кандидатов → LLM возвращает порядок +
+   объяснение «почему этот выше».
+3. **Генерация объяснений** для UI.
 
-**Как обеспечиваем объяснимость** (ТЗ 2.1):
+**В MVP** — формульный скоринг:
+`0.50*test + 0.25*fsp + 0.15*freshness + 0.10*stackMatch`.
 
-- В ответе API всегда есть `explanation` — что совпало, что нет, с весами.
-- В UI разворачивается в «+40 за Go, +20 за Kafka, +15 за грейд, +10 за ФСП».
+**Как обеспечиваем объяснимость:** в ответе API всегда есть `explanation`,
+в UI разворачивается в «+40 за Go, +20 за Kafka».
 
-**Fallback:** если LLM недоступен → формульный скоринг
-`0.50*test + 0.25*fsp + 0.15*freshness + 0.10*completeness`.
+### 6.3. ИИ-помощник в чате (Chat Service) *(Post-MVP)*
 
-### 6.3. ИИ-помощник в чате (Chat Service)
+- На вход: обезличенный профиль кандидата + вакансия + история.
+- На выход: 3–5 вопросов, сгруппированных по темам: «про опыт»,
+  «проверить soft skills», «уточнить стек», «проверить мотивацию».
 
-**Что делает LLM:**
-
-- На вход: обезличенный профиль кандидата + текст вакансии + история диалога.
-- На выход: 3–5 предложений вопросов, сгруппированных по темам:
-  «про опыт», «проверить soft skills», «уточнить стек», «проверить мотивацию».
-
-**Что НЕ уходит в LLM:** ФИО, контакты, точные даты, названия компаний из
-резюме. Только: категория, стек, ответы тестов, агрегированные достижения
-ФСП («участник 3 олимпиад, лучшее место — 2-е»).
+**Что НЕ уходит в LLM:** ФИО, контакты, точные даты, названия компаний.
 
 ### 6.4. Абстракция `LlmProvider`
 
@@ -621,21 +694,29 @@ interface LlmProvider {
 - `YandexGptProvider` — российский, 152-ФЗ-совместим.
 - `GigaChatProvider` — российский, аналогично.
 - `OpenAiProvider` — fallback, только для обезличенных данных.
-- `OllamaProvider` — локальный, для dev и экспериментов.
+- `OllamaProvider` — локальный (через туннель на хакатоне; на GPU-хосте
+  в проде).
 
 Переключение — переменной `LLM_PROVIDER=yandex|giga|openai|ollama`.
 Точка расширения: любой новый провайдер добавляется одной реализацией.
 
+**Режимы работы (`LLM_MODE`):**
+
+| Режим | Что делает |
+|---|---|
+| `pool` | Только пул из БД, LLM не вызывается |
+| `hybrid` | Сначала LLM, если недоступна — пул (дефолт) |
+| `generate` | Только LLM, при недоступности — `503 llm_unavailable` |
+
 ### 6.5. Экономика LLM
 
 - **Кеш** — Redis, TTL 24 ч для генерации, 1 ч для ранжирования.
-- **Квоты** — на пользователя (например, 20 генераций в день) и на сервис
-  (например, 5000 запросов в день).
-- **Батчинг** — где можно, объединять запросы (например, оценить все
-  ответы кандидата одним вызовом).
+- **Квоты** — на пользователя (20 генераций в день) и на сервис
+  (5000 запросов в день).
+- **Батчинг** — где можно, объединять запросы.
 - **Метрики** — `cost_per_user`, `cost_per_test`, `cost_per_match`.
   При выходе за бюджет — алерт и автоматический переход в fallback.
-- **Кеш промптов по хешу** — одинаковые входные → тот же ответ, без вызова.
+- **Кеш промптов по хешу** — одинаковые входные → тот же ответ.
 
 ---
 
@@ -648,14 +729,13 @@ interface LlmProvider {
 - транзакции и MVCC — корректная работа при конкуренции;
 - **JSONB** — гибкие поля (навыки, ответы, промпты) без потери SQL-мощи;
 - **полнотекстовый поиск** (`tsvector`) — фильтрация без ElasticSearch;
-- **партиционирование** — для растущих таблиц (`attempts`, `llm_calls`, `events`);
+- **партиционирование** — для растущих таблиц (`attempts`, `llm_calls`);
 - **репликация** — read-replica для аналитики;
 - **миграции** — контроль версий схемы (`node-pg-migrate`).
 
 ### 7.2. Schema-per-service
 
-Один кластер, разные схемы. Это даёт изоляцию и удобный вынос сервиса
-в отдельную БД, когда он вырастет:
+Один кластер, разные схемы:
 
 ```
 PostgreSQL cluster
@@ -671,6 +751,7 @@ PostgreSQL cluster
    ├─ schema: notification
    ├─ schema: ai
    ├─ schema: chat
+   ├─ schema: news
    ├─ schema: moderation
    └─ schema: ats
 ```
@@ -709,8 +790,8 @@ PostgreSQL cluster
 | `invitation.sent` | Invite | Notification, Analytics, ATS |
 | `invitation.accepted` | Invite | Profile, Notification, ATS, Chat |
 | `invitation.rejected` | Invite | Analytics, ATS |
+| `news.published` | News | Analytics |
 | `chat.message.sent` | Chat | Notification |
-| `chat.ai.suggestion.generated` | AI Service | Chat, Analytics |
 | `fsp.achievement.synced` | FSP Integration | Profile, Matching |
 | `vacancy.published` | Vacancy | Notification, Matching |
 | `llm.call.completed` | AI Service | Analytics |
@@ -731,65 +812,62 @@ PostgreSQL cluster
 - **Защита от перебора** — rate-limit в nginx + счётчик неудачных попыток.
 - **Keycloak / ФСП ID** — OIDC + PKCE, проверка подписи JWT через JWKS.
 
-### 9.2. Аутентификация между сервисами *(Post-MVP)*
+### 9.2. Авторизация по ролям
 
-Пока всё в одном процессе — вызовы через сервисные методы. После выноса:
+- Роли: `candidate`, `employer`, `admin`, `moderator`.
+- Middleware `requireRole` на каждом защищённом маршруте.
+- Кандидат видит только свои приглашения и отклики.
+- Работодатель не видит контакты до `invitation.accepted`.
+- Админ — полный доступ к `admin/*` и `news` (write).
+
+### 9.3. Аутентификация между сервисами *(Post-MVP)*
 
 - **mTLS** между сервисами (внутри доверенной сети);
-- или **service-to-service JWT** с коротким TTL (5 мин) и aud-claim;
+- или **service-to-service JWT** с коротким TTL (5 мин);
 - или **API key + IP allowlist** — для простых интеграций внутри VPC.
 
-### 9.3. Секреты
+### 9.4. Секреты
 
-- **Только через `.env`** или Docker secrets.
-- **Никаких паролей в `docker-compose.yml`** — только `env_file: .env`.
+- **Только через `.env`** или `.deploy-secrets.json` (gitignored).
 - **Ротация:** пароль БД, JWT-секрет, SMTP-пароль, ключ LLM — раз в квартал.
-- **.gitignore** должен блокировать `.env`, `*.pem`, `*.key`, `id_rsa*`.
+- **.gitignore** блокирует `.env`, `*.pem`, `*.key`, `id_rsa*`.
 - Post-MVP: **HashiCorp Vault** или Yandex Lockbox.
 
-### 9.4. Защита API
+**Секреты туннеля:**
 
-- **CSRF** — JWT в `Authorization` → не нужен. Cookie → обязателен
-  `SameSite=Lax` + CSRF-token.
-- **Идемпотентность** — `Idempotency-Key` для `POST /api/invitations`,
-  `/api/applications`.
+- `TUNNEL_SECRET` — общий секрет между VPS и домашним ПК. Хранится
+  в `.deploy-secrets.json`, передаётся через переменную окружения обеим
+  сторонам.
+- Аутентификация WebSocket-клиента — заголовок `x-tunnel-secret` в handshake.
+  Без корректного секрета соединение закрывается кодом 4001.
+- Смена секрета — через `.\deploy.ps1 -RotateSecrets` + перезапуск клиента
+  с новым `TUNNEL_SECRET`.
+
+### 9.5. Защита API
+
+- **CSRF** — JWT в `Authorization` → не нужен. Cookie → `SameSite=Lax`
+  + CSRF-token.
+- **Идемпотентность** — `Idempotency-Key` для `POST /api/invitations`.
 - **Rate-limit** — два уровня: nginx (по IP) + приложение (по `user-id`).
 - **Валидация** — все входные данные через `zod`.
 - **SQL-инъекции** — только параметризованные запросы.
 - **XSS** — на фронте только `textContent` для пользовательских данных.
 - **CORS** — только свой домен, `credentials: true` + allowlist origin.
 
-### 9.5. Безопасность LLM *(новый подраздел)*
+### 9.6. Безопасность LLM
 
 - **Prompt injection** — пользовательский ввод **никогда** не вставляется
-  в системный промпт. Только в отведённые слоты с экранированием и
-  ограничением длины.
+  в системный промпт. Только в отведённые слоты с экранированием.
 - **Анонимизация** — ПДн (ФИО, контакты, точные компании) не уходят в LLM.
-  Для тестов — не нужны. Для чата — только обезличенный профиль.
-- **Аудит LLM-вызовов** — каждый вызов логируется: `prompt_hash`, `model`,
-  `tokens`, `latency`, `cost`. Промпты, содержащие чувствительные данные
-  (если такие появятся), хранятся с маскированием.
+- **Аудит LLM-вызовов** — `prompt_hash`, `model`, `tokens`, `latency`, `cost`.
 - **Совместимость с 152-ФЗ** — предпочтительны российские провайдеры
-  (YandexGPT, GigaChat) или локальная модель. При использовании зарубежных —
-  только обезличенные данные.
-- **Output filtering** — перед отдачей ответа LLM пользователю проверяем,
-  что там нет утечек системного промпта, чужого контекста или вредного
-  контента.
+  (YandexGPT, GigaChat) или локальная модель.
+- **Output filtering** — проверка ответа LLM на утечки и вредный контент.
 
-### 9.6. Security headers (на nginx)
-
-- `X-Content-Type-Options: nosniff`
-- `X-Frame-Options: SAMEORIGIN`
-- `Referrer-Policy: strict-origin-when-cross-origin`
-- `Permissions-Policy`
-- `Strict-Transport-Security` — после валидного TLS.
-- `Content-Security-Policy` — политика под домены (CDN, Keycloak).
-
-### 9.7. 152-ФЗ (персональные данные)
+### 9.7. 152-ФЗ
 
 - **Согласие** — при регистрации: текст, версия, timestamp, IP.
-- **Право на удаление** — `DELETE /api/profile/me`, soft-delete на 30 дней,
-  затем hard-delete.
+- **Право на удаление** — `DELETE /api/profile/me`, soft-delete на 30 дней.
 - **Экспорт данных** — `GET /api/profile/me/export` в JSON.
 - **Шифрование at-rest** — volume БД на шифрованном диске.
 - **Шифрование in-transit** — TLS-only, редирект `http → https`.
@@ -800,7 +878,7 @@ PostgreSQL cluster
 ### 9.8. Аудит и логи безопасности
 
 - Все неудачные логины — в лог с IP и user-agent.
-- Все раскрытия контактов кандидата (`invitation.accepted`) — в audit log.
+- Все раскрытия контактов кандидата — в audit log.
 - Все изменения критичных сущностей (роли, грейды) — с указанием автора.
 - **Каждый LLM-вызов** — в `llm_calls` с параметрами и стоимостью.
 
@@ -815,7 +893,7 @@ PostgreSQL cluster
 - **Поля:** `ts`, `level`, `msg`, `reqId`, `userId`, `route`, `latencyMs`,
   `status`, `err.stack`.
 - **Correlation ID:** nginx прокидывает `X-Request-ID`, Node читает и
-  добавляет во все записи. Один ID — одна цепочка от nginx до БД и до LLM.
+  добавляет во все записи.
 - **Агрегация** (Post-MVP): Loki / ELK / Yandex Cloud Logging.
 - **Никаких паролей, токенов, ПДн в логах.**
 
@@ -823,11 +901,13 @@ PostgreSQL cluster
 
 - **HTTP** — RPS, p50/p95/p99 latency, 2xx/4xx/5xx rate.
 - **Приложение** — активные сессии, длина очередей, ошибки по домену.
-- **БД** — соединения, длинные запросы (>100ms), deadlocks.
+- **БД** — соединения, длинные запросы, deadlocks.
 - **Ресурсы** — CPU, RSS, event loop lag.
 - **Бизнес** — регистрации, тесты, приглашения в час.
 - **AI** — количество LLM-вызовов, `p95 latency`, `cost per user`,
   `cache hit rate`, доля fallback.
+- **Туннель** — `tunnel_client_connected` (0/1), `tunnel_requests_total`,
+  `tunnel_request_errors_total`, `tunnel_request_latency_p95`.
 
 **Формат:** Prometheus. Экспорт через `prom-client` на `/metrics`
 (закрыт для внешнего мира).
@@ -844,7 +924,7 @@ PostgreSQL cluster
 |---|---|---|
 | `GET /health` | «процесс жив» — 200 без обращений к БД | liveness probe |
 | `GET /ready` | «готов принимать» — `SELECT 1` в PostgreSQL | readiness probe |
-| `GET /api/ai/health` | «LLM-провайдер доступен» | алерт, не блокирует |
+| `GET /api/v1/ai/health` | «LLM-провайдер доступен» | алерт, не блокирует |
 
 ### 10.5. Алерты *(Post-MVP)*
 
@@ -854,7 +934,7 @@ PostgreSQL cluster
 - **Диск** > 80%.
 - **`/ready` не отвечает** > 30 секунд.
 - **LLM cost** > дневного бюджета.
-- **Cache hit rate** LLM < 30% (значит, кеш работает плохо).
+- **Cache hit rate** LLM < 30%.
 
 Канал: Telegram-бот / e-mail / PagerDuty.
 
@@ -866,49 +946,25 @@ PostgreSQL cluster
 
 **A. Один контейнер (требование хакатона).**
 
-Упаковываем nginx + Node в один образ через `supervisord` или `s6-overlay`.
-PostgreSQL — внешний сервис или встроен в тот же контейнер через volume.
-AI Service — часть монолита, вызывает внешний LLM по HTTP.
+Упаковываем nginx + Node в один образ через `supervisord`. PostgreSQL —
+внешний сервис. AI Service — часть монолита, вызывает внешний LLM по HTTP.
 
 **B. Несколько контейнеров (прод-вариант).**
 
 `docker-compose.yml` с сервисами `nginx`, `app`, `postgres`, `redis`,
-`ai` (если вынесем).
+`ollama-tunnel`.
 
 ### 11.2. `docker-compose.yml` (прод-вариант)
 
 ```yaml
 services:
-  nginx:
-    image: nginx:alpine
-    ports: ["80:80", "443:443"]
-    volumes:
-      - ./public:/var/www/public:ro
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on: [app]
-    restart: unless-stopped
-
-  app:
-    build: .
-    env_file: .env
-    environment:
-      DATABASE_URL: postgres://fsp:${POSTGRES_PASSWORD}@postgres:5432/fsp
-      REDIS_URL: redis://redis:6379
-      NODE_ENV: production
-      NODE_OPTIONS: "--max-old-space-size=320"
-      LLM_PROVIDER: yandex
-      LLM_DAILY_BUDGET_RUB: "500"
-    depends_on:
-      postgres: { condition: service_healthy }
-      redis:    { condition: service_started }
-    restart: unless-stopped
-    mem_limit: 512m
-
   postgres:
     image: postgres:16-alpine
-    env_file: .env
+    container_name: fsp-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: fsp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fsp_secret}
       POSTGRES_DB: fsp
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -917,23 +973,90 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
     mem_limit: 512m
+    cpus: 0.5
 
-  redis:
-    image: redis:7-alpine
-    command: ["redis-server", "--maxmemory", "192mb", "--maxmemory-policy", "allkeys-lru"]
-    volumes:
-      - redisdata:/data
+  ollama-tunnel:
+    build:
+      context: .
+      dockerfile: tunnel/Dockerfile
+    image: fsp-ollama-tunnel:latest
+    container_name: fsp-ollama-tunnel
     restart: unless-stopped
-    mem_limit: 256m
+    ports:
+      - "4010:4010"
+    environment:
+      TUNNEL_PORT: "4010"
+      TUNNEL_API_PORT: "11434"
+      TUNNEL_SECRET: ${TUNNEL_SECRET:-change_me_tunnel_secret}
+    mem_limit: 128m
+    cpus: 0.25
+
+  migrate:
+    build: .
+    image: fsp-hhru:latest
+    container_name: fsp-migrate
+    command: ["npm", "run", "migrate:up"]
+    environment:
+      DATABASE_URL: postgres://fsp:${POSTGRES_PASSWORD:-fsp_secret}@postgres:5432/fsp
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  fsp-app:
+    build: .
+    image: fsp-hhru:latest
+    container_name: fsp-app
+    restart: unless-stopped
+    ports:
+      - "80:8080"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      NODE_OPTIONS: "--max-old-space-size=192"
+      DATABASE_URL: postgres://fsp:${POSTGRES_PASSWORD:-fsp_secret}@postgres:5432/fsp
+
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev_access_change_me_min_32_chars_ok_12345}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev_refresh_change_me_min_32_chars_ok_12345}
+      JWT_ACCESS_TTL: "15m"
+      JWT_REFRESH_TTL: "30d"
+
+      KEYCLOAK_ENABLED: "false"
+      KEYCLOAK_URL: "https://id.fsp.example"
+      KEYCLOAK_REALM: "fsp"
+      KEYCLOAK_CLIENT_ID: "fsp-web"
+
+      OLLAMA_URL: "http://ollama-tunnel:11434"
+      LLM_MODE: "hybrid"
+      LLM_PROVIDER: "ollama"
+      LLM_MODEL: "llama3.1:8b"
+      LLM_TIMEOUT_MS: "60000"
+    volumes:
+      - ./public:/app/public
+      - ./server:/app/server
+      - ./data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      ollama-tunnel:
+        condition: service_started
+    mem_limit: 320m
+    cpus: 0.5
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
 
 volumes:
   pgdata:
-  redisdata:
 ```
 
-**Итого ресурсов на VPS:** ~1.4 GB RAM, 2 vCPU — хватает для стабильной
+**Итого ресурсов на VPS:** ~1.6 GB RAM, 2 vCPU — хватает для стабильной
 работы при 100–1000 активных пользователей.
 
 ---
@@ -948,7 +1071,8 @@ volumes:
 | Кеш/очередь | **Redis 7** | Кеш промптов, очереди, rate-limit |
 | Валидация | zod | Runtime + типы |
 | Auth | bcrypt + JWT + Keycloak | Совместимость с ФСП ID |
-| **LLM** | **YandexGPT / GigaChat / OpenAI / Ollama** | Генерация, оценка, разбор, чат |
+| **LLM** | **Ollama / YandexGPT / GigaChat / OpenAI** | Генерация, оценка, разбор, чат |
+| **Туннель** | **ws** (WebSocket) | Ollama с домашнего ПК на VPS |
 | **Очередь задач** | **BullMQ** (на Redis) | Асинхронные LLM-вызовы |
 | **Промпты** | **встроенный Prompt Manager** | Версии, тесты, кеш по хешу |
 | OpenAPI | swagger-ui-express | Требование ТЗ 3.5 |
@@ -964,16 +1088,17 @@ volumes:
 
 | Риск | Вероятность | Влияние | Что делаем |
 |---|---|---|---|
-| **ФСП API не открыт** | **Высокая** | **Среднее** | Заглушка + `FspAdapter`. Организаторы подтвердили: доступ откроют только Post-MVP. Подключение реального API — замена одной реализации. |
+| **ФСП API не открыт** | **Высокая** | **Среднее** | Заглушка + `FspAdapter`. Подключение реального API — замена одной реализации. |
 | **LLM-провайдер недоступен** | Средняя | Высокое | Fallback на пул эталонных заданий и формульный скоринг. Кеш промптов в Redis. |
-| **LLM «фантазирует» в оценке** | Высокая | Среднее | Якорные задачи + рубрики + double-check для спорных ответов (self-consistency). Логирование для валидации. |
-| **Утечка ПДн в LLM** | Средняя | Критическое | Анонимизация, российский провайдер или локальная модель. В LLM уходят только обезличенные признаки. |
-| **Расходы на LLM выходят из-под контроля** | Средняя | Среднее | Квоты на пользователя и сервис, кеш, алерты на бюджет, автоматический переход в fallback при превышении. |
-| **Prompt injection** | Средняя | Среднее | Пользовательский ввод — только в отведённые слоты, экранирование, ограничение длины, output filtering. |
+| **LLM «фантазирует» в оценке** | Высокая | Среднее | Якорные задачи + рубрики + double-check для спорных ответов. |
+| **Утечка ПДн в LLM** | Средняя | Критическое | Анонимизация, российский провайдер или локальная модель. |
+| **Расходы на LLM выходят из-под контроля** | Средняя | Среднее | Квоты, кеш, алерты на бюджет, автоматический fallback. |
+| **Prompt injection** | Средняя | Среднее | Пользовательский ввод — только в отведённые слоты, экранирование. |
+| **Туннель отваливается** | Средняя | Низкое | Автопереподключение клиента (5 сек), fallback на пул. |
 | PostgreSQL не тянет нагрузку | Низкая | Высокое | PgBouncer + read replica + индексы. |
 | Keycloak не успеваем подключить | Средняя | Низкое | `LocalAuthProvider` как fallback, переключение флагом. |
 | Утечка ПДн (общая) | Низкая | Критическое | Шифрование at-rest, минимизация, audit log, TLS-only. |
-| Внешний SMTP недоступен | Средняя | Низкое | Очередь с ретраями, fallback на второй провайдер, дублирование в in-app. |
+| Внешний SMTP недоступен | Средняя | Низкое | Очередь с ретраями, fallback на второй провайдер. |
 | Единая точка отказа (nginx) | Низкая | Высокое | В проде — 2+ инстанса nginx за L4-балансировщиком. |
 
 ---
@@ -1005,8 +1130,9 @@ volumes:
 
 - **Profile + Catalog** — тесно связаны, оставить рядом;
 - **Invite + Vacancy** — общая логика статусов;
+- **News** — нет своей нагрузки и релизного цикла;
 - **AI Service + Chat Service** — тесно связаны в использовании,
-  на старте можно держать в одном процессе, разделить при росте;
+  на старте можно держать в одном процессе;
 - **всё, что не имеет собственной нагрузки или релизного цикла.**
 
 Микросервис — не самоцель. Каждый вынос должен окупаться нагрузкой,

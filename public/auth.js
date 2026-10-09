@@ -55,10 +55,8 @@ export function clearSession() {
   localStorage.removeItem(USER_KEY);
 }
 
-export function redirectByRole(role) {
-  if (role === 'admin')         location.href = '/main.html';
-  else if (role === 'employer') location.href = '/employer/profile.html';
-  else                          location.href = '/profile.html';
+export function redirectByRole(_role) {
+  location.href = '/main.html';
 }
 
 // ФСП ID — Post-MVP. Кнопка на месте, но ничего не делает, кроме тоста.
