@@ -7,6 +7,8 @@ import testRouter     from './modules/test/test.router.js';
 import inviteRouter   from './modules/invite/invite.router.js';
 import matchingRouter from './modules/matching/matching.router.js';
 import aiRouter from './modules/ai/ai.router.js';
+import newsRouter  from './modules/news/news.router.js';
+import adminRouter from './modules/admin/admin.router.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -45,6 +47,8 @@ app.use('/api/v1/test',        testRouter);
 app.use('/api/v1/invitations', inviteRouter);
 app.use('/api/v1/matching',    matchingRouter);
 app.use('/api/v1/ai',          aiRouter);
+app.use('/api/v1/news',  newsRouter);
+app.use('/api/v1/admin', adminRouter);
 app.use((_req, res) => res.status(404).json({ error: 'not_found' }));
 
 app.use((err, _req, res, _next) => {

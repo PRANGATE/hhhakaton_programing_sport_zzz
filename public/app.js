@@ -45,9 +45,10 @@ function saveSession(user, access, refresh) {
   localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
-function redirectByRole(role) {
-  if (role === 'employer')  location.href = '/employer/profile.html';
-  else                       location.href = '/profile.html';
+export function redirectByRole(role) {
+  if (role === 'admin')         location.href = '/main.html';
+  else if (role === 'employer') location.href = '/employer/profile.html';
+  else                          location.href = '/profile.html';
 }
 
 // ---- форма входа/регистрации ----

@@ -1,0 +1,239 @@
+/* ============================================================
+   ФСП · Главная (новости + админ-панель)
+   ============================================================ */
+
+.main-hero {
+    width: 100%;
+    padding: 32px 16px 8px;
+}
+
+.main-hero h1 {
+    margin: 0 0 6px;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.main-hero p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14.5px;
+}
+
+main {
+    width: 100%;
+    padding: 24px 16px 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ---------- Блок админ-действий ---------- */
+
+.admin-block {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+}
+
+.admin-block h2 {
+    margin: 0 0 14px;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.admin-block h3 {
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+#news-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 720px;
+}
+
+#news-form input,
+#news-form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font: inherit;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#news-form input:focus,
+#news-form textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.18);
+}
+
+#news-form .btn-primary {
+    align-self: flex-start;
+    padding: 11px 22px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+#news-form .btn-primary:hover { background: #3f6cf0; border-color: #3f6cf0; }
+
+#news-status {
+    font-size: 13px;
+    color: var(--muted);
+    min-height: 16px;
+}
+
+/* ---------- Сетка управления анкетами ---------- */
+
+.admin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.admin-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.admin-row > div:first-child { flex: 1; min-width: 0; }
+
+.admin-row__meta {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 3px;
+    word-break: break-all;
+}
+
+.admin-del {
+    flex: none;
+    padding: 6px 12px;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #ff8b95;
+    background: transparent;
+    border: 1px solid rgba(255, 77, 90, 0.5);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.admin-del:hover {
+    background: rgba(255, 77, 90, 0.1);
+    border-color: var(--accent-2);
+}
+
+.admin-del:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ---------- Список новостей ---------- */
+
+.news-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.news-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+}
+
+.news-card__head { margin-bottom: 12px; }
+
+.news-card__head h2 {
+    margin: 0 0 6px;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+}
+
+.news-card__meta {
+    display: flex;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--muted);
+}
+
+.news-card__body {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--text);
+    white-space: pre-line;
+    word-break: break-word;
+}
+
+.news-card__actions {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    text-align: right;
+}
+
+.news-delete {
+    padding: 6px 12px;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #ff8b95;
+    background: transparent;
+    border: 1px solid rgba(255, 77, 90, 0.5);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.news-delete:hover {
+    background: rgba(255, 77, 90, 0.1);
+    border-color: var(--accent-2);
+}
+
+.empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+footer {
+    width: 100%;
+    padding: 0 16px 40px;
+    color: var(--muted);
+    text-align: center;
+}
+
+@media (max-width: 720px) {
+    .admin-grid { grid-template-columns: 1fr; }
+}
