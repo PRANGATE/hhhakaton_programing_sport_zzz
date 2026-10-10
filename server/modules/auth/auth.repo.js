@@ -36,6 +36,20 @@ export const insertConsent = async ({ userId, kind, version, ip }) => {
   );
 };
 
+// Все согласия пользователя с датой принятия.
+// Для экрана настроек достаточно последнего по каждому kind.
+export const listConsents = async (userId) => {
+  const { rows } = await query(
+    `SELECT DISTINCT ON (kind)
+            kind, version, accepted_at
+       FROM auth.consents
+      WHERE user_id = $1
+      ORDER BY kind, accepted_at DESC`,
+    [userId]
+  );
+  return rows;
+};
+
 export const insertSession = async ({ userId, refreshHash, userAgent, ip, expiresAt }) => {
   const { rows } = await query(
     `INSERT INTO auth.sessions (user_id, refresh_hash, user_agent, ip, expires_at)

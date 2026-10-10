@@ -7,6 +7,19 @@
     accepted: 'Принято', rejected: 'Отклонено',
   };
 
+  // Красивые подписи для категорий
+  const SPEC_LABEL = {
+    backend: 'Backend',
+    frontend: 'Frontend',
+    mobile: 'Mobile',
+    'data-analytics': 'Data & Analytics',
+    devops: 'DevOps / SRE',
+    qa: 'QA',
+    infosec: 'Information Security',
+    gamedev: 'Game Dev',
+  };
+  const GRADE_LABEL = { junior: 'Junior', middle: 'Middle', senior: 'Senior' };
+
   async function api(path, opts = {}) {
     const res = await fetch('/api/v1' + path, {
       ...opts,
@@ -36,9 +49,45 @@
   let items = [];
   let currentId = null;
 
+  /* ---------- Ваша категория ---------- */
+
+  async function loadMyCategory() {
+    const box = $('#my-category');
+    const val = $('#my-category-value');
+    if (!box || !val) return;
+
+    try {
+      const { profile } = await api('/profile/me');
+      const spec = profile?.specialization_id;
+      const grade = profile?.current_grade_id || profile?.target_grade_id;
+
+      if (spec && grade) {
+        val.textContent = `${SPEC_LABEL[spec] || spec} · ${GRADE_LABEL[grade] || grade}`;
+      } else if (spec) {
+        val.textContent = `${SPEC_LABEL[spec] || spec} · тест не пройден`;
+      } else {
+        val.textContent = 'Не определена — пройдите опрос и тест';
+      }
+      box.hidden = false;
+    } catch {
+      // не смогли загрузить — не показываем блок, не ломаем страницу
+    }
+  }
+
+  /* ---------- Список приглашений ---------- */
+
   function renderList() {
     const el = document.getElementById('offersList');
     el.innerHTML = '';
+
+    if (!items.length) {
+      el.innerHTML = `
+        <div class="offers__empty offers__empty--list">
+          Пока приглашений нет.
+        </div>`;
+      return;
+    }
+
     items.forEach(o => {
       const card = document.createElement('button');
       card.type = 'button';
@@ -56,11 +105,31 @@
     });
   }
 
+  /* ---------- Деталь ---------- */
+
   function renderDetail() {
     const detailEl = document.getElementById('offersDetail');
+
+    if (!items.length) {
+      detailEl.innerHTML = `
+        <div class="offers__empty">
+          <div class="offers__empty-title">Работодатели пока не отправили вам приглашений</div>
+          <p class="offers__empty-text">
+            Это нормально — на платформе <b>работодатель сам находит вас</b> по категории
+            и отправляет приглашение с описанием и вилкой зарплаты. Откликаться никуда не нужно.
+          </p>
+          <p class="offers__empty-text">
+            Чтобы вас было видно в подборках, убедитесь, что вы прошли
+            <a href="/survey.html">опрос и тестирование</a> — именно их результат
+            определяет вашу категорию.
+          </p>
+        </div>`;
+      return;
+    }
+
     const o = items.find(x => x.id === currentId);
     if (!o) {
-      detailEl.innerHTML = '<div class="offers__empty">Выберите предложение слева.</div>';
+      detailEl.innerHTML = '<div class="offers__empty">Выберите приглашение слева.</div>';
       return;
     }
     const isFinal = ['accepted','rejected'].includes(o.status);
@@ -104,7 +173,6 @@
 
   async function selectOffer(id) {
     currentId = id;
-    // Открытие «sent» → на бэке переводится в «viewed»
     try {
       const { invitation } = await api('/invitations/' + id);
       const i = items.findIndex(x => x.id === id);
@@ -127,7 +195,9 @@
 
   async function init() {
     if (!localStorage.getItem(TOKEN_KEY)) { location.href = '/'; return; }
-    const el = document.getElementById('offersList');
+
+    await loadMyCategory();
+
     try {
       const { items: got } = await api('/invitations');
       items = got;
@@ -135,6 +205,7 @@
       renderList();
       renderDetail();
     } catch (err) {
+      const el = document.getElementById('offersList');
       el.innerHTML = `<div class="offers__empty">Ошибка: ${escapeHtml(err.message)}</div>`;
     }
   }

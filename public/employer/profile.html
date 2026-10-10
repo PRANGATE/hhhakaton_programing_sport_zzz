@@ -95,15 +95,30 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const data = readForm(form);
-      if (!data.company_name?.trim()) return alert('Название обязательно');
+
+      // PATCH должен содержать только изменённые/заполненные поля.
+      // Пустые строки из формы выкидываем: сервер не пропустит '' как email.
+      const raw = readForm(form);
+      const data = {};
+      for (const [k, v] of Object.entries(raw)) {
+        if (v === '' || v == null) continue;
+        data[k] = typeof v === 'string' ? v.trim() : v;
+      }
+      // Пустая строка после trim — тоже убираем.
+      for (const k of Object.keys(data)) {
+        if (data[k] === '') delete data[k];
+      }
+
+      if (!data.company_name) return alert('Название обязательно');
+
       statusEl.textContent = 'Сохраняем…';
       try {
         await api('/profile/me', { method: 'PATCH', body: JSON.stringify(data) });
         statusEl.textContent = '✓ Сохранено';
         setTimeout(() => statusEl.textContent = '', 2500);
       } catch (err) {
-        statusEl.textContent = 'Ошибка: ' + err.message;
+        const detail = err.body?.details?.[0]?.message;
+        statusEl.textContent = 'Ошибка: ' + (detail || err.message);
       }
     });
 

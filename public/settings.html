@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ФСП · Платформа ИТ-вакансий — настройки</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/navigation_bar_styles.css" />
+    <link rel="stylesheet" href="/settings_styles.css" />
+</head>
+
+<body>
+    <header>
+        <h1>Настройки</h1>
+        <p>Приватность профиля, согласия и связь с ФСП ID.</p>
+    </header>
+
+    <main>
+        <!-- 1. Приватность ------------------------------------------- -->
+        <section class="settings-card" aria-labelledby="priv-title">
+            <h2 id="priv-title">Приватность</h2>
+            <p class="settings-hint">
+                Управляет тем, какие блоки вашего профиля видят работодатели
+                в банке кандидатов и в карточке подборки. Имя и контакты
+                скрыты всегда до момента, когда вы примете приглашение.
+            </p>
+
+            <label class="switch">
+                <input type="checkbox" id="vis-stacks" />
+                <span class="switch__track"><span class="switch__thumb"></span></span>
+                <span class="switch__label">
+                    <b>Стек и технологии</b>
+                    <small>Показывать работодателю список технологий</small>
+                </span>
+            </label>
+
+            <label class="switch">
+                <input type="checkbox" id="vis-experience" />
+                <span class="switch__track"><span class="switch__thumb"></span></span>
+                <span class="switch__label">
+                    <b>Опыт и стаж</b>
+                    <small>Показывать стаж и описание «О себе»</small>
+                </span>
+            </label>
+
+            <label class="switch">
+                <input type="checkbox" id="vis-soft" />
+                <span class="switch__track"><span class="switch__thumb"></span></span>
+                <span class="switch__label">
+                    <b>Софт-скиллы</b>
+                    <small>Показывать список софт-скиллов</small>
+                </span>
+            </label>
+        </section>
+
+        <!-- 2. ФСП ID ------------------------------------------------ -->
+        <section class="settings-card" aria-labelledby="fsp-title">
+            <h2 id="fsp-title">Связь с ФСП ID</h2>
+            <p class="settings-hint">
+                Привязка к ID участника Федерации спортивного программирования.
+                После подтверждения работодатель увидит ваши достижения в
+                соревнованиях — это дополнительный ориентир при подборе.
+            </p>
+
+            <!-- Состояние: не привязан -->
+            <div id="fsp-unlinked" class="fsp-block">
+                <div class="fsp-block__empty">
+                    <div class="fsp-block__title">ФСП ID не привязан</div>
+                    <p class="fsp-block__text">
+                        Это не влияет на категорию и не мешает получать
+                        приглашения. Вы можете привязать ID в любой момент.
+                    </p>
+                </div>
+                <div class="fsp-block__row">
+                    <input type="text" id="fsp-input" maxlength="100"
+                           placeholder="например, FSP-12345678" />
+                    <button type="button" id="fsp-link-btn" class="btn-primary">Привязать</button>
+                </div>
+                <div class="fsp-block__error" id="fsp-error" hidden></div>
+            </div>
+
+            <!-- Состояние: привязан -->
+            <div id="fsp-linked" class="fsp-block" hidden>
+                <div class="fsp-block__linked">
+                    <div class="fsp-block__badge">ФСП ID</div>
+                    <div class="fsp-block__value" id="fsp-value">—</div>
+                </div>
+                <p class="fsp-block__text">
+                    Интеграция с реестром ФСП появится после открытия API.
+                    Пока связь сохранена — достижения подтянутся автоматически,
+                    когда реестр станет доступен.
+                </p>
+                <button type="button" id="fsp-unlink-btn" class="btn-ghost">Отвязать</button>
+            </div>
+        </section>
+
+        <!-- 3. Согласия --------------------------------------------- -->
+        <section class="settings-card" aria-labelledby="consent-title">
+            <h2 id="consent-title">Согласия</h2>
+            <p class="settings-hint">
+                Требования 152-ФЗ: обработка персональных данных и
+                публикация профиля на платформе.
+            </p>
+
+            <div class="consent">
+                <div class="consent__info">
+                    <b>Обработка персональных данных</b>
+                    <small>Обязательное. Дано при регистрации, отозвать нельзя.</small>
+                </div>
+                <div class="consent__state" id="consent-processing-state">
+                    <span class="consent__dot consent__dot--on"></span>
+                    <span>Принято</span>
+                </div>
+            </div>
+
+            <div class="consent">
+                <div class="consent__info">
+                    <b>Публикация профиля</b>
+                    <small>
+                        Разрешает показывать ваш обезличенный профиль
+                        работодателям в банке кандидатов.
+                    </small>
+                </div>
+                <div class="consent__state" id="consent-publish-state">
+                    <span class="consent__dot consent__dot--off"></span>
+                    <span>Не принято</span>
+                </div>
+                <button type="button" id="consent-publish-btn" class="btn-primary btn--sm">
+                    Дать согласие
+                </button>
+            </div>
+        </section>
+
+        <!-- Кнопка сохранения --------------------------------------- -->
+        <p class="settings-actions">
+            <span id="save-status" class="settings-status" aria-live="polite"></span>
+            <button type="button" id="save-btn" class="btn-primary">Сохранить</button>
+        </p>
+    </main>
+
+    <footer class="site-footer">
+        <p><small>ФСП · Платформа ИТ-вакансий</small></p>
+    </footer>
+
+    <script src="/navigation_bar_script.js" defer></script>
+    <script src="/settings_script.js" defer></script>
+</body>
+
+</html>

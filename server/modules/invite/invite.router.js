@@ -18,6 +18,12 @@ const handle = (fn) => async (req, res, next) => {
     if (err.code === 'NOT_FOUND')      return res.status(404).json({ error: 'not_found' });
     if (err.code === 'FORBIDDEN')      return res.status(403).json({ error: 'forbidden' });
     if (err.code === 'ALREADY_CLOSED') return res.status(409).json({ error: 'already_closed' });
+
+    // Непредвиденное (SQL, etc.) — обязательно в лог, иначе 500 «немой».
+    console.error('[invite] error:', err.message);
+    if (err.detail)  console.error('[invite] pg detail:', err.detail);
+    if (err.hint)    console.error('[invite] pg hint:',   err.hint);
+    console.error(err.stack);
     next(err);
   }
 };

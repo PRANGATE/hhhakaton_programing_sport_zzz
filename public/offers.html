@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ФСП · Платформа ИТ-вакансий — предложения</title>
+    <title>ФСП · Платформа ИТ-вакансий — приглашения</title>
     <link rel="stylesheet" href="/styles.css" />
     <link rel="stylesheet" href="/navigation_bar_styles.css" />
     <link rel="stylesheet" href="/offers_styles.css" />
@@ -12,16 +12,29 @@
 
 <body>
     <header>
-        <h1>Предложения</h1>
+        <h1>Приглашения</h1>
+        <p class="offers-subtitle">
+            Работодатели находят вас по вашей категории и отправляют персональное приглашение.
+            Откликаться никуда не нужно — это основная механика платформы.
+        </p>
     </header>
 
     <main>
+        <!-- Блок «Ваша категория» — подтягивается из /profile/me -->
+        <aside class="my-category" id="my-category" hidden>
+            <div class="my-category__label">Ваша категория</div>
+            <div class="my-category__value" id="my-category-value">—</div>
+            <div class="my-category__hint">
+                Работодатели видят вас именно так. Обновляется после тестирования.
+            </div>
+        </aside>
+
         <div class="offers">
 
-            <!-- Левая колонка: список предложений -->
-            <aside class="offers__list" id="offersList" aria-label="Список предложений"></aside>
+            <!-- Левая колонка: список приглашений -->
+            <aside class="offers__list" id="offersList" aria-label="Список приглашений"></aside>
 
-            <!-- Правая колонка: детали выбранного предложения -->
+            <!-- Правая колонка: детали выбранного приглашения -->
             <section class="offers__detail" id="offersDetail" aria-live="polite"></section>
 
         </div>

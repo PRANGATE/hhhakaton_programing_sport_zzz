@@ -19,7 +19,6 @@
         '/survey.html':          'testing',
         '/testing.html':         'testing',
         '/testing_result.html':  'testing',
-        '/jobs.html':            'jobs',
         '/offers.html':          'offers',
         '/settings.html':        'settings',
     };
@@ -32,7 +31,6 @@
         '/main.html': 'main',
     };
 
-    // Короткие имена (которые передаёт mountShell) → ключ data-nav
     const EMPLOYER_KEYS = {
         main:        'main',
         candidate:   'candidates',
@@ -61,10 +59,6 @@
         return window.location.pathname.startsWith('/admin/');
     }
 
-    // Порядок приоритетов:
-    // 1) явный путь /admin/* или /employer/*
-    // 2) роль из localStorage (работает и на /main.html)
-    // 3) fallback — кандидатская панель
     function resolveNavKind() {
         if (isAdminPath())    return 'admin';
         if (isEmployerPath()) return 'employer';
@@ -143,7 +137,6 @@
         const token = localStorage.getItem('fsp.access');
         if (!token) return;
 
-        // Для не-админов и не-employer-ов подтягиваем email из профиля
         try {
             const r = await fetch('/api/v1/profile/me', {
                 headers: { Authorization: 'Bearer ' + token },
@@ -167,7 +160,6 @@
 
         let nav = document.querySelector('header.navbar');
 
-        // Если на странице уже стоит панель другой роли — снести и поставить нужную
         if (nav && nav.dataset.navbarState !== kind) {
             nav.remove();
             nav = null;
@@ -196,10 +188,8 @@
         return nav;
     }
 
-    // Экспорт для mountShell() кабинета работодателя
     window.FSPNavbar = { mount };
 
-    // Автозагрузка — для всех, кроме /employer/* (там панель ставит mountShell)
     if (!isEmployerPath()) {
         const start = () => {
             mount().catch(err => console.error('[FSP] Навигация:', err));

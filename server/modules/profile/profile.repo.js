@@ -60,6 +60,10 @@ export const upsertCandidate = async (userId, patch) => {
 
 export const upsertEmployer = async (userId, patch) => {
   const cols = Object.keys(patch);
+  // Guard: пустой patch = нечего писать. company_name required,
+  // но подстрахуемся, чтобы SQL не собрался с "SET , updated_at".
+  if (!cols.length) return getEmployer(userId);
+
   const insert = ['user_id', ...cols];
   const params = [userId, ...cols.map(c => toPg(c, patch[c]))];
   const placeholders = insert.map((_, i) => `$${i + 1}`);

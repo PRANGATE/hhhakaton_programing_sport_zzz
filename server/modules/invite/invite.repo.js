@@ -17,9 +17,11 @@ export const insertInvitation = async (data) => {
   return rows[0];
 };
 
-export const getInvitation = async (id) => {
+// Внутренний геттер — отдаёт ВСЁ, включая email кандидата.
+// Используется в service для проверки прав, не отдаётся в API.
+export const getInvitationInternal = async (id) => {
   const { rows } = await query(
-    `SELECT i.*, 
+    `SELECT i.*,
             eu.email AS employer_email,
             cu.email AS candidate_email
        FROM invite.invitations i
@@ -31,9 +33,28 @@ export const getInvitation = async (id) => {
   return rows[0] || null;
 };
 
+// Публичный геттер для API — email кандидата отдаётся
+// ТОЛЬКО если status='accepted'. Для остальных — null.
+export const getInvitation = async (id) => {
+  const { rows } = await query(
+    `SELECT i.*,
+            eu.email AS employer_email,
+            CASE WHEN i.status = 'accepted' THEN cu.email ELSE NULL END
+              AS candidate_email
+       FROM invite.invitations i
+       JOIN auth.users eu ON eu.id = i.employer_id
+       JOIN auth.users cu ON cu.id = i.candidate_id
+      WHERE i.id = $1`,
+    [id]
+  );
+  return rows[0] || null;
+};
+
 export const listByEmployer = async (employerId) => {
   const { rows } = await query(
-    `SELECT i.*, cu.email AS candidate_email
+    `SELECT i.*,
+            CASE WHEN i.status = 'accepted' THEN cu.email ELSE NULL END
+              AS candidate_email
        FROM invite.invitations i
        JOIN auth.users cu ON cu.id = i.candidate_id
       WHERE i.employer_id = $1
@@ -43,6 +64,8 @@ export const listByEmployer = async (employerId) => {
   return rows;
 };
 
+// Кандидат видит данные работодателя всегда — это его приглашения,
+// он должен понимать, кто пишет.
 export const listByCandidate = async (candidateId) => {
   const { rows } = await query(
     `SELECT i.*, eu.email AS employer_email,
@@ -69,7 +92,6 @@ export const updateStatus = async (id, status) => {
   return rows[0] || null;
 };
 
-// Только пометить «просмотрено», если сейчас «sent».
 export const markViewed = async (id) => {
   await query(
     `UPDATE invite.invitations
