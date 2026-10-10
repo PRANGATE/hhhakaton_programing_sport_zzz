@@ -4,6 +4,25 @@
 
 const TOKEN_KEY = 'fsp.access';
 
+const GRADE_ORDER   = ['junior', 'middle', 'senior'];
+const GRADE_LABEL   = { junior: 'Junior', middle: 'Middle', senior: 'Senior' };
+const SPEC_LABEL    = {
+  backend: 'Backend',
+  frontend: 'Frontend',
+  mobile: 'Mobile',
+  'data-analytics': 'Data & Analytics',
+  devops: 'DevOps / SRE',
+  qa: 'QA',
+  infosec: 'Information Security',
+  gamedev: 'Game Dev',
+};
+const STATUS_LABEL  = {
+  passed: 'Пройдено',
+  failed: 'Не пройдено',
+  in_progress: 'В процессе',
+  expired: 'Истекло',
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   initExportPdf('exportPdf');
   loadProfile();
@@ -33,8 +52,12 @@ async function api(path, opts = {}) {
 
 async function loadProfile() {
   try {
-    const { profile } = await api('/profile/me');
-    renderProfile(profile);
+    const [profileRes, historyRes] = await Promise.all([
+      api('/profile/me'),
+      api('/test/history').catch(() => ({ items: [], current: null, locks: {}, cooldown_days: 90 })),
+    ]);
+    renderProfile(profileRes.profile);
+    renderCategory(profileRes.profile, historyRes);
   } catch (err) {
     console.error('[FSP] profile load failed', err);
     const main = document.querySelector('main');
@@ -47,7 +70,7 @@ async function loadProfile() {
   }
 }
 
-/* ---------- рендер ---------- */
+/* ---------- рендер базового профиля ---------- */
 
 function splitName(full) {
   const parts = String(full || '').trim().split(/\s+/).filter(Boolean);
@@ -120,12 +143,173 @@ function renderBadges(sel, items) {
   }).join('');
 }
 
+/* ============================================================
+   Категория и грейд + история попыток
+   ============================================================ */
+
+function renderCategory(profile, history) {
+  const items  = history.items  || [];
+  const current = history.current || null;
+  const locks  = history.locks   || {};
+  const cooldownDays = history.cooldown_days || 90;
+
+  // Фолбэк, если успешных попыток нет — берём target/spec из профиля.
+  const spec  = current?.specialization_id || profile?.specialization_id || null;
+  const grade = current?.grade_id          || profile?.current_grade_id || null;
+
+  // 1. Строка «Текущая категория»
+  const catEl = document.getElementById('pf-category');
+  if (catEl) {
+    if (spec && grade) {
+      catEl.textContent = `${SPEC_LABEL[spec] || spec} · ${GRADE_LABEL[grade] || grade}`;
+    } else if (spec) {
+      catEl.textContent = `${SPEC_LABEL[spec] || spec} · тест не пройден`;
+    } else {
+      catEl.textContent = 'Не определена — пройдите опрос и тест';
+    }
+  }
+
+  // 2. Кнопки выше/ниже/пройти
+  const btnSingle = document.getElementById('pf-test-single');
+  const btnHigher = document.getElementById('pf-test-higher');
+  const btnLower  = document.getElementById('pf-test-lower');
+  const hintEl    = document.getElementById('pf-cooldown-hint');
+
+  if (btnSingle) btnSingle.hidden = true;
+  if (btnHigher) btnHigher.hidden = true;
+  if (btnLower)  btnLower.hidden  = true;
+
+  if (!spec) {
+    if (hintEl) hintEl.textContent = '';
+    renderHistory(items);
+    return;
+  }
+
+  if (!grade) {
+    // Опроса прошёл, теста не было — одна кнопка «Пройти тест».
+    if (btnSingle) {
+      btnSingle.hidden = false;
+      btnSingle.disabled = false;
+      btnSingle.onclick = () => goToSurvey(spec, profile?.target_grade_id || null);
+    }
+    if (hintEl) hintEl.textContent = '';
+    renderHistory(items);
+    return;
+  }
+
+  const idx    = GRADE_ORDER.indexOf(grade);
+  const higher = idx >= 0 && idx < GRADE_ORDER.length - 1 ? GRADE_ORDER[idx + 1] : null;
+  const lower  = idx > 0 ? GRADE_ORDER[idx - 1] : null;
+
+  const lockFor = (targetGrade) => {
+    if (!targetGrade) return null;
+    return locks[`${spec}|${targetGrade}`] || null;
+  };
+
+  const higherLock = higher ? lockFor(higher) : null;
+  const lowerLock  = lower  ? lockFor(lower)  : null;
+
+  if (higher && btnHigher) {
+    btnHigher.hidden   = false;
+    btnHigher.disabled = Boolean(higherLock);
+    btnHigher.onclick  = () => goToSurvey(spec, higher);
+    btnHigher.title    = higherLock
+      ? `Доступно с ${fmtDate(higherLock.until)}`
+      : '';
+  }
+
+  if (lower && btnLower) {
+    btnLower.hidden   = false;
+    btnLower.disabled = Boolean(lowerLock);
+    btnLower.onclick  = () => goToSurvey(spec, lower);
+    btnLower.title    = lowerLock
+      ? `Доступно с ${fmtDate(lowerLock.until)}`
+      : '';
+  }
+
+  if (hintEl) {
+    const parts = [];
+    if (higherLock) parts.push(`выше (${GRADE_LABEL[higher]}) — с ${fmtDate(higherLock.until)}`);
+    if (lowerLock)  parts.push(`ниже (${GRADE_LABEL[lower]})  — с ${fmtDate(lowerLock.until)}`);
+
+    hintEl.textContent = parts.length
+      ? `Смена грейда — раз в ${cooldownDays} дней. Доступно: ${parts.join('; ')}.`
+      : `Смена грейда — раз в ${cooldownDays} дней с момента последней попытки.`;
+  }
+
+  renderHistory(items);
+}
+
+function goToSurvey(spec, grade) {
+  const q = new URLSearchParams();
+  if (spec)  q.set('spec',  spec);
+  if (grade) q.set('grade', grade);
+  location.href = '/survey.html' + (q.toString() ? '?' + q.toString() : '');
+}
+
+function renderHistory(items) {
+  const el = document.getElementById('pf-history');
+  if (!el) return;
+
+  if (!items.length) {
+    el.innerHTML = `<div class="history__empty">Попыток пока нет. Пройдите опрос и тестирование.</div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <table class="history__table">
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Специализация</th>
+          <th>Грейд</th>
+          <th>Результат</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${items.map(a => {
+          const date   = fmtDate(a.finished_at || a.started_at);
+          const spec   = SPEC_LABEL[a.specialization_id] || a.specialization_id || '—';
+          const target = GRADE_LABEL[a.target_grade_id]  || a.target_grade_id  || '—';
+          const awarded = a.awarded_grade_id
+            ? `<span class="history__awarded">→ ${GRADE_LABEL[a.awarded_grade_id] || a.awarded_grade_id}</span>`
+            : '';
+          const score  = a.score != null ? `${a.score}%` : '—';
+          const status = STATUS_LABEL[a.status] || a.status;
+          const cls    = a.status === 'passed' ? 'history__status--ok'
+                       : a.status === 'failed' ? 'history__status--bad'
+                       : '';
+          return `
+            <tr>
+              <td>${escapeHtml(date)}</td>
+              <td>${escapeHtml(spec)}</td>
+              <td>${escapeHtml(target)} ${awarded}</td>
+              <td>${escapeHtml(score)}</td>
+              <td><span class="history__status ${cls}">${escapeHtml(status)}</span></td>
+            </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function fmtDate(value) {
+  if (!value) return '';
+  try {
+    return new Date(value).toLocaleString('ru-RU', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  } catch { return String(value); }
+}
+
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 /* ============================================================
-   Экспорт профиля в PDF (без изменений)
+   Экспорт профиля в PDF
    ============================================================ */
 
 function initExportPdf(buttonId) {

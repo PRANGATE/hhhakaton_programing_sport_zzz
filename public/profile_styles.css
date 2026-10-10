@@ -422,3 +422,156 @@ legend {
         text-align: center;
     }
 }
+
+/* ============================================================
+   Категория и грейд + история тестов (дополнение)
+   ============================================================ */
+
+.category-card {
+    padding: 16px 18px;
+    background: linear-gradient(180deg, var(--panel-2) 0%, var(--panel) 100%);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 10px;
+    margin-bottom: 6px;
+}
+
+.category-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.category-card__value {
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin-top: 2px;
+}
+
+.category-card__actions {
+    display: flex;
+    gap: 8px;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+}
+
+.category-btn {
+    padding: 8px 16px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.category-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(79, 124, 255, .08);
+}
+
+.category-btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.category-card__hint {
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.5;
+    min-height: 16px;
+}
+
+/* --- История --- */
+
+.history {
+    margin: 8px 0 18px;
+}
+
+.history__empty {
+    padding: 20px 16px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13.5px;
+    background: var(--panel-2);
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+}
+
+.history__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.history__table th,
+.history__table td {
+    padding: 9px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+}
+
+.history__table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.history__table th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--muted);
+    font-weight: 600;
+    background: var(--panel);
+}
+
+.history__awarded {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.history__status {
+    display: inline-flex;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    white-space: nowrap;
+    color: var(--muted);
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid var(--line);
+}
+
+.history__status--ok {
+    color: #7ee2a8;
+    border-color: rgba(46, 204, 113, .5);
+    background: rgba(46, 204, 113, .1);
+}
+
+.history__status--bad {
+    color: #ff8b95;
+    border-color: rgba(255, 77, 90, .5);
+    background: rgba(255, 77, 90, .1);
+}
+
+@media (max-width: 620px) {
+    .category-card__head { flex-direction: column; }
+    .history__table      { font-size: 12.5px; }
+    .history__table th,
+    .history__table td   { padding: 8px 8px; }
+}

@@ -60,7 +60,7 @@ services:
 
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev_access_change_me_min_32_chars_ok_12345}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev_refresh_change_me_min_32_chars_ok_12345}
-      JWT_ACCESS_TTL: "15m"
+      JWT_ACCESS_TTL: "1h"
       JWT_REFRESH_TTL: "30d"
 
       KEYCLOAK_ENABLED: "false"

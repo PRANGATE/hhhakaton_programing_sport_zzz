@@ -84,7 +84,6 @@ export const countAttemptsForGrade = async (userId, specId, gradeId, sinceDays =
 };
 
 // Сохраняет задания, сгенерированные LLM, чтобы FK из test.answers сработал.
-// Требует колонок generated_by_llm / model в test.questions (см. миграцию).
 export const persistGeneratedQuestions = async ({ specializationId, targetGradeId, questions }) => {
   const out = [];
   for (const q of questions) {
@@ -106,4 +105,26 @@ export const persistGeneratedQuestions = async ({ specializationId, targetGradeI
     out.push(rows[0]);
   }
   return out;
+};
+
+// История попыток пользователя — для экрана профиля.
+// Отдаём без breakdown'ов: только шапки попыток.
+// Сортировка — от свежих к старым.
+export const listAttemptsForUser = async (userId, limit = 50) => {
+  const { rows } = await query(
+    `SELECT id,
+            specialization_id,
+            target_grade_id,
+            awarded_grade_id,
+            score,
+            status,
+            started_at,
+            finished_at
+       FROM test.attempts
+      WHERE user_id = $1
+      ORDER BY started_at DESC
+      LIMIT $2`,
+    [userId, limit]
+  );
+  return rows;
 };

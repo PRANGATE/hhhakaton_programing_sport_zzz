@@ -3,8 +3,9 @@ import * as ai from '../ai/ai.service.js';
 
 const PASS_THRESHOLD = 60;
 const LOWER_GRADE  = { senior: 'middle', middle: 'junior', junior: null };
+const COOLDOWN_DAYS = 90;   // окно, в течение которого повторная попытка на тот же грейд заблокирована
 
-const llmMode = () => process.env.LLM_MODE || 'hybrid'; // hybrid | generate | pool
+const llmMode = () => process.env.LLM_MODE || 'hybrid';
 
 const fail = (code, message) => {
   const e = new Error(message || code);
@@ -23,7 +24,6 @@ const scoreAnswer = (question, payload) => {
     for (const c of chosen) if (!correct.has(c)) return 0;
     return 100;
   }
-  // свободный текст: оценивает LLM, если доступен
   return payload?.text && payload.text.trim().length > 20 ? 50 : 0;
 };
 
@@ -31,15 +31,13 @@ const toPublic = ({ id, topic, difficulty, kind, prompt, options }) =>
   ({ id, topic, difficulty, kind, prompt, options });
 
 export const startAttempt = async ({ userId, specializationId, targetGradeId }) => {
-  // 1. Лимит смены грейда (не чаще раза в 90 дней)
-  const recent = await repo.countAttemptsForGrade(userId, specializationId, targetGradeId, 90);
+  const recent = await repo.countAttemptsForGrade(userId, specializationId, targetGradeId, COOLDOWN_DAYS);
   if (recent > 0) throw fail('GRADE_CHANGE_LOCKED');
 
   const mode = llmMode();
   let questions = [];
   let source = 'none';
 
-  // 2. LLM (если режим не pool)
   if (mode !== 'pool') {
     try {
       questions = await ai.generateQuestions({
@@ -52,9 +50,6 @@ export const startAttempt = async ({ userId, specializationId, targetGradeId }) 
     }
   }
 
-  // 3. Fallback: пул из БД
-  // 3. Добираем из пула, сколько не хватает до 5.
-  //    LLM могла дать 1–2 (llama3.1:8b ленивая) — это не провал.
   const TARGET = 5;
   if (questions.length < TARGET) {
     const need = TARGET - questions.length;
@@ -63,15 +58,11 @@ export const startAttempt = async ({ userId, specializationId, targetGradeId }) 
       const fromPool = pool.map(q => ({ ...q, generatedByLlm: false }));
       questions = questions.concat(fromPool);
       source = questions.some(q => q.generatedByLlm) ? 'mixed' : 'pool';
-      console.log(`[test] LLM дала ${TARGET - need}, пул добавил ${fromPool.length}`);
     }
   }
 
-  if (questions.length < 3) {
-    throw fail('LLM_UNAVAILABLE');
-  }
+  if (questions.length < 3) throw fail('LLM_UNAVAILABLE');
 
-  // 5. Персистим только LLM-задания, у которых ещё нет id в БД.
   const llmOnly = questions.filter(q => q.generatedByLlm && !q.id);
   if (llmOnly.length) {
     try {
@@ -91,20 +82,14 @@ export const startAttempt = async ({ userId, specializationId, targetGradeId }) 
     }
   }
 
-  if (questions.length < 3) {
-    throw fail('LLM_UNAVAILABLE');
-  }
+  if (questions.length < 3) throw fail('LLM_UNAVAILABLE');
 
   const attempt = await repo.createAttempt({
     userId, specializationId, targetGradeId,
     questionIds: questions.map(q => q.id),
   });
 
-  return {
-    attempt,
-    source,                                 // 'llm' | 'pool' — покажем на фронте для демо
-    questions: questions.map(toPublic),
-  };
+  return { attempt, source, questions: questions.map(toPublic) };
 };
 
 export const submitAnswer = async ({ attemptId, userId, questionId, payload }) => {
@@ -157,4 +142,57 @@ export const finishAttempt = async ({ attemptId, userId }) => {
       score:       a.score,
     })),
   };
+};
+
+/* ============================================================
+   История тестов — для экрана профиля.
+   ============================================================
+   Отдаём:
+     • items   — список попыток (свежие вверху),
+     • current — текущая подтверждённая категория (последняя успешная),
+     • locks   — до какой даты заблокирована попытка на каждый (spec, grade).
+*/
+
+export const getHistory = async ({ userId }) => {
+  const rows = await repo.listAttemptsForUser(userId, 50);
+
+  const items = rows.map(r => ({
+    id: r.id,
+    specialization_id: r.specialization_id,
+    target_grade_id: r.target_grade_id,
+    awarded_grade_id: r.awarded_grade_id,
+    score: r.score,
+    status: r.status,
+    started_at: r.started_at,
+    finished_at: r.finished_at,
+  }));
+
+  // Текущая категория = последняя успешная попытка.
+  const lastPassed = items.find(a => a.status === 'passed' && a.awarded_grade_id);
+  const current = lastPassed
+    ? {
+        specialization_id: lastPassed.specialization_id,
+        grade_id: lastPassed.awarded_grade_id,
+        since: lastPassed.finished_at || lastPassed.started_at,
+      }
+    : null;
+
+  // Для каждой пары (spec, target_grade) — самая свежая попытка.
+  // Её started_at + COOLDOWN_DAYS = дата, до которой попытка заблокирована.
+  const locks = {};
+  const now = Date.now();
+  const cooldownMs = COOLDOWN_DAYS * 86_400_000;
+
+  for (const a of items) {
+    const key = `${a.specialization_id}|${a.target_grade_id}`;
+    if (locks[key]) continue; // items отсортированы DESC, первый — самый свежий
+
+    const lastStarted = new Date(a.started_at).getTime();
+    const until = lastStarted + cooldownMs;
+    if (until > now) {
+      locks[key] = { until: new Date(until).toISOString(), last_attempt_at: a.started_at };
+    }
+  }
+
+  return { items, current, locks, cooldown_days: COOLDOWN_DAYS };
 };

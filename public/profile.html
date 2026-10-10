@@ -44,6 +44,29 @@
                 </div>
             </fieldset>
 
+            <!-- ===== Категория и грейд ===== -->
+            <fieldset>
+                <legend>Категория и грейд</legend>
+
+                <div class="category-card">
+                    <div class="category-card__head">
+                        <div>
+                            <span class="profile-label">Текущая категория</span>
+                            <span class="category-card__value" id="pf-category">—</span>
+                        </div>
+                        <div class="category-card__actions">
+                            <button type="button" id="pf-test-single" class="category-btn" hidden>Пройти тест</button>
+                            <button type="button" id="pf-test-higher" class="category-btn" hidden>↑ Выше</button>
+                            <button type="button" id="pf-test-lower"  class="category-btn" hidden>↓ Ниже</button>
+                        </div>
+                    </div>
+                    <div class="category-card__hint" id="pf-cooldown-hint"></div>
+                </div>
+
+                <span class="profile-label" style="margin-top:18px">История попыток</span>
+                <div id="pf-history" class="history"></div>
+            </fieldset>
+
             <fieldset>
                 <legend>Опыт</legend>
                 <p><span class="profile-label">Стаж</span>

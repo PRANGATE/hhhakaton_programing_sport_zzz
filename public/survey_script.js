@@ -12,6 +12,16 @@
     grade: null,
   };
 
+  // Преселект из URL: /survey.html?spec=backend&grade=middle
+  // Устанавливаем ДО renderPicks — чтобы класс .is-on сразу попал.
+  (function readPreselect() {
+    const params = new URLSearchParams(location.search);
+    const spec   = params.get('spec');
+    const grade  = params.get('grade');
+    if (spec)  state.specialization = spec;
+    if (grade) state.grade          = grade;
+  })();
+
   // ---------- API ----------
   async function api(path, opts = {}) {
     const res = await fetch('/api/v1' + path, {
@@ -87,6 +97,7 @@
     renderPicks($('#industries'),      ind.items,    'industry');
     renderPicks($('#specializations'), spec.items,   'specialization');
     renderPicks($('#grades'),          grades.items, 'grade');
+    refresh();  // на случай, если spec+grade уже выбраны из URL
 
     const form = $('#survey-form');
     if (!form) return;
@@ -128,7 +139,6 @@
         const code    = err.body?.error;
         const message = err.body?.message;
 
-        // Нет заданий — показываем экран тестирования с сообщением в поле вопроса.
         if (status === 503 && (code === 'llm_unavailable' || code === 'not_enough_questions')) {
           sessionStorage.removeItem('fsp.attempt');
           sessionStorage.setItem(
@@ -139,8 +149,6 @@
           return;
         }
 
-        // Любая другая ошибка — тоже показываем на экране тестирования,
-        // чтобы пользователь не видел alert.
         sessionStorage.removeItem('fsp.attempt');
         sessionStorage.setItem(
           'fsp.test.error',

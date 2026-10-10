@@ -39,8 +39,12 @@ const answerSchema = z.object({
   payload:     z.object({}).passthrough(),
 });
 
-// ВАЖНО: body приходит в snake_case (как требует ТЗ/фронт),
-// а сервис работает в camelCase — мапим явно.
+// История попыток и текущая категория — для /profile.html.
+// Только кандидат, только своя история.
+router.get('/history', requireAuth, requireRole('candidate'), handle(async (req, res) => {
+  res.json(await svc.getHistory({ userId: req.user.id }));
+}));
+
 router.post('/start', requireAuth, requireRole('candidate'), handle(async (req, res) => {
   const body = startSchema.parse(req.body);
   const out = await svc.startAttempt({
