@@ -53,3 +53,5 @@ logs/
 
 # ---------- Локальные секреты деплоя ----------
 .deploy-secrets.json
+.deploy-config.json
+backups/

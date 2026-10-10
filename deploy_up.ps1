@@ -6,36 +6,57 @@ param()
 
 $ErrorActionPreference = "Stop"
 
-# ======================= НАСТРОЙКИ (совпадают с deploy.ps1) =======================
-$ProjectPath   = "F:\hhru"
-$ImageName     = "fsp-hhru"
-$ImageTag      = "latest"
+# ======================= НАСТРОЙКИ =======================
+$ProjectPath = if ($PSScriptRoot) { Split-Path -Parent $PSCommandPath } else { (Get-Location).Path }
+
+# Конфиг (создаётся scripts\setup.ps1, иначе — дефолты)
+$cfgPath = Join-Path $ProjectPath '.deploy-config.json'
+$cfg = if (Test-Path $cfgPath) {
+    Get-Content $cfgPath -Raw -Encoding UTF8 | ConvertFrom-Json
+} else {
+    [pscustomobject]@{
+        vps_user = 'root'; vps_host = '31.185.105.155'
+        vps_docker_dir = '/home/PRANG/docker'
+        container_app = 'fsp-app'; container_postgres = 'fsp-postgres'
+        container_tunnel = 'fsp-ollama-tunnel'; container_migrate = 'fsp-migrate'
+        network_name = 'fsp-net'
+        image_name = 'fsp-hhru'; image_tag = 'latest'
+        tunnel_image = 'fsp-ollama-tunnel:latest'
+        port_mapping = '80:8080'; tunnel_port_mapping = '4010:4010'
+        memory_limit = '320m'; cpu_limit = '0.5'
+        postgres_user = 'fsp'; postgres_db = 'fsp'
+    }
+}
+
+$ImageName     = $cfg.image_name
+$ImageTag      = $cfg.image_tag
 $FullImage     = "${ImageName}:${ImageTag}"
-$TunnelImage   = "fsp-ollama-tunnel:latest"
-$TunnelDockerfile = "tunnel\Dockerfile"
+$TunnelImage   = $cfg.tunnel_image
+$TunnelDockerfile = 'tunnel\Dockerfile'
 
-$VpsUser       = "root"
-$VpsHost       = "31.185.105.155"
-$VpsDockerDir  = "/home/PRANG/docker"
+$VpsUser       = $cfg.vps_user
+$VpsHost       = $cfg.vps_host
+$VpsDockerDir  = $cfg.vps_docker_dir
 $RemoteTar     = "$VpsDockerDir/fsp-hhru-image.tar"
+$PgVolumePath  = "$VpsDockerDir/pgdata"
 
-$ContainerName     = "fsp-app"
-$ContainerMigrate  = "fsp-migrate"
-$ContainerPostgres = "fsp-postgres"
-$ContainerTunnel   = "fsp-ollama-tunnel"
-$NetworkName       = "fsp-net"
+$ContainerName     = $cfg.container_app
+$ContainerMigrate  = $cfg.container_migrate
+$ContainerPostgres = $cfg.container_postgres
+$ContainerTunnel   = $cfg.container_tunnel
+$NetworkName       = $cfg.network_name
 
-$PortMapping        = "80:8080"
-$TunnelPortMapping  = "4010:4010"
-$MemoryLimit        = "320m"
-$CpuLimit           = "0.5"
+$PortMapping        = $cfg.port_mapping
+$TunnelPortMapping  = $cfg.tunnel_port_mapping
+$MemoryLimit        = $cfg.memory_limit
+$CpuLimit           = $cfg.cpu_limit
 
-$PostgresUser  = "fsp"
-$PostgresDb    = "fsp"
+$PostgresUser  = $cfg.postgres_user
+$PostgresDb    = $cfg.postgres_db
 
-$SecretsFile   = Join-Path $ProjectPath ".deploy-secrets.json"
-$LocalTar      = Join-Path $env:TEMP "fsp-hhru-image.tar"
-# ==================================================================================
+$SecretsFile   = Join-Path $ProjectPath '.deploy-secrets.json'
+$LocalTar      = Join-Path $env:TEMP 'fsp-hhru-image.tar'
+# =========================================================
 
 function Info($m) { Write-Host "==> $m" -ForegroundColor Cyan }
 function Ok($m)   { Write-Host "OK: $m"  -ForegroundColor Green }

@@ -13,6 +13,20 @@
 
 ## Быстрый старт
 
+> ⚠️ **Перед началом:** Docker Desktop должен быть запущен (зелёный кит в трее).
+
+### Порядок запуска
+
+```powershell
+# 1. Первичная настройка (один раз)
+powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
+
+# 2. Первый деплой (стирает БД)
+powershell -ExecutionPolicy Bypass -File .\deploy.ps1
+
+# 3. Дальше — только меню (для простого управления сайтом)
+powershell -ExecutionPolicy Bypass -File .\scripts\menu.ps1
+
 ### Docker
 
 ```bash
@@ -47,7 +61,7 @@ powershell -ExecutionPolicy Bypass -File .\deploy.ps1
 powershell -ExecutionPolicy Bypass -File .\deploy_up.ps1
 ```
 
-Требуется SSH-ключ без пароля к серверу.
+Требуется SSH-ключ (У текущего сервера отключен вход по паролю.)
 
 ---
 
@@ -75,6 +89,7 @@ powershell -ExecutionPolicy Bypass -File .\deploy_up.ps1
 
 | Документ | О чём |
 |---|---|
+| [scripts.md](./_docs/scripts.md) | Обзор PS1-скриптов: setup, deploy, rotate, backup |
 | [vision.md](./_docs/vision.md) | Проблема, аудитория, ценность, отличие от job-бордов |
 | [roadmap.md](./_docs/roadmap.md) | Что делаем на MVP, что в Post-MVP |
 | [open-questions.md](./_docs/open-questions.md) | Нерешённые вопросы и решения по ним |
@@ -105,6 +120,8 @@ powershell -ExecutionPolicy Bypass -File .\deploy_up.ps1
 | [deployment.md](./_docs/deployment.md) | Сборка, деплой, окружения |
 | [local-setup.md](./_docs/local-setup.md) | Локальный запуск для разработчика |
 | [runbook.md](./_docs/runbook.md) | Типовые инциденты и решения |
+| [scripts-quickstart.md](./_docs/scripts-quickstart.md) | Что установить и как запускать PS1-скрипты («инструкция для чайников) |
+| [scripts.md](./_docs/scripts.md) | Полное описание PS1-скриптов: setup, deploy, rotate, backup, fix-tunnel |
 
 ### ИИ
 
