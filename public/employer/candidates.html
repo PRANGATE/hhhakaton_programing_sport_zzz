@@ -1,87 +1,91 @@
 <!doctype html>
 <html lang="ru">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ФСП · Банк кандидатов</title>
-<link rel="stylesheet" href="/styles.css" />
-<link rel="stylesheet" href="/employer/employer.css" />
-<link rel="stylesheet" href="/navigation_bar_styles.css" />
-<script src="/navigation_bar_script.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ФСП · Банк кандидатов</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/employer/employer.css" />
+  <link rel="stylesheet" href="/navigation_bar_styles.css" />
+  <script src="/navigation_bar_script.js"></script>
 </head>
+
 <body data-navbar-state="employer">
 
-<main class="emp-main candidates-page">
-  <div class="emp-head">
-    <div>
-      <h1>Банк кандидатов</h1>
-      <p>Поиск по категориям. Уточнение запроса не сбрасывает сохранённую подборку.</p>
+  <main class="emp-main candidates-page">
+    <div class="emp-head">
+      <div>
+        <h1>Банк кандидатов</h1>
+        <p>Поиск по категориям. Уточнение запроса не сбрасывает сохранённую подборку.</p>
+      </div>
     </div>
-  </div>
 
-  <div class="candidates-workspace">
-    <section class="candidates-list-pane" aria-label="Поиск и список кандидатов">
-      <div class="card candidates-filters">
-        <div class="row3">
-          <div class="field"><label>Специализация</label>
-            <select id="f-spec">
-              <option value="">все</option>
-              <option value="backend">Backend</option>
-              <option value="frontend">Frontend</option>
-            </select>
+    <div class="candidates-workspace">
+      <section class="candidates-list-pane" aria-label="Поиск и список кандидатов">
+        <div class="card candidates-filters">
+          <div class="row3">
+            <div class="field"><label>Специализация</label>
+              <select id="f-spec">
+                <option value="">все</option>
+                <option value="backend">Backend</option>
+                <option value="frontend">Frontend</option>
+              </select>
+            </div>
+            <div class="field"><label>Грейд</label>
+              <select id="f-grade">
+                <option value="">все</option>
+                <option value="junior">Junior</option>
+                <option value="middle">Middle</option>
+                <option value="senior">Senior</option>
+              </select>
+            </div>
+            <div class="field"><label>Стек</label><input id="f-stack" placeholder="Go, Kafka" /></div>
           </div>
-          <div class="field"><label>Грейд</label>
-            <select id="f-grade">
-              <option value="">все</option>
-              <option value="junior">Junior</option>
-              <option value="middle">Middle</option>
-              <option value="senior">Senior</option>
-            </select>
+          <div style="margin-top:12px; display:flex; gap:12px; align-items:center">
+            <label style="display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px">
+              <input type="checkbox" id="f-fsp" style="width:auto" /> только с ФСП
+            </label>
+            <button id="apply" class="btn btn--primary btn--sm" style="margin-left:auto">Применить</button>
           </div>
-          <div class="field"><label>Стек</label><input id="f-stack" placeholder="Go, Kafka" /></div>
         </div>
-        <div style="margin-top:12px; display:flex; gap:12px; align-items:center">
-          <label style="display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px">
-            <input type="checkbox" id="f-fsp" style="width:auto" /> только с ФСП
-          </label>
-          <button id="apply" class="btn btn--primary btn--sm" style="margin-left:auto">Применить</button>
+
+        <div id="list"></div>
+      </section>
+
+      <aside class="candidate-preview-pane" aria-label="Карточка кандидата">
+        <div id="candidate-preview" class="card candidate-preview-card">
+          <div class="empty">Выберите кандидата из списка</div>
         </div>
-      </div>
+      </aside>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <p><small>ФСП · Платформа ИТ-вакансий</small></p>
+  </footer>
+  <script type="module">
+    import { mountShell, api, escapeHtml } from '/employer/employer.js';
+    const user = await mountShell('candidates');
+    if (!user) throw new Error('auth');
 
-      <div id="list"></div>
-    </section>
+    const listEl = document.getElementById('list');
+    const previewEl = document.getElementById('candidate-preview');
+    let selectedId = null;
 
-    <aside class="candidate-preview-pane" aria-label="Карточка кандидата">
-      <div id="candidate-preview" class="card candidate-preview-card">
-        <div class="empty">Выберите кандидата из списка</div>
-      </div>
-    </aside>
-  </div>
-</main>
+    function renderCandidate(candidate) {
+      selectedId = String(candidate.id);
 
-<script type="module">
-import { mountShell, api, escapeHtml } from '/employer/employer.js';
-const user = await mountShell('candidates');
-if (!user) throw new Error('auth');
-
-const listEl = document.getElementById('list');
-const previewEl = document.getElementById('candidate-preview');
-let selectedId = null;
-
-function renderCandidate(candidate) {
-  selectedId = String(candidate.id);
-
-  const fspBlock = candidate.fsp && candidate.fsp.length
-    ? candidate.fsp.map(a => `
+      const fspBlock = candidate.fsp && candidate.fsp.length
+        ? candidate.fsp.map(a => `
         <div class="candidate-preview__fsp-item">
           <div><b style="color:var(--accent)">${escapeHtml(a.place)}</b> — ${escapeHtml(a.event)}</div>
           <span style="color:var(--muted)">${escapeHtml(a.year)}</span>
         </div>`).join('')
-    : `<div style="color:var(--muted); font-size:13px; padding:12px 0">
+        : `<div style="color:var(--muted); font-size:13px; padding:12px 0">
         История ФСП отсутствует. На категорию и подборку это <b>не влияет</b>.
       </div>`;
 
-  previewEl.innerHTML = `
+      previewEl.innerHTML = `
     <div class="candidate-preview__head">
       <div>
         <h2>${escapeHtml(candidate.anon_id)}</h2>
@@ -117,23 +121,23 @@ function renderCandidate(candidate) {
     </div>
   `;
 
-  document.querySelectorAll('.cand-row').forEach(row => {
-    row.classList.toggle('cand-row--selected', String(row.dataset.id) === selectedId);
-  });
-}
+      document.querySelectorAll('.cand-row').forEach(row => {
+        row.classList.toggle('cand-row--selected', String(row.dataset.id) === selectedId);
+      });
+    }
 
-async function selectCandidate(id) {
-  previewEl.innerHTML = '<div class="empty">Загружаем карточку…</div>';
-  try {
-    const { candidate } = await api('/matching/candidates/' + encodeURIComponent(id));
-    renderCandidate(candidate);
-  } catch (err) {
-    previewEl.innerHTML = `<div class="empty">Ошибка: ${escapeHtml(err.message)}</div>`;
-  }
-}
+    async function selectCandidate(id) {
+      previewEl.innerHTML = '<div class="empty">Загружаем карточку…</div>';
+      try {
+        const { candidate } = await api('/matching/candidates/' + encodeURIComponent(id));
+        renderCandidate(candidate);
+      } catch (err) {
+        previewEl.innerHTML = `<div class="empty">Ошибка: ${escapeHtml(err.message)}</div>`;
+      }
+    }
 
-function renderList(items) {
-  listEl.innerHTML = items.map(c => `
+    function renderList(items) {
+      listEl.innerHTML = items.map(c => `
     <div class="cand-row" data-id="${escapeHtml(c.id)}" role="button" tabindex="0" aria-label="Открыть кандидата ${escapeHtml(c.anon_id)}">
       <div>
         <div class="cand-row__id">${escapeHtml(c.anon_id)}</div>
@@ -150,40 +154,41 @@ function renderList(items) {
     </div>
   `).join('');
 
-  listEl.querySelectorAll('.cand-row').forEach(row => {
-    row.addEventListener('click', () => selectCandidate(row.dataset.id));
-    row.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        selectCandidate(row.dataset.id);
+      listEl.querySelectorAll('.cand-row').forEach(row => {
+        row.addEventListener('click', () => selectCandidate(row.dataset.id));
+        row.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            selectCandidate(row.dataset.id);
+          }
+        });
+      });
+    }
+
+    async function search() {
+      const body = {
+        specialization: document.getElementById('f-spec').value || undefined,
+        grade: document.getElementById('f-grade').value || undefined,
+        stack: document.getElementById('f-stack').value
+          ? document.getElementById('f-stack').value.split(',').map(s => s.trim()).filter(Boolean)
+          : undefined,
+        only_fsp: document.getElementById('f-fsp').checked || undefined,
+      };
+      listEl.innerHTML = '<div class="empty">Ищем…</div>';
+      previewEl.innerHTML = '<div class="empty">Выберите кандидата из списка</div>';
+      selectedId = null;
+      try {
+        const { items } = await api('/matching/query', { method: 'POST', body: JSON.stringify(body) });
+        if (!items.length) { listEl.innerHTML = '<div class="empty">Ничего не найдено.</div>'; return; }
+        renderList(items);
+      } catch (err) {
+        listEl.innerHTML = `<div class="empty">Ошибка: ${escapeHtml(err.message)}</div>`;
       }
-    });
-  });
-}
+    }
 
-async function search() {
-  const body = {
-    specialization: document.getElementById('f-spec').value || undefined,
-    grade:          document.getElementById('f-grade').value || undefined,
-    stack:          document.getElementById('f-stack').value
-                      ? document.getElementById('f-stack').value.split(',').map(s => s.trim()).filter(Boolean)
-                      : undefined,
-    only_fsp:       document.getElementById('f-fsp').checked || undefined,
-  };
-  listEl.innerHTML = '<div class="empty">Ищем…</div>';
-  previewEl.innerHTML = '<div class="empty">Выберите кандидата из списка</div>';
-  selectedId = null;
-  try {
-    const { items } = await api('/matching/query', { method: 'POST', body: JSON.stringify(body) });
-    if (!items.length) { listEl.innerHTML = '<div class="empty">Ничего не найдено.</div>'; return; }
-    renderList(items);
-  } catch (err) {
-    listEl.innerHTML = `<div class="empty">Ошибка: ${escapeHtml(err.message)}</div>`;
-  }
-}
-
-document.getElementById('apply').addEventListener('click', search);
-search();
-</script>
+    document.getElementById('apply').addEventListener('click', search);
+    search();
+  </script>
 </body>
+
 </html>

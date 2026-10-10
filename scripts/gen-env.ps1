@@ -1,4 +1,4 @@
-# scripts/gen-env.ps1
+﻿# scripts/gen-env.ps1
 #
 # Генерирует .env из .env.example, подставляя реальные секреты вместо
 # плейсхолдеров (change_me_*, fsp_secret, dev_*).

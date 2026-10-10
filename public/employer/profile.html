@@ -1,17 +1,19 @@
 <!doctype html>
 <html lang="ru">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ФСП · Профиль компании</title>
-<link rel="stylesheet" href="/styles.css" />
-<link rel="stylesheet" href="/employer/employer.css" />
-<link rel="stylesheet" href="/navigation_bar_styles.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ФСП · Профиль компании</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/employer/employer.css" />
+  <link rel="stylesheet" href="/navigation_bar_styles.css" />
   <script src="/navigation_bar_script.js"></script>
 </head>
+
 <body data-navbar-state="employer">
 
-<main class="emp-main">
+  <main class="emp-main">
     <div class="emp-head">
       <div>
         <h1>Профиль компании</h1>
@@ -55,7 +57,8 @@
         </div>
         <div class="field" style="margin-top:14px">
           <label>Описание организации</label>
-          <textarea name="description" maxlength="4000" placeholder="Чем занимается компания, стек, культура, формат работы…"></textarea>
+          <textarea name="description" maxlength="4000"
+            placeholder="Чем занимается компания, стек, культура, формат работы…"></textarea>
         </div>
       </div>
 
@@ -65,44 +68,47 @@
         <span id="save-status" style="color:var(--muted); font-size:13px"></span>
       </div>
     </form>
-</main>
+  </main>
+  <footer class="site-footer">
+    <p><small>ФСП · Платформа ИТ-вакансий</small></p>
+  </footer>
+  <script type="module">
+    import { mountShell, api, readForm } from '/employer/employer.js';
 
-<script type="module">
-import { mountShell, api, readForm } from '/employer/employer.js';
+    const user = await mountShell('profile');
+    if (!user) throw new Error('auth');
 
-const user = await mountShell('profile');
-if (!user) throw new Error('auth');
+    const form = document.getElementById('profile-form');
+    const statusEl = document.getElementById('save-status');
 
-const form = document.getElementById('profile-form');
-const statusEl = document.getElementById('save-status');
-
-async function load() {
-  try {
-    const { profile } = await api('/profile/me');
-    if (profile) {
-      for (const [k, v] of Object.entries(profile)) {
-        const el = form.elements.namedItem(k);
-        if (el && v != null) el.value = v;
-      }
+    async function load() {
+      try {
+        const { profile } = await api('/profile/me');
+        if (profile) {
+          for (const [k, v] of Object.entries(profile)) {
+            const el = form.elements.namedItem(k);
+            if (el && v != null) el.value = v;
+          }
+        }
+      } catch (err) { console.warn('profile load', err); }
     }
-  } catch (err) { console.warn('profile load', err); }
-}
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const data = readForm(form);
-  if (!data.company_name?.trim()) return alert('Название обязательно');
-  statusEl.textContent = 'Сохраняем…';
-  try {
-    await api('/profile/me', { method: 'PATCH', body: JSON.stringify(data) });
-    statusEl.textContent = '✓ Сохранено';
-    setTimeout(() => statusEl.textContent = '', 2500);
-  } catch (err) {
-    statusEl.textContent = 'Ошибка: ' + err.message;
-  }
-});
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = readForm(form);
+      if (!data.company_name?.trim()) return alert('Название обязательно');
+      statusEl.textContent = 'Сохраняем…';
+      try {
+        await api('/profile/me', { method: 'PATCH', body: JSON.stringify(data) });
+        statusEl.textContent = '✓ Сохранено';
+        setTimeout(() => statusEl.textContent = '', 2500);
+      } catch (err) {
+        statusEl.textContent = 'Ошибка: ' + err.message;
+      }
+    });
 
-load();
-</script>
+    load();
+  </script>
 </body>
+
 </html>

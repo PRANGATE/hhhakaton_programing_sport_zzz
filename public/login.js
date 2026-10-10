@@ -63,5 +63,8 @@ form.addEventListener('submit', async (e) => {
     } else {
       toast('Ошибка: ' + code, 'error');
     }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
   }
 });

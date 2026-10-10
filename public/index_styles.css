@@ -1,147 +1,224 @@
+/* ============================================================
+   ФСП · Страница входа / регистрации
+   Файл: /index_styles.css
+   ============================================================ */
 
-.layout {
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: 1.05fr 1fr;
-}
+/* ---------- Центрирование панели ---------- */
 
-/* ---------- брендовая панель ---------- */
-.brand {
-  padding: 56px 56px 40px;
-  background:
-    radial-gradient(1200px 600px at -10% -20%, rgba(79,124,255,.25), transparent 60%),
-    radial-gradient(900px 500px at 100% 110%, rgba(255,77,90,.15), transparent 60%),
-    var(--panel-2);
-  border-right: 1px solid var(--line);
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-}
-.brand__logo { display: flex; flex-direction: column; gap: 4px; }
-.brand__mark {
-  font-weight: 800; letter-spacing: .06em; font-size: 22px;
-  color: var(--text);
-}
-.brand__mark::after {
-  content: ""; display: inline-block; width: 8px; height: 8px;
-  background: var(--accent-2); border-radius: 2px; margin-left: 8px;
-  transform: translateY(-2px);
-}
-.brand__sub { font-size: 12.5px; color: var(--muted); letter-spacing: .02em; }
-
-.brand__title { font-size: 34px; line-height: 1.15; margin: 24px 0 4px; font-weight: 700; }
-.brand__lead  { color: #c4cdf0; font-size: 15.5px; max-width: 520px; margin: 0; }
-
-.brand__points { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
-.brand__points li {
-  position: relative; padding-left: 20px; color: var(--muted); font-size: 14.5px;
-}
-.brand__points li::before {
-  content: ""; position: absolute; left: 0; top: 8px;
-  width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
-}
-
-.brand__footer { margin-top: auto; color: #5e6a90; font-size: 12.5px; }
-
-/* ---------- панель формы ---------- */
 .panel {
-  display: grid; place-items: center;
-  padding: 40px 24px;
-  background: var(--bg);
+    display: grid;
+    place-items: center;
+    align-content: center;   /* ← новое: не растягивать строки грида по всей высоте */
+    gap: 16px;               /* ← новое: отступ между лидом и карточкой */
+    padding: 40px 24px;
+    min-height: 100vh;
+    background: var(--bg);
 }
+
+.panel__lead {
+    max-width: 420px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: center;
+}
+
 .panel__inner {
-  width: 100%; max-width: 420px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 32px 28px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    width: 100%;
+    max-width: 420px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 32px 28px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
 }
+
 .panel__title { margin: 0 0 6px; font-size: 22px; font-weight: 700; }
 .panel__hint  { margin: 0 0 22px; color: var(--muted); font-size: 14px; }
 .panel__foot  { text-align: center; margin: 18px 0 0; color: var(--muted); font-size: 14px; }
 
-/* ---------- роли ---------- */
-.roles {
-  display: grid; grid-template-columns: 1fr 1fr;
-  background: #0b1226; border: 1px solid var(--line); border-radius: 10px;
-  padding: 4px; margin-bottom: 22px; gap: 4px;
-}
-.roles__btn {
-  appearance: none; border: 0; background: transparent; color: var(--muted);
-  padding: 9px 12px; border-radius: 7px; font: inherit; font-weight: 600;
-  cursor: pointer; transition: .15s;
-}
-.roles__btn:hover { color: var(--text); }
-.roles__btn.is-active { background: var(--accent); color: #fff; box-shadow: 0 6px 20px rgba(79,124,255,.35); }
+/* ---------- Роли (для register.html) ---------- */
 
-/* ---------- форма ---------- */
+.roles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: #0b1226;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 22px;
+    gap: 4px;
+}
+
+.roles__btn {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    padding: 9px 12px;
+    border-radius: 7px;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.roles__btn:hover { color: var(--text); }
+
+.roles__btn.is-active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(79, 124, 255, 0.35);
+}
+
+/* ---------- Форма ---------- */
+
 .form { display: grid; gap: 14px; }
+
 .field { display: grid; gap: 6px; }
 .field__label { font-size: 13px; color: var(--muted); }
-.field__input {
-  width: 100%; padding: 11px 13px; font: inherit;
-  color: var(--text); background: #0b1226;
-  border: 1px solid var(--line); border-radius: 9px;
-  transition: .15s; outline: none;
-}
-.field__input::placeholder { color: #556188; }
-.field__input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,124,255,.18); }
 
-.form__row { display: flex; justify-content: space-between; align-items: center; margin-top: -2px; }
-.check { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13.5px; }
+.field__input {
+    width: 100%;
+    padding: 11px 13px;
+    font: inherit;
+    color: var(--text);
+    background: #0b1226;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    transition: 0.15s;
+    outline: none;
+}
+
+.field__input::placeholder { color: #556188; }
+
+.field__input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.18);
+}
+
+.form__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: -2px;
+}
+
+.check {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 13.5px;
+}
+
 .check input { accent-color: var(--accent); }
 
 .link { color: var(--accent); text-decoration: none; font-size: 13.5px; }
 .link:hover { text-decoration: underline; }
 
-/* ---------- кнопки ---------- */
+/* ---------- Кнопки ---------- */
+
 .btn {
-  appearance: none; border: 1px solid transparent; border-radius: 10px;
-  padding: 12px 16px; font: inherit; font-weight: 600; cursor: pointer;
-  transition: .15s; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-  width: 100%;
+    appearance: none;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
 }
+
 .btn--primary { background: var(--accent); color: #fff; }
 .btn--primary:hover { background: #3f6bec; }
+
 .btn--ghost {
-  background: transparent; color: var(--text); border-color: var(--line);
+    background: transparent;
+    color: var(--text);
+    border-color: var(--line);
 }
 .btn--ghost:hover { border-color: var(--accent); color: #fff; }
 
 .fsp-dot {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--accent-2); box-shadow: 0 0 0 3px rgba(255,77,90,.2);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 0 3px rgba(255, 77, 90, 0.2);
 }
 
-/* ---------- разделитель ---------- */
+/* ---------- Разделитель ---------- */
+
 .divider {
-  position: relative; text-align: center; color: var(--muted);
-  font-size: 12.5px; margin: 18px 0;
+    position: relative;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12.5px;
+    margin: 18px 0;
 }
+
 .divider::before {
-  content: ""; position: absolute; inset: 50% 0 auto 0; height: 1px; background: var(--line);
+    content: "";
+    position: absolute;
+    inset: 50% 0 auto 0;
+    height: 1px;
+    background: var(--line);
 }
-.divider span { position: relative; background: var(--panel); padding: 0 10px; }
 
-.legal { margin: 18px 0 0; font-size: 11.5px; color: #5e6a90; line-height: 1.45; }
+.divider span {
+    position: relative;
+    background: var(--panel);
+    padding: 0 10px;
+}
 
-/* ---------- тост ---------- */
+.legal {
+    margin: 18px 0 0;
+    font-size: 11.5px;
+    color: #5e6a90;
+    line-height: 1.45;
+}
+
+/* ---------- Тост ---------- */
+
 .toast {
-  position: fixed; left: 50%; bottom: 26px;
-  transform: translate(-50%, 20px);
-  background: #16204180; backdrop-filter: blur(8px);
-  border: 1px solid var(--line);
-  color: var(--text);
-  padding: 10px 16px; border-radius: 10px;
-  font-size: 14px; opacity: 0; pointer-events: none;
-  transition: .2s;
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translate(-50%, 20px);
+    background: #16204180;
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.2s;
 }
-.toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
 
-/* ---------- адаптив ---------- */
-@media (max-width: 900px) {
-  .layout { grid-template-columns: 1fr; }
-  .brand { display: none; }
-  .panel { padding: 24px 16px; }
+.toast.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+/* ---------- Адаптив ---------- */
+
+@media (max-width: 560px) {
+    .panel { padding: 24px 16px; }
+
+    .panel__inner {
+        padding: 24px 20px;
+        border-radius: 10px;
+        box-shadow: none;
+    }
+
+    .panel__title { font-size: 20px; }
 }

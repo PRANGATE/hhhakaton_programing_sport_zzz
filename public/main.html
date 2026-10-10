@@ -1,72 +1,78 @@
 <!doctype html>
 <html lang="ru">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ФСП · Платформа ИТ-вакансий — Главная</title>
-<link rel="stylesheet" href="/styles.css" />
-<link rel="stylesheet" href="/navigation_bar_styles.css" />
-<link rel="stylesheet" href="/main_styles.css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ФСП · Платформа ИТ-вакансий — Главная</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/navigation_bar_styles.css" />
+    <link rel="stylesheet" href="/main_styles.css" />
 </head>
+
 <body>
 
-<div class="main-page">
+    <div class="main-page">
 
-    <!-- Плашка «режим администратора», видна только админу -->
-    <div id="admin-banner" class="admin-banner" hidden>
-        <span class="admin-banner__badge">ADMIN</span>
-        <span>Режим администратора</span>
+        <!-- Плашка «режим администратора», видна только админу -->
+        <div id="admin-banner" class="admin-banner" hidden>
+            <span class="admin-banner__badge">ADMIN</span>
+            <span>Режим администратора</span>
+        </div>
+
+        <section class="main-hero">
+            <h1>Новости платформы</h1>
+        </section>
+
+        <main>
+
+            <!-- Публикация новости — только для админа -->
+            <section id="admin-compose" class="admin-block is-hidden">
+                <h2>Опубликовать новость</h2>
+                <form id="news-form" novalidate>
+                    <input name="title" placeholder="Заголовок" maxlength="200" required />
+                    <textarea name="body" rows="6" placeholder="Текст новости…" maxlength="10000" required></textarea>
+                    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap">
+                        <button type="submit" class="btn-primary">Опубликовать</button>
+                        <span id="news-status" aria-live="polite"></span>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Список новостей -->
+            <section id="news-list" class="news-list" aria-label="Новости">
+                <div class="empty">Загружаем…</div>
+            </section>
+
+            <!-- Управление анкетами — только для админа -->
+            <section id="admin-panel" class="admin-block is-hidden">
+                <h2>Управление анкетами</h2>
+                <div class="admin-grid">
+                    <div>
+                        <h3>Соискатели</h3>
+                        <div id="admin-candidates">
+                            <div class="empty">Загружаем…</div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>Работодатели</h3>
+                        <div id="admin-employers">
+                            <div class="empty">Загружаем…</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="site-footer">
+            <p><small>ФСП · Платформа ИТ-вакансий</small></p>
+        </footer>
+
     </div>
 
-    <section class="main-hero">
-        <h1>Новости платформы</h1>
-        <p>Обновления, объявления и важные события проекта ФСП · ИТ-вакансии.</p>
-    </section>
-
-    <main>
-
-        <!-- Публикация новости — только для админа -->
-        <section id="admin-compose" class="admin-block is-hidden">
-            <h2>Опубликовать новость</h2>
-            <form id="news-form" novalidate>
-                <input name="title" placeholder="Заголовок" maxlength="200" required />
-                <textarea name="body" rows="6" placeholder="Текст новости…" maxlength="10000" required></textarea>
-                <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap">
-                    <button type="submit" class="btn-primary">Опубликовать</button>
-                    <span id="news-status" aria-live="polite"></span>
-                </div>
-            </form>
-        </section>
-
-        <!-- Список новостей -->
-        <section id="news-list" class="news-list" aria-label="Новости">
-            <div class="empty">Загружаем…</div>
-        </section>
-
-        <!-- Управление анкетами — только для админа -->
-        <section id="admin-panel" class="admin-block is-hidden">
-            <h2>Управление анкетами</h2>
-            <div class="admin-grid">
-                <div>
-                    <h3>Соискатели</h3>
-                    <div id="admin-candidates"><div class="empty">Загружаем…</div></div>
-                </div>
-                <div>
-                    <h3>Работодатели</h3>
-                    <div id="admin-employers"><div class="empty">Загружаем…</div></div>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <footer class="site-footer">
-        <p><small>ФСП · Платформа ИТ-вакансий</small></p>
-    </footer>
-
-</div>
-
-<script src="/navigation_bar_script.js" defer></script>
-<script src="/main_script.js" defer></script>
+    <script src="/navigation_bar_script.js" defer></script>
+    <script src="/main_script.js" defer></script>
 </body>
+
 </html>

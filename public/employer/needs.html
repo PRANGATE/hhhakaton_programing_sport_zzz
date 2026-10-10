@@ -1,29 +1,71 @@
 <!doctype html>
 <html lang="ru">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ФСП · Описание потребности</title>
-<link rel="stylesheet" href="/styles.css" />
-<link rel="stylesheet" href="/employer/employer.css" />
-<link rel="stylesheet" href="/navigation_bar_styles.css" />
-<style>
-.need-stack-select { display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; }
-.need-stack-select .multi-select__row { display:flex; align-items:center; gap:8px; min-width:0; }
-.need-stack-select .multi-select__select { width:auto; max-width:min(100%, 420px); padding:10px 36px 10px 12px; color:var(--text); background-color:var(--panel-2); border:1px solid var(--line); border-radius:8px; font:inherit; }
-.need-stack-select .multi-select__remove { flex:0 0 auto; width:38px; height:38px; padding:0; color:var(--muted); background:var(--panel-2); border:1px solid var(--line); border-radius:8px; font-size:20px; cursor:pointer; }
-.need-stack-select .multi-select__remove:hover { color:var(--accent-2); border-color:var(--accent-2); }
-.need-stack-select .multi-select__remove[hidden] { display:none; }
-</style>
-<script src="/navigation_bar_script.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ФСП · Описание потребности</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/employer/employer.css" />
+  <link rel="stylesheet" href="/navigation_bar_styles.css" />
+  <style>
+    .need-stack-select {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .need-stack-select .multi-select__row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .need-stack-select .multi-select__select {
+      width: auto;
+      max-width: min(100%, 420px);
+      padding: 10px 36px 10px 12px;
+      color: var(--text);
+      background-color: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+    }
+
+    .need-stack-select .multi-select__remove {
+      flex: 0 0 auto;
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      color: var(--muted);
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .need-stack-select .multi-select__remove:hover {
+      color: var(--accent-2);
+      border-color: var(--accent-2);
+    }
+
+    .need-stack-select .multi-select__remove[hidden] {
+      display: none;
+    }
+  </style>
+  <script src="/navigation_bar_script.js"></script>
 </head>
+
 <body data-navbar-state="employer">
 
-<main class="emp-main">
+  <main class="emp-main">
     <div class="emp-head">
       <div>
         <h1>Описание потребности</h1>
-        
+
       </div>
     </div>
 
@@ -59,75 +101,76 @@
             <div class="multi-select__row">
               <select class="multi-select__select" name="stack[]">
 
-                            <option value="">— выберите стек —</option>
-                            <optgroup label="Языки программирования">
-                                <option value="python">Python</option>
-                                <option value="javascript">JavaScript</option>
-                                <option value="typescript">TypeScript</option>
-                                <option value="java">Java</option>
-                                <option value="kotlin">Kotlin</option>
-                                <option value="csharp">C#</option>
-                                <option value="cpp">C / C++</option>
-                                <option value="go">Go</option>
-                                <option value="rust">Rust</option>
-                                <option value="php">PHP</option>
-                                <option value="ruby">Ruby</option>
-                                <option value="swift">Swift</option>
-                                <option value="scala">Scala</option>
-                                <option value="1c">1С</option>
-                            </optgroup>
-                            <optgroup label="Frontend">
-                                <option value="react">React</option>
-                                <option value="vue">Vue.js</option>
-                                <option value="angular">Angular</option>
-                                <option value="svelte">Svelte</option>
-                                <option value="nextjs">Next.js</option>
-                                <option value="nuxt">Nuxt</option>
-                            </optgroup>
-                            <optgroup label="Backend-фреймворки">
-                                <option value="django">Django</option>
-                                <option value="fastapi">FastAPI</option>
-                                <option value="flask">Flask</option>
-                                <option value="spring">Spring / Spring Boot</option>
-                                <option value="nestjs">NestJS</option>
-                                <option value="express">Express</option>
-                                <option value="laravel">Laravel</option>
-                                <option value="aspnet">ASP.NET Core</option>
-                                <option value="gin">Gin / Echo</option>
-                            </optgroup>
-                            <optgroup label="Мобильная разработка">
-                                <option value="android">Android (Kotlin/Java)</option>
-                                <option value="ios">iOS (Swift)</option>
-                                <option value="flutter">Flutter</option>
-                                <option value="react-native">React Native</option>
-                            </optgroup>
-                            <optgroup label="Базы данных">
-                                <option value="postgresql">PostgreSQL</option>
-                                <option value="mysql">MySQL</option>
-                                <option value="mongodb">MongoDB</option>
-                                <option value="redis">Redis</option>
-                                <option value="clickhouse">ClickHouse</option>
-                                <option value="oracle">Oracle</option>
-                            </optgroup>
-                            <optgroup label="DevOps и инфраструктура">
-                                <option value="docker">Docker</option>
-                                <option value="kubernetes">Kubernetes</option>
-                                <option value="terraform">Terraform</option>
-                                <option value="ansible">Ansible</option>
-                                <option value="ci-cd">CI/CD (GitLab CI, Jenkins)</option>
-                                <option value="aws">AWS</option>
-                                <option value="yandex-cloud">Yandex Cloud</option>
-                            </optgroup>
-                            <optgroup label="Данные и ML">
-                                <option value="pytorch">PyTorch</option>
-                                <option value="tensorflow">TensorFlow</option>
-                                <option value="spark">Apache Spark</option>
-                                <option value="airflow">Airflow</option>
-                                <option value="kafka">Kafka</option>
-                            </optgroup>
-                        
+                <option value="">— выберите стек —</option>
+                <optgroup label="Языки программирования">
+                  <option value="python">Python</option>
+                  <option value="javascript">JavaScript</option>
+                  <option value="typescript">TypeScript</option>
+                  <option value="java">Java</option>
+                  <option value="kotlin">Kotlin</option>
+                  <option value="csharp">C#</option>
+                  <option value="cpp">C / C++</option>
+                  <option value="go">Go</option>
+                  <option value="rust">Rust</option>
+                  <option value="php">PHP</option>
+                  <option value="ruby">Ruby</option>
+                  <option value="swift">Swift</option>
+                  <option value="scala">Scala</option>
+                  <option value="1c">1С</option>
+                </optgroup>
+                <optgroup label="Frontend">
+                  <option value="react">React</option>
+                  <option value="vue">Vue.js</option>
+                  <option value="angular">Angular</option>
+                  <option value="svelte">Svelte</option>
+                  <option value="nextjs">Next.js</option>
+                  <option value="nuxt">Nuxt</option>
+                </optgroup>
+                <optgroup label="Backend-фреймворки">
+                  <option value="django">Django</option>
+                  <option value="fastapi">FastAPI</option>
+                  <option value="flask">Flask</option>
+                  <option value="spring">Spring / Spring Boot</option>
+                  <option value="nestjs">NestJS</option>
+                  <option value="express">Express</option>
+                  <option value="laravel">Laravel</option>
+                  <option value="aspnet">ASP.NET Core</option>
+                  <option value="gin">Gin / Echo</option>
+                </optgroup>
+                <optgroup label="Мобильная разработка">
+                  <option value="android">Android (Kotlin/Java)</option>
+                  <option value="ios">iOS (Swift)</option>
+                  <option value="flutter">Flutter</option>
+                  <option value="react-native">React Native</option>
+                </optgroup>
+                <optgroup label="Базы данных">
+                  <option value="postgresql">PostgreSQL</option>
+                  <option value="mysql">MySQL</option>
+                  <option value="mongodb">MongoDB</option>
+                  <option value="redis">Redis</option>
+                  <option value="clickhouse">ClickHouse</option>
+                  <option value="oracle">Oracle</option>
+                </optgroup>
+                <optgroup label="DevOps и инфраструктура">
+                  <option value="docker">Docker</option>
+                  <option value="kubernetes">Kubernetes</option>
+                  <option value="terraform">Terraform</option>
+                  <option value="ansible">Ansible</option>
+                  <option value="ci-cd">CI/CD (GitLab CI, Jenkins)</option>
+                  <option value="aws">AWS</option>
+                  <option value="yandex-cloud">Yandex Cloud</option>
+                </optgroup>
+                <optgroup label="Данные и ML">
+                  <option value="pytorch">PyTorch</option>
+                  <option value="tensorflow">TensorFlow</option>
+                  <option value="spark">Apache Spark</option>
+                  <option value="airflow">Airflow</option>
+                  <option value="kafka">Kafka</option>
+                </optgroup>
+
               </select>
-              <button type="button" class="multi-select__remove" aria-label="Удалить технологию" title="Удалить" hidden>×</button>
+              <button type="button" class="multi-select__remove" aria-label="Удалить технологию" title="Удалить"
+                hidden>×</button>
             </div>
           </div>
           <small style="color:var(--muted); font-size:12px">Совпадение по стеку объясняется в подборке.</small>
@@ -135,7 +178,8 @@
 
         <div class="field" style="margin-top:14px">
           <label>Чем занимается команда</label>
-          <textarea name="about" placeholder="12 инженеров, микросервисы на Go, Kafka, Kubernetes. Highload."></textarea>
+          <textarea name="about"
+            placeholder="12 инженеров, микросервисы на Go, Kafka, Kubernetes. Highload."></textarea>
         </div>
 
         <div style="margin-top:12px">
@@ -151,108 +195,111 @@
         <a href="/employer/profile.html" class="btn btn--ghost">← Профиль</a>
       </div>
     </form>
-</main>
+  </main>
+  <footer class="site-footer">
+    <p><small>ФСП · Платформа ИТ-вакансий</small></p>
+  </footer>
+  <script type="module">
+    import { mountShell, readForm } from '/employer/employer.js';
+    const user = await mountShell('needs');
+    if (!user) throw new Error('auth');
 
-<script type="module">
-import { mountShell, readForm } from '/employer/employer.js';
-const user = await mountShell('needs');
-if (!user) throw new Error('auth');
+    const KEY = 'fsp.employer.need';
+    const form = document.getElementById('need-form');
+    const stackContainer = form.querySelector('[data-multi-select="need-stacks"]');
+    const stackTemplate = stackContainer.querySelector('select').innerHTML;
 
-const KEY = 'fsp.employer.need';
-const form = document.getElementById('need-form');
-const stackContainer = form.querySelector('[data-multi-select="need-stacks"]');
-const stackTemplate = stackContainer.querySelector('select').innerHTML;
+    function addStackRow(value = '') {
+      const row = document.createElement('div');
+      row.className = 'multi-select__row';
+      const select = document.createElement('select');
+      select.className = 'multi-select__select';
+      select.name = 'stack[]';
+      select.innerHTML = stackTemplate;
+      if (value) {
+        const opts = Array.from(select.options);
+        const found = opts.find(o => o.value.toLowerCase() === String(value).toLowerCase() || o.textContent.trim().toLowerCase() === String(value).toLowerCase());
+        if (found) select.value = found.value;
+      }
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'multi-select__remove';
+      remove.setAttribute('aria-label', 'Удалить технологию');
+      remove.title = 'Удалить';
+      remove.textContent = '×';
+      row.append(select, remove);
+      stackContainer.appendChild(row);
+      resizeSelect(select);
+    }
 
-function addStackRow(value = '') {
-  const row = document.createElement('div');
-  row.className = 'multi-select__row';
-  const select = document.createElement('select');
-  select.className = 'multi-select__select';
-  select.name = 'stack[]';
-  select.innerHTML = stackTemplate;
-  if (value) {
-    const opts = Array.from(select.options);
-    const found = opts.find(o => o.value.toLowerCase() === String(value).toLowerCase() || o.textContent.trim().toLowerCase() === String(value).toLowerCase());
-    if (found) select.value = found.value;
-  }
-  const remove = document.createElement('button');
-  remove.type = 'button';
-  remove.className = 'multi-select__remove';
-  remove.setAttribute('aria-label', 'Удалить технологию');
-  remove.title = 'Удалить';
-  remove.textContent = '×';
-  row.append(select, remove);
-  stackContainer.appendChild(row);
-  resizeSelect(select);
-}
+    function resizeSelect(select) {
+      const option = select.options[select.selectedIndex];
+      const text = option ? option.textContent.trim() : '— выберите стек —';
+      const canvas = resizeSelect.canvas || (resizeSelect.canvas = document.createElement('canvas'));
+      const ctx = canvas.getContext('2d');
+      const style = getComputedStyle(select);
+      ctx.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+      select.style.width = `${Math.max(210, Math.ceil(ctx.measureText(text).width + 66))}px`;
+    }
 
-function resizeSelect(select) {
-  const option = select.options[select.selectedIndex];
-  const text = option ? option.textContent.trim() : '— выберите стек —';
-  const canvas = resizeSelect.canvas || (resizeSelect.canvas = document.createElement('canvas'));
-  const ctx = canvas.getContext('2d');
-  const style = getComputedStyle(select);
-  ctx.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-  select.style.width = `${Math.max(210, Math.ceil(ctx.measureText(text).width + 66))}px`;
-}
+    function refreshStacks() {
+      let rows = Array.from(stackContainer.querySelectorAll('.multi-select__row'));
+      if (!rows.length || rows[rows.length - 1].querySelector('select').value) addStackRow();
+      rows = Array.from(stackContainer.querySelectorAll('.multi-select__row'));
+      rows.slice(0, -1).forEach(row => { if (!row.querySelector('select').value) row.remove(); });
+      rows = Array.from(stackContainer.querySelectorAll('.multi-select__row'));
+      const chosen = new Set(rows.map(row => row.querySelector('select').value).filter(Boolean));
+      rows.forEach(row => {
+        const select = row.querySelector('select');
+        Array.from(select.options).forEach(option => { if (option.value) option.disabled = option.value !== select.value && chosen.has(option.value); });
+        row.querySelector('.multi-select__remove').hidden = !select.value;
+        resizeSelect(select);
+      });
+    }
 
-function refreshStacks() {
-  let rows = Array.from(stackContainer.querySelectorAll('.multi-select__row'));
-  if (!rows.length || rows[rows.length - 1].querySelector('select').value) addStackRow();
-  rows = Array.from(stackContainer.querySelectorAll('.multi-select__row'));
-  rows.slice(0, -1).forEach(row => { if (!row.querySelector('select').value) row.remove(); });
-  rows = Array.from(stackContainer.querySelectorAll('.multi-select__row'));
-  const chosen = new Set(rows.map(row => row.querySelector('select').value).filter(Boolean));
-  rows.forEach(row => {
-    const select = row.querySelector('select');
-    Array.from(select.options).forEach(option => { if (option.value) option.disabled = option.value !== select.value && chosen.has(option.value); });
-    row.querySelector('.multi-select__remove').hidden = !select.value;
-    resizeSelect(select);
-  });
-}
+    stackContainer.addEventListener('change', event => { if (event.target.matches('select')) refreshStacks(); });
+    stackContainer.addEventListener('click', event => {
+      const button = event.target.closest('.multi-select__remove');
+      if (!button) return;
+      const row = button.closest('.multi-select__row');
+      if (stackContainer.querySelectorAll('.multi-select__row').length > 1) row.remove();
+      else row.querySelector('select').value = '';
+      refreshStacks();
+    });
 
-stackContainer.addEventListener('change', event => { if (event.target.matches('select')) refreshStacks(); });
-stackContainer.addEventListener('click', event => {
-  const button = event.target.closest('.multi-select__remove');
-  if (!button) return;
-  const row = button.closest('.multi-select__row');
-  if (stackContainer.querySelectorAll('.multi-select__row').length > 1) row.remove();
-  else row.querySelector('select').value = '';
-  refreshStacks();
-});
+    const saved = JSON.parse(sessionStorage.getItem(KEY) || 'null');
+    if (saved) {
+      Object.entries(saved).forEach(([k, v]) => {
+        if (k === 'stack') return;
+        const el = form.elements.namedItem(k);
+        if (!el) return;
+        if (el.type === 'checkbox') el.checked = !!v;
+        else el.value = v;
+      });
+      if (Array.isArray(saved.stack) && saved.stack.length) {
+        stackContainer.innerHTML = '';
+        saved.stack.forEach(value => addStackRow(value));
+      }
+    } else {
+      stackContainer.innerHTML = '';
+      ['Go', 'PostgreSQL', 'Kafka', 'Docker'].forEach(value => addStackRow(value));
+    }
+    refreshStacks();
 
-const saved = JSON.parse(sessionStorage.getItem(KEY) || 'null');
-if (saved) {
-  Object.entries(saved).forEach(([k, v]) => {
-    if (k === 'stack') return;
-    const el = form.elements.namedItem(k);
-    if (!el) return;
-    if (el.type === 'checkbox') el.checked = !!v;
-    else el.value = v;
-  });
-  if (Array.isArray(saved.stack) && saved.stack.length) {
-    stackContainer.innerHTML = '';
-    saved.stack.forEach(value => addStackRow(value));
-  }
-} else {
-  stackContainer.innerHTML = '';
-  ['Go', 'PostgreSQL', 'Kafka', 'Docker'].forEach(value => addStackRow(value));
-}
-refreshStacks();
-
-form.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const d = readForm(form);
-  const need = {
-    specialization: d.specialization || '',
-    grade:          d.grade || '',
-    stack:          Array.from(stackContainer.querySelectorAll('select')).map(select => select.selectedIndex > 0 ? select.options[select.selectedIndex].textContent.trim() : '').filter(Boolean),
-    about:          d.about || '',
-    only_fsp:       !!form.elements.namedItem('only_fsp').checked,
-  };
-  sessionStorage.setItem(KEY, JSON.stringify(need));
-  location.href = '/employer/matching.html';
-});
-</script>
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const d = readForm(form);
+      const need = {
+        specialization: d.specialization || '',
+        grade: d.grade || '',
+        stack: Array.from(stackContainer.querySelectorAll('select')).map(select => select.selectedIndex > 0 ? select.options[select.selectedIndex].textContent.trim() : '').filter(Boolean),
+        about: d.about || '',
+        only_fsp: !!form.elements.namedItem('only_fsp').checked,
+      };
+      sessionStorage.setItem(KEY, JSON.stringify(need));
+      location.href = '/employer/matching.html';
+    });
+  </script>
 </body>
+
 </html>
