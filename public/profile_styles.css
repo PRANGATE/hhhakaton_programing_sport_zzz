@@ -6,6 +6,32 @@
    Светлая тема для экспорта в PDF (класс навешивается на <body>
    на время работы html2pdf)
    ============================================================ */
+/* ---------- Отступы страницы от краёв экрана ---------- */
+
+body > header:not(.navbar),
+body > main,
+body > footer {
+    width: 100%;
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+body > header:not(.navbar) {
+    padding-top: 32px;
+}
+
+body > main {
+    padding-bottom: 48px;
+}
+
+@media (max-width: 560px) {
+    body > header:not(.navbar),
+    body > main,
+    body > footer {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+}
 
 body.is-printing {
     background: #ffffff !important;
@@ -97,6 +123,75 @@ body.is-printing footer {
     display: none !important;
 }
 
+/* ---- Категория и грейд в PDF ---- */
+
+body.is-printing .category-card {
+    background: #ffffff !important;
+    border: 1px solid #cfcfcf !important;
+    border-left: 4px solid #4f7cff !important;
+}
+
+body.is-printing .category-card__value {
+    color: #000000 !important;
+}
+
+body.is-printing .category-card__hint {
+    color: #4a4a4a !important;
+}
+
+/* Кнопки теста в PDF тоже не нужны */
+body.is-printing .category-card__actions,
+body.is-printing .category-btn {
+    display: none !important;
+}
+
+/* ---- История попыток в PDF ---- */
+
+body.is-printing .history__empty {
+    background: #ffffff !important;
+    color: #4a4a4a !important;
+    border: 1px dashed #cfcfcf !important;
+}
+
+body.is-printing .history__table {
+    background: #ffffff !important;
+    border: 1px solid #cfcfcf !important;
+}
+
+body.is-printing .history__table th,
+body.is-printing .history__table td {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border-bottom: 1px solid #cfcfcf !important;
+}
+
+body.is-printing .history__table th {
+    background: #f5f5f5 !important;
+    color: #4a4a4a !important;
+}
+
+body.is-printing .history__awarded {
+    color: #3f5fcf !important;
+}
+
+body.is-printing .history__status {
+    color: #4a4a4a !important;
+    background: #f5f5f5 !important;
+    border: 1px solid #cfcfcf !important;
+}
+
+body.is-printing .history__status--ok {
+    color: #0c6b38 !important;
+    border-color: #2ecc71 !important;
+    background: #eafaf0 !important;
+}
+
+body.is-printing .history__status--bad {
+    color: #8a1f28 !important;
+    border-color: #ff4d5a !important;
+    background: #fdecee !important;
+}
+
 /* --- Персональные данные: сетка 2 колонки, как в форме создания --- */
 
 .profile-grid {
@@ -125,7 +220,7 @@ body.is-printing footer {
     display: block;
     padding: 10px 12px;
     font-size: 15px;
-    color: var(--text);
+    color: var(--muted);          /* было: var(--text) */
     background: var(--panel-2);
     border: 1px solid var(--line);
     border-radius: 8px;
@@ -574,4 +669,111 @@ legend {
     .history__table      { font-size: 12.5px; }
     .history__table th,
     .history__table td   { padding: 8px 8px; }
+}
+
+/* Навбар не должен наследовать отступы из page-стилей */
+body > .navbar {
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    width: 100%;
+    align-self: stretch;
+    flex: 0 0 auto;
+}
+
+body > .navbar *,
+body > .navbar *::before,
+body > .navbar *::after {
+    box-sizing: border-box;
+}
+
+/* Кнопка «Пройти тест» — синяя, во всю высоту карточки */
+
+.category-card .category-card__actions {
+    align-items: stretch;   /* растягиваем дочерние кнопки по высоте */
+}
+
+#pf-test-single {
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    align-self: stretch;      /* растянуть по вертикали до конца ряда */
+    transition: background 0.15s ease, border-color 0.15s ease,
+                transform 0.05s ease, box-shadow 0.15s ease;
+}
+
+#pf-test-single:hover:not(:disabled) {
+    background: #3f6cf0;
+    border-color: #3f6cf0;
+}
+
+#pf-test-single:active {
+    transform: translateY(1px);
+}
+
+#pf-test-single:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.35);
+}
+
+#pf-test-single:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+/* ============================================================
+   Правила для корректного экспорта в PDF (html2pdf)
+   ============================================================ */
+
+/* 1. Небольшие блоки не режем между страницами */
+.pdf-keep,
+.profile__section,
+.profile__row,
+.profile__field,
+.badge,
+.card,
+section {
+  break-inside: avoid;
+  page-break-inside: avoid; /* для старых движков */
+}
+
+/* 2. Каждая строка таблицы — целиком на одной странице */
+.history__table tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* 3. Шапка таблицы не отрывается от первой строки */
+.history__table thead {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* 4. Но сама таблица МОЖЕТ тянуться на несколько страниц —
+      иначе html2pdf выдаст пустые листы. */
+.history__table {
+  break-inside: auto;
+  page-break-inside: auto;
+}
+
+/* 5. Заголовки не должны оставаться внизу страницы без контента */
+h1, h2, h3,
+.profile__label,
+.job-detail__label {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* 6. Отдельные «тяжёлые» абзацы (длинное описание) разрешаем разрывать —
+      иначе html2pdf сдвинет их целиком на новую страницу и оставит дыру. */
+.profile__about,
+.profile__text {
+  break-inside: auto;
+  page-break-inside: auto;
 }

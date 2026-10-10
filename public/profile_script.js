@@ -179,11 +179,20 @@ function renderCategory(profile, history) {
   if (btnHigher) btnHigher.hidden = true;
   if (btnLower)  btnLower.hidden  = true;
 
-  if (!spec) {
-    if (hintEl) hintEl.textContent = '';
+if (!spec) {
+    // Категория ещё не определена — предлагаем пройти опрос и тест.
+    if (btnSingle) {
+        btnSingle.hidden   = false;
+        btnSingle.disabled = false;
+        btnSingle.textContent = 'Пройти тест';
+        btnSingle.onclick  = () => goToSurvey(null, profile?.target_grade_id || null);
+    }
+    if (hintEl) {
+        hintEl.textContent = 'Пройдите опрос и тест, чтобы получить категорию и грейд.';
+    }
     renderHistory(items);
     return;
-  }
+}
 
   if (!grade) {
     // Опроса прошёл, теста не было — одна кнопка «Пройти тест».
@@ -323,17 +332,55 @@ async function runExport(btn) {
   btn.disabled = true;
   btn.textContent = 'Готовим PDF…';
   document.body.classList.add('is-printing');
+
+  const target = document.querySelector('main');
+  const injected = []; // запоминаем, кому добавили класс, чтобы потом убрать
+
   try {
     if (typeof window.html2pdf === 'function') {
-      const target = document.querySelector('main');
+      // Помечаем все «неразрывные» блоки явным классом.
+      // Список селекторов можно расширять под свою вёрстку.
+      const KEEP_SELECTORS = [
+        '.profile__section',
+        '.profile__row',
+        '.profile__field',
+        '.badge',
+        '.history__table thead',
+        '.history__table tbody tr',
+        'section',
+        '.card',
+        'h1', 'h2', 'h3',
+      ];
+      target.querySelectorAll(KEEP_SELECTORS.join(',')).forEach(el => {
+        el.classList.add('pdf-keep');
+        injected.push(el);
+      });
+
       await window.html2pdf()
         .set({
-          margin: [10, 10, 12, 10],
+          margin: [14, 10, 12, 10],  // было [10, 10, 12, 10] — верхний увеличили
           filename: 'fsp-profile.pdf',
           image: { type: 'jpeg', quality: 0.95 },
-          html2canvas: { scale: 2, useCORS: true, backgroundColor: null, scrollY: 0 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: null,
+            scrollY: 0,
+            windowWidth: target.scrollWidth, // важно: иначе блоки «сжимаются» и переносятся
+          },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'legacy'] },
+          pagebreak: {
+            mode: ['css', 'legacy'],
+            avoid: [
+              '.pdf-keep',
+              'tr', 'thead', 'tbody tr',
+              '.badge',
+              '.profile__section',
+              'h1', 'h2', 'h3',
+            ],
+            before: '.pdf-break-before', // если где-то нужен принудительный разрыв
+            after:  '.pdf-break-after',
+          },
         })
         .from(target)
         .save();
@@ -344,6 +391,7 @@ async function runExport(btn) {
     console.error('[FSP] export error', err);
     window.print();
   } finally {
+    injected.forEach(el => el.classList.remove('pdf-keep'));
     document.body.classList.remove('is-printing');
     btn.disabled = false;
     btn.textContent = original;

@@ -88,7 +88,37 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
 .cand-row--match { border-left-color: var(--accent); }
 .cand-row__id { font-weight: 700; font-size: 15px; }
 .cand-row__meta { font-size: 13px; color: var(--muted); margin-top: 4px; }
-.cand-row__score { font-size: 22px; font-weight: 700; color: var(--accent); text-align: right; }
+.cand-row__score {
+  display: inline-flex;
+  align-items: center;          /* <-- было baseline */
+  gap: 8px;
+  justify-content: flex-end;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;               /* <-- убираем лишний «воздух» вокруг цифры */
+  color: var(--accent);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cand-row__score-label {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;               /* <-- и здесь тоже */
+  color: var(--muted);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  position: relative;
+  top: 1px;                     /* микро-подстройка, если всё ещё кажется низко */
+}
+/* На узких экранах (когда строка превращается в одну колонку) —
+   выравниваем влево, чтобы не «улетало» вправо. */
+@media (max-width: 900px) {
+  .cand-row__score {
+    justify-content: flex-start;
+    text-align: left;
+  }
+}
 .cand-row__score small { display: block; font-size: 10px; color: var(--muted); font-weight: 500; }
 
 .empty { padding: 40px 20px; text-align: center; color: var(--muted); font-size: 14px; }

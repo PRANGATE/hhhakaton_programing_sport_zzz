@@ -1,10 +1,10 @@
 /* Экран опроса. Хранит выбранное и создаёт попытку теста. */
 (function () {
-  const $  = (s, r = document) => r.querySelector(s);
+  const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
   const TOKEN_KEY = 'fsp.access';
-  const getToken  = () => localStorage.getItem(TOKEN_KEY) || '';
+  const getToken = () => localStorage.getItem(TOKEN_KEY) || '';
 
   const state = {
     industry: null,
@@ -16,10 +16,10 @@
   // Устанавливаем ДО renderPicks — чтобы класс .is-on сразу попал.
   (function readPreselect() {
     const params = new URLSearchParams(location.search);
-    const spec   = params.get('spec');
-    const grade  = params.get('grade');
-    if (spec)  state.specialization = spec;
-    if (grade) state.grade          = grade;
+    const spec = params.get('spec');
+    const grade = params.get('grade');
+    if (spec) state.specialization = spec;
+    if (grade) state.grade = grade;
   })();
 
   // ---------- API ----------
@@ -94,9 +94,9 @@
       return;
     }
 
-    renderPicks($('#industries'),      ind.items,    'industry');
-    renderPicks($('#specializations'), spec.items,   'specialization');
-    renderPicks($('#grades'),          grades.items, 'grade');
+    renderPicks($('#industries'), ind.items, 'industry');
+    renderPicks($('#specializations'), spec.items, 'specialization');
+    renderPicks($('#grades'), grades.items, 'grade');
     refresh();  // на случай, если spec+grade уже выбраны из URL
 
     const form = $('#survey-form');
@@ -109,15 +109,23 @@
       if (!btn) return;
       const original = btn.textContent;
       btn.disabled = true;
-      btn.textContent = 'Готовим задания…';
+
+      // Анимация точек: «Готовим задания», «.», «..», «...»
+      const baseText = 'Готовим задания';
+      let dots = 0;
+      btn.textContent = baseText;
+      const dotsTimer = setInterval(() => {
+        dots = (dots + 1) % 4;                 // 0,1,2,3 → '', '.', '..', '...'
+        btn.textContent = baseText + '.'.repeat(dots);
+      }, 400);
 
       try {
         await api('/profile/me', {
           method: 'PATCH',
           body: JSON.stringify({
-            industry_id:       state.industry,
+            industry_id: state.industry,
             specialization_id: state.specialization,
-            target_grade_id:   state.grade,
+            target_grade_id: state.grade,
           }),
         });
 
@@ -125,7 +133,7 @@
           method: 'POST',
           body: JSON.stringify({
             specialization_id: state.specialization,
-            target_grade_id:   state.grade,
+            target_grade_id: state.grade,
           }),
         });
 
@@ -135,8 +143,8 @@
       } catch (err) {
         if (err.message === 'unauthorized') return;
 
-        const status  = err.status;
-        const code    = err.body?.error;
+        const status = err.status;
+        const code = err.body?.error;
         const message = err.body?.message;
 
         if (status === 503 && (code === 'llm_unavailable' || code === 'not_enough_questions')) {
@@ -155,6 +163,10 @@
           message || ('Не удалось начать тест: ' + (code || err.message))
         );
         window.location.href = '/testing.html';
+      } finally {
+        clearInterval(dotsTimer);
+        btn.disabled = false;
+        btn.textContent = original;
       }
     });
   }

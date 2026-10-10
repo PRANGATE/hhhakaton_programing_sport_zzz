@@ -1,4 +1,4 @@
-# scripts/_lib.ps1
+﻿# scripts/_lib.ps1
 # Общая библиотека. Подключается через:
 #   . "$PSScriptRoot\_lib.ps1"
 

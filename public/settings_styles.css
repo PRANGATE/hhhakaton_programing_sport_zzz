@@ -12,8 +12,12 @@ body > header:not(.navbar),
 body > main,
 body > footer {
     width: 100%;
+    max-width: 720px;   /* единая ширина для всех трёх */
+    margin-left: auto;  /* <-- центрирование */
+    margin-right: auto;
     padding-left: 16px;
     padding-right: 16px;
+    box-sizing: border-box;
 }
 
 body > header:not(.navbar) {
@@ -28,7 +32,7 @@ main {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    max-width: 720px;
+    /* max-width убрали — он теперь у родительского селектора выше */
 }
 
 /* ---------- Карточка настройки ---------- */
@@ -145,6 +149,7 @@ main {
     gap: 10px;
     align-items: stretch;
     flex-wrap: wrap;
+    margin-bottom: 4px;   /* <-- гарантированный «воздух» снизу */
 }
 
 .fsp-block__row input {
@@ -171,6 +176,7 @@ main {
 .fsp-block__error {
     font-size: 13px;
     color: var(--accent-2);
+    margin-top: -6px;     /* компенсируем gap у .fsp-block, чтобы ошибка была ближе */
 }
 
 .fsp-block__linked {

@@ -147,7 +147,9 @@
         <div style="font-size:14px; margin-bottom:6px">${(c.stacks || []).map(s => `<span class="tag tag--ok">${escapeHtml(s)}</span>`).join('')}</div>
         <div class="cand-row__meta">${escapeHtml(c.explanation)}</div>
       </div>
-      <div class="cand-row__score">${c.score}</div>
+      <div class="cand-row__score">
+        <span class="cand-row__score-label">рейтинг</span>${c.score}
+      </div>
       <div style="display:flex; gap:8px">
         <a class="btn btn--primary btn--sm" href="/employer/invite.html?candidate=${c.id}" onclick="event.stopPropagation()">Пригласить</a>
       </div>
