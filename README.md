@@ -19,13 +19,13 @@
 
 ```powershell
 # 1. Первичная настройка (один раз)
-powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
+.\scripts\setup.ps1
 
 # 2. Первый деплой (стирает БД)
-powershell -ExecutionPolicy Bypass -File .\deploy.ps1
+.\deploy.ps1
 
 # 3. Дальше — только меню (для простого управления сайтом)
-powershell -ExecutionPolicy Bypass -File .\scripts\menu.ps1
+.\scripts\menu.ps1
 
 ### Docker
 
