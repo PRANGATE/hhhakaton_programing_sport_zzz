@@ -106,22 +106,50 @@ function extractJson(text) {
 //
 // Возвращаем всегда массив (возможно пустой).
 
+// Элемент считается вопросом, только если у него есть и prompt (строка),
+// и kind (строка). Это отсекает rubric[], options[], correct[] — они тоже
+// массивы внутри объекта, но не вопросы.
+function isQuestionShape(x) {
+  return x && typeof x === 'object' && !Array.isArray(x)
+    && typeof x.prompt === 'string' && x.prompt.trim().length > 0
+    && typeof x.kind === 'string'   && ['single','multi','text'].includes(x.kind);
+}
+
 function toQuestionList(parsed) {
-  if (Array.isArray(parsed)) return parsed;
+  // 1. Уже массив.
+  if (Array.isArray(parsed)) {
+    return parsed.filter(isQuestionShape);
+  }
   if (!parsed || typeof parsed !== 'object') return [];
 
-  // Частые ключи-обёртки
+  // 2. Обёртка с известным ключом: {questions:[...]}, {items:[...]}, …
   for (const k of ['questions', 'items', 'tasks', 'data', 'result', 'results']) {
-    if (Array.isArray(parsed[k])) return parsed[k];
+    const v = parsed[k];
+    if (Array.isArray(v)) {
+      const filtered = v.filter(isQuestionShape);
+      if (filtered.length) return filtered;
+    }
+    // Вложенная обёртка: {result: {questions: [...]}}
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      const nested = toQuestionList(v);
+      if (nested.length) return nested;
+    }
   }
 
-  // Любой массив-значение с непустой длиной
+  // 3. Одиночный вопрос-объект. Именно этот случай у тебя и был —
+  //    llama3.1 вернула один объект вместо массива.
+  if (isQuestionShape(parsed)) return [parsed];
+
+  // 4. Последний шанс: любой массив, чьи элементы похожи на вопросы.
+  //    rubric/options/correct сюда уже не попадут — их строки не
+  //    удовлетворяют isQuestionShape.
   for (const k of Object.keys(parsed)) {
-    if (Array.isArray(parsed[k]) && parsed[k].length) return parsed[k];
+    const v = parsed[k];
+    if (Array.isArray(v)) {
+      const filtered = v.filter(isQuestionShape);
+      if (filtered.length) return filtered;
+    }
   }
-
-  // Единственный объект, похожий на вопрос
-  if (typeof parsed.prompt === 'string' && parsed.kind) return [parsed];
 
   return [];
 }
@@ -189,42 +217,57 @@ function normalizeQuestion(raw) {
 }
 
 // ---------- промпт генерации ----------
-
 function buildGenSystem({ specializationId, targetGradeId, count }) {
-  return `Ты — эксперт по найму IT-специалистов. Сгенерируй ${count} тестовых задания
+  return `Ты — опытный технический интервьюер. Придумай ${count} РАЗНЫХ тестовых вопроса
 для проверки уровня «${targetGradeId}» по специализации «${specializationId}».
 
-Требования к заданиям:
-- Темы разные (language, db, algorithms, architecture, network, testing, ...).
-- Сложность: целое 1..5, соответствует уровню «${targetGradeId}».
-- Тип задания: "single" (4 варианта, 1 верный), "multi" (4–5 вариантов, 2–3 верных),
-  либо "text" (свободный ответ с рубрикой 3–5 критериев).
-- Задания не должны повторять друг друга.
+Каждый вопрос — это отдельная задача. Темы не должны повторяться.
+Возьми темы из набора: язык программирования, базы данных, алгоритмы,
+архитектура, сети, тестирование, безопасность, инструменты разработки.
 
-Отвечай СТРОГО валидным JSON-массивом без markdown, без пояснений.
-Каждый элемент:
+Уровень сложности вопросов — строго «${targetGradeId}»:
+- junior: базовый синтаксис, простые концепции, чтение кода
+- middle: практика, типичные ошибки, отладка, проектирование небольших систем
+- senior: архитектура, trade-off'ы, распределённые системы, оптимизация
+
+Формат каждого вопроса:
+- kind = "single": ровно 4 варианта ответа, ровно 1 правильный
+- kind = "multi": 4–5 вариантов, 2–3 правильных
+- kind = "text": свободный ответ, оценивается по рубрике из 3–5 критериев
+
+ПРАВИЛА, которые нельзя нарушать:
+1. Ответ должен быть JSON-МАССИВОМ ровно из ${count} элементов.
+   Первый символ ответа — '['. Последний — ']'. Ничего до и после.
+2. НЕ копируй пример ниже. Придумай свои уникальные вопросы.
+3. НЕ оборачивай массив в объект вида {"questions": ...}.
+4. Если не можешь придумать — верни пустой массив [].
+
+Формат одного элемента в массиве:
 {
-  "topic": "string",
-  "difficulty": 1|2|3|4|5,
+  "topic": "короткое название темы на английском (одно слово)",
+  "difficulty": 1-5,
   "kind": "single" | "multi" | "text",
-  "prompt": "текст задания",
-  "options": ["A","B","C","D"],
+  "prompt": "текст вопроса на русском",
+  "options": ["вариант 1", "вариант 2", "вариант 3", "вариант 4"],
   "correct": 0,
-  "rubric": ["критерий 1","критерий 2"]
+  "rubric": ["критерий 1", "критерий 2"]
 }
 
-Правила по полям:
-- "options" и "correct" — только для kind=single/multi.
-- для single: "correct" — индекс верного варианта (число).
-- для multi: "correct" — массив индексов верных вариантов.
-- для text: "rubric" — массив критериев оценки.
+Для kind="single": "correct" — это число (индекс правильного варианта).
+Для kind="multi": "correct" — это массив чисел, например [0, 2].
+Для kind="text": "options" и "correct" не нужны, а "rubric" обязателен.
 
-ВАЖНО ПРО ФОРМАТ ОТВЕТА:
-- Ответ должен начинаться символом '[' и заканчиваться символом ']'.
-- Ответ — МАССИВ из ровно ${count} объектов, а не один объект.
-- НЕ оборачивай в {"questions": [...]}, {"items": [...]} или другой объект.
-- Если не можешь выполнить — верни пустой массив [].
-- Первый символ ответа — '[', последний — ']'.`;
+ПРИМЕР реального вопроса (НЕ КОПИРУЙ этот текст, сделай свои):
+{
+  "topic": "databases",
+  "difficulty": 2,
+  "kind": "single",
+  "prompt": "Какой тип JOIN вернёт все строки из левой таблицы, даже если в правой нет совпадений?",
+  "options": ["INNER JOIN", "LEFT JOIN", "RIGHT JOIN", "CROSS JOIN"],
+  "correct": 1
+}
+
+Теперь придумай ${count} СВОИХ вопросов и верни их массивом.`;
 }
 
 // ---------- сам провайдер ----------
@@ -243,21 +286,43 @@ export default {
         console.warn(`[llm.ollama] health: HTTP ${res.status} ${probeUrl}`);
         return false;
       }
-      const data = await res.json().catch(() => ({}));
-      const models = (data?.models || []).map(m => m.name);
-      const found = models.some(n => n === MODEL || n.startsWith(MODEL + ':'));
-      if (!found) {
-        console.warn(`[llm.ollama] health: model "${MODEL}" not found in ${models.length} models`);
-        console.warn(`[llm.ollama]   models: ${models.slice(0, 10).join(', ')}${models.length > 10 ? ', …' : ''}`);
-      }
-      return found;
+      // Ollama отвечает — этого достаточно. Наличие модели проверим
+      // отдельно, чтобы не ронять health на время pull'а.
+      return true;
     } catch (err) {
       console.warn(`[llm.ollama] health: fetch failed ${probeUrl}: ${err.message}`);
       return false;
     }
   },
+  // Подробный статус для /api/v1/ai/status и логов.
+  async checkStatus() {
+    const start = Date.now();
+    try {
+      const res = await fetch(`${URL}/api/tags`, {
+        signal: AbortSignal.timeout(5000),
+      });
+      const elapsedMs = Date.now() - start;
+      if (!res.ok) {
+        return { reachable: false, httpStatus: res.status, elapsedMs };
+      }
+      const data = await res.json().catch(() => ({}));
+      const models = (data?.models || []).map(m => m.name);
+      const hasModel = models.some(n => n === MODEL || n.startsWith(MODEL + ':'));
+      return {
+        reachable: true,
+        httpStatus: 200,
+        elapsedMs,
+        modelRequested: MODEL,
+        modelAvailable: hasModel,
+        modelsCount: models.length,
+        modelsSample: models.slice(0, 5),
+      };
+    } catch (err) {
+      return { reachable: false, error: err.message, elapsedMs: Date.now() - start };
+    }
+  },
 
-  async generateQuestions({ specializationId, targetGradeId, count = 5 }) {
+    async generateQuestions({ specializationId, targetGradeId, count = 5 }) {
     const system = buildGenSystem({ specializationId, targetGradeId, count });
     const user = JSON.stringify({
       specialization: specializationId,
@@ -265,16 +330,22 @@ export default {
       count,
     });
 
+    // Две попытки: сначала "послушная" температура, потом чуть выше.
+    const ATTEMPTS = [
+      { temperature: TEMP },
+      { temperature: Math.min(1.0, TEMP + 0.2) },
+    ];
+
     let lastErr;
-    for (let attempt = 0; attempt <= RETRIES; attempt++) {
+    for (const { temperature } of ATTEMPTS) {
       try {
         const raw = await callChat({
           messages: [
             { role: 'system', content: system },
             { role: 'user', content: user },
           ],
-          format: 'json',
-          temperature: TEMP,
+          // format: 'json' — НЕ передаём, иначе llama3.1:8b вырождается
+          temperature,
         });
 
         let parsed;
@@ -289,10 +360,8 @@ export default {
         const list = toQuestionList(parsed);
         if (!list.length) {
           console.warn('[llm.ollama] raw response:', String(raw).slice(0, 800));
-          console.warn('[llm.ollama] parsed type:', Array.isArray(parsed) ? 'array' : typeof parsed);
-          console.warn('[llm.ollama] parsed keys:', parsed && typeof parsed === 'object'
-            ? Object.keys(parsed).join(', ')
-            : String(parsed));
+          console.warn('[llm.ollama] parsed type:',
+            Array.isArray(parsed) ? 'array' : typeof parsed);
           throw new Error('empty_questions_array');
         }
 
@@ -307,13 +376,25 @@ export default {
         }
 
         if (normalized.length < Math.min(3, count)) {
+          console.warn('[llm.ollama] raw response (first 1500):', String(raw).slice(0, 1500));
+          console.warn('[llm.ollama] parsed list length:', list.length);
+          console.warn('[llm.ollama] normalized count:', normalized.length);
+          console.warn('[llm.ollama] per-item status:',
+            list.map((q, i) => {
+              try { normalizeQuestion(q); return `#${i}:ok`; }
+              catch (e) { return `#${i}:${e.message}`; }
+            }).join(' | ')
+          );
           throw new Error(`too_few_valid_questions: ${normalized.length}`);
         }
 
         return normalized.slice(0, count);
       } catch (err) {
         lastErr = err;
-        console.warn(`[llm.ollama] generate attempt ${attempt + 1} failed:`, err.message);
+        console.warn(
+          `[llm.ollama] generate attempt failed at temp=${temperature}:`,
+          err.message
+        );
       }
     }
 
@@ -352,7 +433,6 @@ export default {
         { role: 'system', content: system },
         { role: 'user', content: user },
       ],
-      format: 'json',
       temperature: 0.2,
     });
 

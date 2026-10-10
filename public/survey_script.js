@@ -44,6 +44,7 @@
 
   // ---------- рендер опций ----------
   function renderPicks(container, items, key) {
+    if (!container) return;
     container.innerHTML = '';
     items.forEach((it) => {
       const b = document.createElement('button');
@@ -69,7 +70,7 @@
   // ---------- init ----------
   async function init() {
     if (!getToken()) { location.href = '/'; return; }
-
+    if (!document.getElementById('industries')) return;
     let ind, spec, grades;
     try {
       [ind, spec, grades] = await Promise.all([

@@ -3,6 +3,7 @@
 // Ни один доменный модуль не вызывает LLM напрямую — только через ai.service.
 
 const CACHE_TTL_MS = 30_000;
+const CACHE_TTL_NULL_MS = 5_000;
 let cache = { provider: undefined, at: 0 };
 
 // Ленивая загрузка. Если модуля нет — он просто пропускается.
@@ -18,8 +19,9 @@ function candidates() {
 }
 
 export async function resolveProvider() {
-  if (cache.provider !== undefined && Date.now() - cache.at < CACHE_TTL_MS) {
-    return cache.provider;
+  if (cache.provider !== undefined) {
+    const ttl = cache.provider === null ? CACHE_TTL_NULL_MS : CACHE_TTL_MS;
+    if (Date.now() - cache.at < ttl) return cache.provider;
   }
 
   for (const name of candidates()) {

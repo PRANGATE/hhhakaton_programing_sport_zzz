@@ -53,37 +53,46 @@ export const startAttempt = async ({ userId, specializationId, targetGradeId }) 
   }
 
   // 3. Fallback: пул из БД
-  if (questions.length < 3) {
-    const pool = await repo.pickQuestions(specializationId, targetGradeId, 5);
-    if (pool.length >= 3) {
-      questions = pool.map(q => ({ ...q, generatedByLlm: false }));
-      source = 'pool';
+  // 3. Добираем из пула, сколько не хватает до 5.
+  //    LLM могла дать 1–2 (llama3.1:8b ленивая) — это не провал.
+  const TARGET = 5;
+  if (questions.length < TARGET) {
+    const need = TARGET - questions.length;
+    const pool = await repo.pickQuestions(specializationId, targetGradeId, need);
+    if (pool.length) {
+      const fromPool = pool.map(q => ({ ...q, generatedByLlm: false }));
+      questions = questions.concat(fromPool);
+      source = questions.some(q => q.generatedByLlm) ? 'mixed' : 'pool';
+      console.log(`[test] LLM дала ${TARGET - need}, пул добавил ${fromPool.length}`);
     }
   }
 
-  // 4. Ни LLM, ни пул не дали минимум — 503
   if (questions.length < 3) {
     throw fail('LLM_UNAVAILABLE');
   }
 
-  // 5. Персистим сгенерированные, чтобы FK answers→questions сработал
-  if (source === 'llm') {
+  // 5. Персистим только LLM-задания, у которых ещё нет id в БД.
+  const llmOnly = questions.filter(q => q.generatedByLlm && !q.id);
+  if (llmOnly.length) {
     try {
       const persisted = await repo.persistGeneratedQuestions({
-        specializationId, targetGradeId, questions,
+        specializationId, targetGradeId, questions: llmOnly,
       });
-      if (persisted.length >= 3) questions = persisted.map(q => ({ ...q, generatedByLlm: true }));
+      let k = 0;
+      questions = questions.map(q =>
+        (q.generatedByLlm && !q.id)
+          ? { ...q, ...persisted[k++], generatedByLlm: true }
+          : q
+      );
     } catch (err) {
-      console.warn('[test] persist generated questions failed:', err.message);
-      // если не смогли персистить — уходим в пул
-      const pool = await repo.pickQuestions(specializationId, targetGradeId, 5);
-      if (pool.length >= 3) {
-        questions = pool.map(q => ({ ...q, generatedByLlm: false }));
-        source = 'pool';
-      } else {
-        throw fail('LLM_UNAVAILABLE');
-      }
+      console.warn('[test] persist LLM questions failed:', err.message);
+      questions = questions.filter(q => !q.generatedByLlm || q.id);
+      source = 'pool';
     }
+  }
+
+  if (questions.length < 3) {
+    throw fail('LLM_UNAVAILABLE');
   }
 
   const attempt = await repo.createAttempt({

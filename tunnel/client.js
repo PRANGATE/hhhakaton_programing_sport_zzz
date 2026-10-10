@@ -193,12 +193,31 @@ process.on('SIGTERM', () => shutdown('SIGTERM'));
 /* ---------- старт ---------- */
 
 (async () => {
+  console.log('[client] ================');
+  console.log('[client] VPS_URL     :', VPS_URL);
+  console.log('[client] OLLAMA_LOCAL:', OLLAMA_LOCAL);
+  console.log('[client] MODEL       :', MODEL);
+  console.log('[client] ================');
+
+  // 1. Ollama должна отвечать — иначе туннель бесполезен.
   try {
     await ensureOllama();
-    await ensureModel();
   } catch (err) {
-    console.error('[client]', err.message);
+    console.error('[client] Ollama недоступна:', err.message);
+    console.error('[client] Проверь: ollama установлена и запущена.');
     process.exit(1);
   }
+
+  // 2. СРАЗУ поднимаем WS — health приложения станет зелёным,
+  //    как только Ollama ответит на /api/tags, даже без модели.
   connect();
+
+  // 3. Модель тянем фоном. Пока качается — WS уже работает,
+  //    /api/tags отвечает, а вот /api/chat вернёт "model not found".
+  if (PULL_MODEL) {
+    ensureModel().catch((err) => {
+      console.error('[client] ensureModel failed:', err.message);
+      console.error('[client] Туннель работает, но генерация не пойдёт до перезапуска.');
+    });
+  }
 })();
